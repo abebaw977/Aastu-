@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+/* Custom Mobile & KaTeX Responsiveness for Samsung A04 (360px-384px) */
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    overflow-x: hidden;
+    touch-action: manipulation;
+  }
+}
+
+/* KaTeX equations responsive horizontal scroll styling */
+.katex-display {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  padding-top: 0.35rem !important;
+  padding-bottom: 0.35rem !important;
+  margin: 0.5rem 0 !important;
+  max-width: 100% !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+.katex-display::-webkit-scrollbar {
+  height: 4px;
+}
+
+.katex-display::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.4);
+  border-radius: 4px;
+}
+
+.katex-display > .katex {
+  max-width: 100%;
+  text-align: center;
+}
+
+/* Ensure inline math doesn't overflow or push layout */
+.inline-math {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  overflow-x: auto;
+  vertical-align: middle;
+  scrollbar-width: none;
+}
+
+.inline-math::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom minimal scrollbars for horizontal chip rows on mobile */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Touch targets helper */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Mobile Safe Area Padding */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+}

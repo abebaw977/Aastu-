@@ -1,0 +1,6 @@
+{
+  "name": "AASTU Entrance Exam Prep & 5-Day Fast Track",
+  "description": "Intensive 5-day structured preparation portal for the Addis Ababa Science and Technology University (AASTU) entrance exam, featuring extensive textbook-grade master notes, realistic mock tests, formula cheat sheets, subject study guides, and an AI tutor.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
