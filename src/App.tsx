@@ -13,12 +13,41 @@ import { AITutorView } from './components/AITutorView';
 import { MistakesNotebookView } from './components/MistakesNotebookView';
 import { QUESTION_BANK } from './data/questions';
 import { AASTU_5_DAY_PLAN } from './data/studyPlan';
-import { Question, Subject } from './types';
+import { Question, Subject, UserStudyNote, SavedExamRecord } from './types';
+import { 
+  loadUserNotes, 
+  saveUserNotesToStorage, 
+  loadSavedGeneratedQuestions, 
+  saveGeneratedQuestionsToStorage, 
+  loadExamHistory, 
+  saveExamHistoryToStorage 
+} from './utils/storage';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('plan');
   const [selectedPracticeSubject, setSelectedPracticeSubject] = useState<Subject>('all');
-  const [allQuestions, setAllQuestions] = useState<Question[]>(QUESTION_BANK);
+  
+  // Custom Saved Generated Questions
+  const [savedGeneratedQuestions, setSavedGeneratedQuestions] = useState<Question[]>(() => {
+    return loadSavedGeneratedQuestions();
+  });
+
+  // Master Question List combining built-in bank with user's saved generated questions
+  const [allQuestions, setAllQuestions] = useState<Question[]>(() => {
+    const saved = loadSavedGeneratedQuestions();
+    return [...QUESTION_BANK, ...saved];
+  });
+
+  // User Study Notes State
+  const [userNotes, setUserNotes] = useState<UserStudyNote[]>(() => {
+    return loadUserNotes();
+  });
+
+  // Mock Exam History State
+  const [examHistory, setExamHistory] = useState<SavedExamRecord[]>(() => {
+    return loadExamHistory();
+  });
+
   const [tutorQuestionContext, setTutorQuestionContext] = useState<Question | null>(null);
   const [isA04SimActive, setIsA04SimActive] = useState<boolean>(false);
   const [isScratchpadOpen, setIsScratchpadOpen] = useState<boolean>(false);
@@ -78,6 +107,18 @@ export default function App() {
     }
   }, [mistakeQuestions]);
 
+  useEffect(() => {
+    saveUserNotesToStorage(userNotes);
+  }, [userNotes]);
+
+  useEffect(() => {
+    saveExamHistoryToStorage(examHistory);
+  }, [examHistory]);
+
+  useEffect(() => {
+    saveGeneratedQuestionsToStorage(savedGeneratedQuestions);
+  }, [savedGeneratedQuestions]);
+
   // Total tasks count across 5 days
   const totalTasksCount = AASTU_5_DAY_PLAN.reduce((acc, day) => {
     return acc + day.timeBlocks.reduce((bAcc, block) => bAcc + block.objectives.length, 0);
@@ -123,6 +164,32 @@ export default function App() {
     setMistakeQuestions([]);
   };
 
+  // User Notes Handlers
+  const handleSaveUserNote = (note: UserStudyNote) => {
+    setUserNotes(prev => {
+      const index = prev.findIndex(n => n.id === note.id);
+      if (index >= 0) {
+        const next = [...prev];
+        next[index] = note;
+        return next;
+      }
+      return [note, ...prev];
+    });
+  };
+
+  const handleDeleteUserNote = (id: string) => {
+    setUserNotes(prev => prev.filter(n => n.id !== id));
+  };
+
+  // Exam History Handlers
+  const handleSaveExamRecord = (record: SavedExamRecord) => {
+    setExamHistory(prev => [record, ...prev]);
+  };
+
+  const handleDeleteExamRecord = (id: string) => {
+    setExamHistory(prev => prev.filter(r => r.id !== id));
+  };
+
   const handleOpenAITutorWithQuestion = (q: Question) => {
     setTutorQuestionContext(q);
     setActiveTab('tutor');
@@ -140,10 +207,28 @@ export default function App() {
 
   const handleAddCustomQuestion = (newQ: Question) => {
     setAllQuestions(prev => [newQ, ...prev]);
+    setSavedGeneratedQuestions(prev => [newQ, ...prev]);
   };
 
   const handleAddBatchCustomQuestions = (newQuestions: Question[]) => {
     setAllQuestions(prev => [...newQuestions, ...prev]);
+    setSavedGeneratedQuestions(prev => [...newQuestions, ...prev]);
+  };
+
+  // Callback when user restores full backup from JSON
+  const handleDataRestored = () => {
+    setUserNotes(loadUserNotes());
+    setExamHistory(loadExamHistory());
+    const restoredQs = loadSavedGeneratedQuestions();
+    setSavedGeneratedQuestions(restoredQs);
+    setAllQuestions([...QUESTION_BANK, ...restoredQs]);
+    try {
+      setMistakeQuestions(JSON.parse(localStorage.getItem('aastu_prep_mistakes') || '[]'));
+      setBookmarkedIds(JSON.parse(localStorage.getItem('aastu_prep_bookmarks') || '[]'));
+      setCheckedTasks(JSON.parse(localStorage.getItem('aastu_prep_checked_tasks') || '{}'));
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const appContent = (
@@ -178,6 +263,12 @@ export default function App() {
               setSelectedPracticeSubject(subject);
               setActiveTab('practice');
             }}
+            userNotes={userNotes}
+            onSaveNote={handleSaveUserNote}
+            onDeleteNote={handleDeleteUserNote}
+            savedQuestionsCount={savedGeneratedQuestions.length}
+            examHistoryCount={examHistory.length}
+            onDataRestored={handleDataRestored}
           />
         )}
 
@@ -200,6 +291,9 @@ export default function App() {
             onSaveMistakes={handleSaveBatchMistakes}
             onOpenAITutorWithQuestion={handleOpenAITutorWithQuestion}
             onAddCustomQuestionsToBank={handleAddBatchCustomQuestions}
+            examHistory={examHistory}
+            onSaveExamRecord={handleSaveExamRecord}
+            onDeleteExamRecord={handleDeleteExamRecord}
           />
         )}
 

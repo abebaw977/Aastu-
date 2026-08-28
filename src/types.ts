@@ -14,6 +14,35 @@ export interface Question {
   shortcutTip?: string;
   yearReference?: string;
   difficulty: Difficulty;
+  isAIGenerated?: boolean;
+  generatedAt?: string;
+}
+
+export interface UserStudyNote {
+  id: string;
+  title: string;
+  subject: Subject;
+  topic?: string;
+  content: string;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+  pinned?: boolean;
+}
+
+export interface SavedExamRecord {
+  id: string;
+  title: string;
+  date: string;
+  timestamp: number;
+  totalQuestions: number;
+  correctCount: number;
+  scorePercentage: number;
+  timeSpentSeconds: number;
+  difficulty: string;
+  subjectBreakdown: ExamResult['subjectBreakdown'];
+  questions: Question[];
+  answers: ExamResult['answers'];
 }
 
 export interface DayPlan {

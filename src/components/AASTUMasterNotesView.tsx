@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ALL_AASTU_MASTER_NOTES } from '../data/aastuNotesData';
-import { MasterNoteChapter, Subject } from '../types';
+import { MasterNoteChapter, Subject, UserStudyNote } from '../types';
 import { MathRenderer } from './MathRenderer';
+import { StudentNotesView } from './StudentNotesView';
 import { 
   BookOpen, 
   Search, 
@@ -25,18 +26,34 @@ import {
   Lightbulb,
   Maximize2,
   Minimize2,
-  GraduationCap
+  GraduationCap,
+  Edit3,
+  PenTool,
+  Library
 } from 'lucide-react';
 
 interface AASTUMasterNotesViewProps {
   onOpenAITutorWithTopic?: (topic: string, subject: Subject) => void;
   onJumpToPractice?: (subject: Subject) => void;
+  userNotes?: UserStudyNote[];
+  onSaveNote?: (note: UserStudyNote) => void;
+  onDeleteNote?: (id: string) => void;
+  savedQuestionsCount?: number;
+  examHistoryCount?: number;
+  onDataRestored?: () => void;
 }
 
 export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
   onOpenAITutorWithTopic,
   onJumpToPractice,
+  userNotes = [],
+  onSaveNote,
+  onDeleteNote,
+  savedQuestionsCount = 0,
+  examHistoryCount = 0,
+  onDataRestored,
 }) => {
+  const [notesSubTab, setNotesSubTab] = useState<'master' | 'personal'>('master');
   const [selectedSubject, setSelectedSubject] = useState<Subject>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedChapterId, setSelectedChapterId] = useState<string>(ALL_AASTU_MASTER_NOTES[0].id);
@@ -114,43 +131,87 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
 
   return (
     <div className={`space-y-6 ${isFocusMode ? 'max-w-5xl mx-auto' : ''}`}>
-      {/* Top Hero Banner */}
-      {!isFocusMode && (
-        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 rounded-2xl p-6 text-white border border-blue-800/40 shadow-xl relative overflow-hidden">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="space-y-1.5 max-w-3xl">
-              <div className="flex items-center gap-2">
-                <span className="bg-blue-500/20 text-blue-300 text-xs font-extrabold px-2.5 py-0.5 rounded border border-blue-500/30 flex items-center gap-1.5">
-                  <GraduationCap className="w-4 h-4" /> AASTU Official Syllabus Vault
-                </span>
-                <span className="text-xs text-slate-400">
-                  {totalChapters} Comprehensive Chapters • Extensive STEM Notes
-                </span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                AASTU Comprehensive Master Notes & High-Yield Vault
-              </h2>
-              <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                Textbook-grade comprehensive notes, mathematical proofs, governing equations, 30-second speed hacks, and examiner traps tailored exclusively for the Addis Ababa Science & Technology University entrance standard.
-              </p>
-            </div>
+      {/* Sub-navigation Switcher between Master Syllabus & Personal Vault */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-1.5 flex items-center gap-1.5 shadow-sm">
+        <button
+          id="notes-tab-master-btn"
+          onClick={() => setNotesSubTab('master')}
+          className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition ${
+            notesSubTab === 'master'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+          }`}
+        >
+          <Library className="w-4 h-4 text-emerald-400" />
+          <span>AASTU Master Notes (Official Syllabus)</span>
+        </button>
 
-            {/* Read progress summary */}
-            <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-700/80 min-w-[200px] text-right sm:text-left">
-              <div className="text-xs text-slate-400 font-medium">Mastery Progress</div>
-              <div className="text-xl font-bold text-emerald-400 mt-0.5">
-                {completedCount} / {totalChapters} Chapters Read
-              </div>
-              <div className="w-full bg-slate-700 h-2 rounded-full mt-2 overflow-hidden">
-                <div 
-                  className="bg-emerald-400 h-full transition-all duration-300"
-                  style={{ width: `${progressPercent}%` }}
-                />
+        <button
+          id="notes-tab-personal-btn"
+          onClick={() => setNotesSubTab('personal')}
+          className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition ${
+            notesSubTab === 'personal'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+          }`}
+        >
+          <Edit3 className="w-4 h-4 text-amber-300" />
+          <span>My Personal Study Notes</span>
+          <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.2 rounded-full font-bold">
+            {userNotes.length} Saved
+          </span>
+        </button>
+      </div>
+
+      {notesSubTab === 'personal' ? (
+        <StudentNotesView
+          userNotes={userNotes}
+          onSaveNote={onSaveNote || (() => {})}
+          onDeleteNote={onDeleteNote || (() => {})}
+          onOpenAITutorWithTopic={onOpenAITutorWithTopic}
+          savedQuestionsCount={savedQuestionsCount}
+          examHistoryCount={examHistoryCount}
+          onDataRestored={onDataRestored}
+        />
+      ) : (
+        <>
+          {/* Top Hero Banner */}
+          {!isFocusMode && (
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 rounded-2xl p-6 text-white border border-blue-800/40 shadow-xl relative overflow-hidden">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="space-y-1.5 max-w-3xl">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-blue-500/20 text-blue-300 text-xs font-extrabold px-2.5 py-0.5 rounded border border-blue-500/30 flex items-center gap-1.5">
+                      <GraduationCap className="w-4 h-4" /> AASTU Official Syllabus Vault
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      {totalChapters} Comprehensive Chapters • Extensive STEM Notes
+                    </span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                    AASTU Comprehensive Master Notes & High-Yield Vault
+                  </h2>
+                  <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                    Textbook-grade comprehensive notes, mathematical proofs, governing equations, 30-second speed hacks, and examiner traps tailored exclusively for the Addis Ababa Science & Technology University entrance standard.
+                  </p>
+                </div>
+
+                {/* Read progress summary */}
+                <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-700/80 min-w-[200px] text-right sm:text-left">
+                  <div className="text-xs text-slate-400 font-medium">Mastery Progress</div>
+                  <div className="text-xl font-bold text-emerald-400 mt-0.5">
+                    {completedCount} / {totalChapters} Chapters Read
+                  </div>
+                  <div className="w-full bg-slate-700 h-2 rounded-full mt-2 overflow-hidden">
+                    <div 
+                      className="bg-emerald-400 h-full transition-all duration-300"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
       {/* Filter and Search Bar */}
       <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-3 sticky top-16 z-30">
@@ -483,6 +544,8 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 };

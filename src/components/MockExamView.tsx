@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Question, ExamResult, Subject } from '../types';
+import { Question, ExamResult, Subject, SavedExamRecord } from '../types';
 import { MathRenderer } from './MathRenderer';
 import confetti from 'canvas-confetti';
 import { 
@@ -28,7 +28,11 @@ import {
   Calculator,
   FlaskConical,
   BrainCircuit,
-  Plus
+  Plus,
+  History,
+  Trash2,
+  Eye,
+  Calendar
 } from 'lucide-react';
 
 interface MockExamViewProps {
@@ -36,13 +40,19 @@ interface MockExamViewProps {
   onSaveMistakes: (wrongQuestions: Question[]) => void;
   onOpenAITutorWithQuestion: (q: Question) => void;
   onAddCustomQuestionsToBank?: (questions: Question[]) => void;
+  examHistory?: SavedExamRecord[];
+  onSaveExamRecord?: (record: SavedExamRecord) => void;
+  onDeleteExamRecord?: (id: string) => void;
 }
 
 export const MockExamView: React.FC<MockExamViewProps> = ({
   allQuestions,
   onSaveMistakes,
   onOpenAITutorWithQuestion,
-  onAddCustomQuestionsToBank
+  onAddCustomQuestionsToBank,
+  examHistory = [],
+  onSaveExamRecord,
+  onDeleteExamRecord,
 }) => {
   // Exam Execution State
   const [examStarted, setExamStarted] = useState<boolean>(false);
@@ -58,7 +68,7 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
   const [examTitle, setExamTitle] = useState<string>('Custom AI Mock Exam');
 
   // AI Exam Creator Configuration State
-  const [examMode, setExamMode] = useState<'ai_custom' | 'standard'>('ai_custom');
+  const [examMode, setExamMode] = useState<'ai_custom' | 'standard' | 'history'>('ai_custom');
   const [customCount, setCustomCount] = useState<number>(10);
   const [customSubjects, setCustomSubjects] = useState<Subject[]>([
     'mathematics', 
@@ -347,6 +357,25 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
     setExamCompleted(true);
     setExamStarted(false);
 
+    // Save to permanent exam history
+    if (onSaveExamRecord) {
+      const record: SavedExamRecord = {
+        id: result.id,
+        title: examTitle,
+        date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: Date.now(),
+        totalQuestions: examQuestions.length,
+        correctCount,
+        scorePercentage,
+        timeSpentSeconds: totalTimeSpent,
+        difficulty: customDifficulty,
+        subjectBreakdown: breakdown,
+        questions: examQuestions,
+        answers: answersReport,
+      };
+      onSaveExamRecord(record);
+    }
+
     // Save wrong questions to Mistakes Notebook
     if (wrongList.length > 0) {
       onSaveMistakes(wrongList);
@@ -362,24 +391,51 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
     }
   };
 
-  // Pre-exam Landing Screen with AI Custom Builder & Standard Modes
+  const handleReviewPastExam = (record: SavedExamRecord) => {
+    setExamTitle(record.title);
+    setExamQuestions(record.questions);
+    setDurationMinutes(Math.round(record.timeSpentSeconds / 60) || 20);
+    setTimeLeftSeconds(0);
+    const remappedAnswers: Record<string, number> = {};
+    record.answers.forEach(a => {
+      if (a.userSelected !== null) {
+        remappedAnswers[a.questionId] = a.userSelected;
+      }
+    });
+    setUserAnswers(remappedAnswers);
+    setExamResult({
+      id: record.id,
+      date: record.date,
+      totalQuestions: record.totalQuestions,
+      correctCount: record.correctCount,
+      scorePercentage: record.scorePercentage,
+      timeSpentSeconds: record.timeSpentSeconds,
+      subjectBreakdown: record.subjectBreakdown,
+      answers: record.answers,
+    });
+    setExamStarted(false);
+    setExamCompleted(true);
+  };
+
+  // Pre-exam Landing Screen with AI Custom Builder, Standard & History Modes
   if (!examStarted && !examCompleted) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Mode Selector Header Bar */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-1.5 flex items-center gap-1.5 shadow-sm">
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-1.5 flex flex-wrap items-center gap-1.5 shadow-sm">
           <button
             id="exam-mode-ai-custom-btn"
             onClick={() => setExamMode('ai_custom')}
-            className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition ${
+            className={`flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition ${
               examMode === 'ai_custom'
                 ? 'bg-blue-600 text-white shadow-md'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
             <Sparkles className="w-4 h-4 text-amber-300" />
-            <span>AI Custom Exam Generator</span>
-            <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.2 rounded font-bold uppercase">
+            <span className="hidden sm:inline">AI Custom Exam</span>
+            <span className="sm:hidden">AI Custom</span>
+            <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1 py-0.2 rounded font-bold uppercase">
               NEW
             </span>
           </button>
@@ -387,14 +443,33 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
           <button
             id="exam-mode-standard-btn"
             onClick={() => setExamMode('standard')}
-            className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition ${
+            className={`flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition ${
               examMode === 'standard'
                 ? 'bg-blue-600 text-white shadow-md'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
             <Trophy className="w-4 h-4 text-amber-400" />
-            <span>Standard 22-Q AASTU Mock</span>
+            <span className="hidden sm:inline">Standard 22-Q Mock</span>
+            <span className="sm:hidden">Standard Mock</span>
+          </button>
+
+          <button
+            id="exam-mode-history-btn"
+            onClick={() => setExamMode('history')}
+            className={`flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition ${
+              examMode === 'history'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <History className="w-4 h-4 text-emerald-400" />
+            <span>Past Exam History</span>
+            {examHistory.length > 0 && (
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.2 rounded-full font-bold">
+                {examHistory.length}
+              </span>
+            )}
           </button>
         </div>
 
@@ -696,6 +771,183 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
                 Start Standard Mock Exam <ArrowRight className="w-4 h-4" />
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Past Exam History Mode */}
+        {examMode === 'history' && (
+          <div className="space-y-5">
+            {/* History Metrics Banner */}
+            <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 rounded-2xl p-6 text-white border border-blue-800/40 shadow-xl space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-blue-800/60 pb-4">
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
+                    <History className="w-6 h-6 text-emerald-400" />
+                    Permanent Mock Exam History & Diagnostic Records
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                    Every mock test you finish is permanently archived here with full question breakdown and answer logs.
+                  </p>
+                </div>
+              </div>
+
+              {examHistory.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                  <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                    <div className="text-xs text-slate-400">Total Exams Completed</div>
+                    <div className="text-lg font-bold text-white mt-0.5">{examHistory.length} Exams</div>
+                  </div>
+                  <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                    <div className="text-xs text-slate-400">Average Score</div>
+                    <div className="text-lg font-bold text-blue-300 mt-0.5">
+                      {Math.round(examHistory.reduce((acc, h) => acc + h.scorePercentage, 0) / examHistory.length)}%
+                    </div>
+                  </div>
+                  <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                    <div className="text-xs text-slate-400">Highest Score</div>
+                    <div className="text-lg font-bold text-emerald-400 mt-0.5">
+                      {Math.max(...examHistory.map(h => h.scorePercentage))}%
+                    </div>
+                  </div>
+                  <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                    <div className="text-xs text-slate-400">Total Questions Tested</div>
+                    <div className="text-lg font-bold text-amber-300 mt-0.5">
+                      {examHistory.reduce((acc, h) => acc + h.totalQuestions, 0)} Qs
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* List of Past Exams */}
+            {examHistory.length === 0 ? (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
+                <History className="w-12 h-12 mx-auto text-slate-400 stroke-1" />
+                <h4 className="text-base font-bold text-slate-800 dark:text-slate-200">No past exams recorded yet</h4>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Take your first AI Custom Exam or Standard 22-Q AASTU benchmark mock exam. Your score logs and questions will appear here permanently!
+                </p>
+                <button
+                  onClick={() => setExamMode('ai_custom')}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow transition"
+                >
+                  Generate Mock Exam Now
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {examHistory.slice().reverse().map((record, rIdx) => {
+                  const mins = Math.floor(record.timeSpentSeconds / 60);
+                  const secs = record.timeSpentSeconds % 60;
+                  const isHighScore = record.scorePercentage >= 75;
+                  const isMidScore = record.scorePercentage >= 50 && record.scorePercentage < 75;
+
+                  return (
+                    <div
+                      key={record.id || rIdx}
+                      className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+                              {record.title}
+                            </span>
+                            <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
+                              <Calendar className="w-3.5 h-3.5" /> {record.date}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
+                            <span>{record.totalQuestions} Questions</span>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" /> {mins}m {secs}s duration
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Score Badge */}
+                        <div className="flex items-center gap-3">
+                          <div className={`px-3 py-1.5 rounded-xl font-black text-sm sm:text-base border flex items-center gap-1.5 ${
+                            isHighScore
+                              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300'
+                              : isMidScore
+                              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300'
+                              : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-300'
+                          }`}>
+                            <Trophy className="w-4 h-4" />
+                            <span>{record.scorePercentage}%</span>
+                            <span className="text-[11px] font-normal opacity-80">({record.correctCount}/{record.totalQuestions})</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Subject breakdown pills */}
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {record.subjectBreakdown && Object.entries(record.subjectBreakdown).map(([subj, rawStats]) => {
+                          const stats = rawStats as { total: number; correct: number } | undefined;
+                          if (!stats || stats.total === 0) return null;
+                          const sPct = Math.round((stats.correct / stats.total) * 100);
+                          return (
+                            <span
+                              key={subj}
+                              className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium capitalize"
+                            >
+                              <strong>{subj}:</strong> {stats.correct}/{stats.total} ({sPct}%)
+                            </span>
+                          );
+                        })}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleReviewPastExam(record)}
+                            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> Review Questions & Solutions
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              // Retake with same questions
+                              setExamTitle(`Retake: ${record.title}`);
+                              setExamQuestions(record.questions);
+                              setDurationMinutes(Math.round(record.questions.length * 1.8));
+                              setTimeLeftSeconds(Math.round(record.questions.length * 1.8) * 60);
+                              setUserAnswers({});
+                              setFlaggedIds({});
+                              setCurrentIndex(0);
+                              setExamStarted(true);
+                              setExamCompleted(false);
+                              setExamResult(null);
+                            }}
+                            className="px-3.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs rounded-xl transition flex items-center gap-1.5"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" /> Retake Exam
+                          </button>
+                        </div>
+
+                        {onDeleteExamRecord && (
+                          <button
+                            onClick={() => {
+                              if (window.confirm('Delete this exam record from history?')) {
+                                onDeleteExamRecord(record.id);
+                              }
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 transition"
+                            title="Delete Record"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
