@@ -1,4 +1,4 @@
-import { Question, UserStudyNote, SavedExamRecord } from '../types';
+import { Question, UserStudyNote, SavedExamRecord, TutorChatSession } from '../types';
 
 export const STORAGE_KEYS = {
   CHECKED_TASKS: 'aastu_prep_checked_tasks',
@@ -8,6 +8,7 @@ export const STORAGE_KEYS = {
   USER_NOTES: 'aastu_prep_user_notes',
   EXAM_HISTORY: 'aastu_prep_exam_history',
   COMPLETED_CHAPTERS: 'aastu_completed_chapters',
+  TUTOR_SESSIONS: 'aastu_prep_tutor_sessions',
 };
 
 // --- Custom Generated Questions ---
@@ -73,6 +74,27 @@ export function saveExamHistoryToStorage(records: SavedExamRecord[]): void {
   }
 }
 
+// --- AI Tutor Chat Sessions ---
+export function loadTutorChatSessions(): TutorChatSession[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.TUTOR_SESSIONS);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error('Failed to load tutor chat sessions:', e);
+    return [];
+  }
+}
+
+export function saveTutorChatSessionsToStorage(sessions: TutorChatSession[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.TUTOR_SESSIONS, JSON.stringify(sessions));
+  } catch (e) {
+    console.error('Failed to save tutor chat sessions to storage:', e);
+  }
+}
+
 // --- Full Backup Export & Import ---
 export interface CompleteBackupData {
   version: number;
@@ -80,6 +102,7 @@ export interface CompleteBackupData {
   generatedQuestions: Question[];
   userNotes: UserStudyNote[];
   examHistory: SavedExamRecord[];
+  tutorSessions?: TutorChatSession[];
   mistakes: Question[];
   bookmarks: string[];
   checkedTasks: Record<string, boolean>;
@@ -93,6 +116,7 @@ export function exportCompleteBackup(): string {
     generatedQuestions: loadSavedGeneratedQuestions(),
     userNotes: loadUserNotes(),
     examHistory: loadExamHistory(),
+    tutorSessions: loadTutorChatSessions(),
     mistakes: JSON.parse(localStorage.getItem(STORAGE_KEYS.MISTAKES) || '[]'),
     bookmarks: JSON.parse(localStorage.getItem(STORAGE_KEYS.BOOKMARKS) || '[]'),
     checkedTasks: JSON.parse(localStorage.getItem(STORAGE_KEYS.CHECKED_TASKS) || '{}'),
@@ -142,6 +166,14 @@ export function restoreBackupFromJSON(jsonText: string): { success: boolean; err
       existing.forEach(h => mergedMap.set(h.id, h));
       data.examHistory.forEach(h => mergedMap.set(h.id, h));
       saveExamHistoryToStorage(Array.from(mergedMap.values()));
+    }
+
+    if (data.tutorSessions && Array.isArray(data.tutorSessions)) {
+      const existing = loadTutorChatSessions();
+      const mergedMap = new Map<string, TutorChatSession>();
+      existing.forEach(s => mergedMap.set(s.id, s));
+      data.tutorSessions.forEach(s => mergedMap.set(s.id, s));
+      saveTutorChatSessionsToStorage(Array.from(mergedMap.values()));
     }
 
     if (data.mistakes && Array.isArray(data.mistakes)) {

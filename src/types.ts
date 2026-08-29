@@ -116,6 +116,23 @@ export interface MasterNoteChapter {
   sections: MasterNoteSection[];
 }
 
+export interface TutorChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
+
+export interface TutorChatSession {
+  id: string;
+  title: string;
+  subject: string;
+  createdAt: string;
+  updatedAt: string;
+  messages: TutorChatMessage[];
+  pinned?: boolean;
+}
+
 export interface FormulaItem {
   id: string;
   subject: 'mathematics' | 'physics' | 'chemistry' | 'aptitude';

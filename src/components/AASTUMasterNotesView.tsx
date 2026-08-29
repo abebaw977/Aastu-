@@ -3,6 +3,7 @@ import { ALL_AASTU_MASTER_NOTES } from '../data/aastuNotesData';
 import { MasterNoteChapter, Subject, UserStudyNote } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { StudentNotesView } from './StudentNotesView';
+import { AINoteGeneratorModal } from './AINoteGeneratorModal';
 import { 
   BookOpen, 
   Search, 
@@ -29,7 +30,8 @@ import {
   GraduationCap,
   Edit3,
   PenTool,
-  Library
+  Library,
+  Plus
 } from 'lucide-react';
 
 interface AASTUMasterNotesViewProps {
@@ -57,6 +59,7 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
   const [selectedSubject, setSelectedSubject] = useState<Subject>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedChapterId, setSelectedChapterId] = useState<string>(ALL_AASTU_MASTER_NOTES[0].id);
+  const [isGeneratorModalOpen, setIsGeneratorModalOpen] = useState<boolean>(false);
   const [completedChapters, setCompletedChapters] = useState<Record<string, boolean>>(() => {
     try {
       const saved = localStorage.getItem('aastu_completed_chapters');
@@ -197,17 +200,27 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
                 </div>
 
                 {/* Read progress summary */}
-                <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-700/80 min-w-[200px] text-right sm:text-left">
-                  <div className="text-xs text-slate-400 font-medium">Mastery Progress</div>
-                  <div className="text-xl font-bold text-emerald-400 mt-0.5">
-                    {completedCount} / {totalChapters} Chapters Read
+                <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-700/80 min-w-[200px] text-right sm:text-left flex flex-col justify-between gap-2">
+                  <div>
+                    <div className="text-xs text-slate-400 font-medium">Mastery Progress</div>
+                    <div className="text-xl font-bold text-emerald-400 mt-0.5">
+                      {completedCount} / {totalChapters} Chapters Read
+                    </div>
+                    <div className="w-full bg-slate-700 h-2 rounded-full mt-2 overflow-hidden">
+                      <div 
+                        className="bg-emerald-400 h-full transition-all duration-300"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full bg-slate-700 h-2 rounded-full mt-2 overflow-hidden">
-                    <div 
-                      className="bg-emerald-400 h-full transition-all duration-300"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
+
+                  <button
+                    onClick={() => setIsGeneratorModalOpen(true)}
+                    className="w-full mt-2 py-2 px-3 bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-bold text-xs rounded-lg shadow transition flex items-center justify-center gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+                    <span>AI Generate Day 3, 4, 5 Notes</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -546,6 +559,18 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
       </div>
       </>
       )}
+
+      {/* AI Note Generator Modal */}
+      <AINoteGeneratorModal
+        isOpen={isGeneratorModalOpen}
+        onClose={() => setIsGeneratorModalOpen(false)}
+        onSaveAsUserNote={(note) => {
+          if (onSaveNote) {
+            onSaveNote(note);
+          }
+          setNotesSubTab('personal');
+        }}
+      />
     </div>
   );
 };

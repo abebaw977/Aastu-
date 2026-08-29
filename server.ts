@@ -320,6 +320,190 @@ Return ONLY a valid JSON array of objects with this structure:
   }
 });
 
+// AI Master Study Notes Generator (Day 3, Day 4, Day 5 or custom topic)
+app.post("/api/gemini/generate-notes", async (req, res) => {
+  try {
+    const { day, subject = "chemistry", topic, focusAreas, detailLevel = "comprehensive" } = req.body;
+    const ai = getAI();
+
+    if (!ai) {
+      return res.status(400).json({ 
+        error: "Gemini API key is required to generate AI study notes. Please configure your key in Settings > Secrets." 
+      });
+    }
+
+    let defaultDayTopic = "";
+    if (day === 3) {
+      defaultDayTopic = "Day 3: Organic Reaction Mechanisms, Physical Chemistry, Thermodynamics, Chemical Kinetics & Equilibrium";
+    } else if (day === 4) {
+      defaultDayTopic = "Day 4: Wave Optics, Interference & Diffraction, Electromagnetism, AC Circuits & Modern Quantum Physics";
+    } else if (day === 5) {
+      defaultDayTopic = "Day 5: Quantitative Aptitude, Matrices & Determinants, 3D Analytical Coordinate Geometry & Vector Algebra";
+    } else {
+      defaultDayTopic = topic || "High-Yield STEM Topic for AASTU Entrance Exam";
+    }
+
+    const noteTopic = topic || defaultDayTopic;
+
+    const prompt = `You are the Premier Engineering Professor and Master Notes Author for the Addis Ababa Science and Technology University (AASTU) Entrance Examination in Ethiopia.
+Create an exhaustive, high-yield, university-grade master study note chapter for:
+"${noteTopic}" (Subject: ${subject}, Target: Day ${day || "Special"} Curriculum).
+Focus Areas / Subtopics: ${focusAreas || "Complete syllabus breakdown with derivations, formulas, worked examples, examiner traps, and 30-second speed hacks."}
+Detail Level: ${detailLevel}
+
+Requirements:
+- Format equations using clean LaTeX (e.g., $E = mc^2$, $\\Delta G = \\Delta H - T\\Delta S$, $\\int_a^b f(x)dx$, $\\lim_{x \\to 0}$).
+- Provide 2 to 3 detailed sections with deep theoretical explanations, governing laws, and derivations.
+- In each section, include key formulas/equations with explanations.
+- In each section, include 1 to 2 university entrance worked examples with step-by-step solutions and 30-second shortcut tips.
+- Include common examiner traps and key takeaways.
+
+Return ONLY a valid JSON object matching this schema:
+{
+  "id": "ai-note-day${day || 'x'}-${Date.now()}",
+  "subject": "${subject}",
+  "chapterNumber": ${day ? Number(day) + 5 : 8},
+  "title": "Day ${day || 'Master'}: ${noteTopic.replace(/Day \d+:\s*/, '')}",
+  "gradeLevel": "University Prep",
+  "overview": "Comprehensive overview explaining why this topic is critical for AASTU entrance exam and what core concepts are mastered.",
+  "estimatedReadTimeMinutes": 35,
+  "sections": [
+    {
+      "id": "sec-${Date.now()}-1",
+      "heading": "1.1 [First Major Subtopic Name]",
+      "content": "Deep theoretical markdown content with markdown headers (###), bullet points, conceptual explanations, physical/chemical meaning, and LaTeX math.",
+      "equations": [
+        {
+          "name": "Governing Equation Name",
+          "formula": "\\Delta G^\\circ = -RT \\ln K",
+          "explanation": "Brief explanation of what this equation calculates and variable meanings."
+        }
+      ],
+      "workedExamples": [
+        {
+          "problem": "Clear exam-grade problem statement",
+          "stepByStepSolution": [
+            "Step 1: Identify given variables...",
+            "Step 2: Apply the governing formula...",
+            "Step 3: Compute final numerical result..."
+          ],
+          "shortcutTip": "30-second mental shortcut or elimination trick for this problem."
+        }
+      ],
+      "examTraps": [
+        "Common mistake or sign error students make on this topic."
+      ],
+      "keyTakeaways": [
+        "Core rule or concept to remember for test day."
+      ]
+    },
+    {
+      "id": "sec-${Date.now()}-2",
+      "heading": "1.2 [Second Major Subtopic Name]",
+      "content": "Detailed markdown explanation for second subtopic...",
+      "equations": [
+        {
+          "name": "Second Key Formula",
+          "formula": "k = A e^{-\\frac{E_a}{RT}}",
+          "explanation": "Arrhenius equation relating rate constant to temperature and activation energy."
+        }
+      ],
+      "workedExamples": [
+        {
+          "problem": "Second exam-grade problem statement",
+          "stepByStepSolution": [
+            "Step 1...",
+            "Step 2...",
+            "Step 3..."
+          ],
+          "shortcutTip": "Shortcut tip..."
+        }
+      ],
+      "examTraps": [
+        "Trap or distractor to avoid."
+      ],
+      "keyTakeaways": [
+        "Key takeaway point."
+      ]
+    }
+  ]
+}`;
+
+    const text = await generateContentWithFallback(ai, prompt, {
+      systemInstruction: "You are an elite academic professor writing master study notes for Addis Ababa Science and Technology University entrance exams. Output strictly valid JSON format.",
+      responseMimeType: "application/json",
+    });
+
+    const parsedNote = JSON.parse(text || "{}");
+    return res.json({ note: parsedNote });
+  } catch (error: any) {
+    console.error("AI Note Generation error:", error);
+    return res.status(500).json({ error: error.message || "Failed to generate AI master note" });
+  }
+});
+
+// AI Note Expander & Editor (Adds depth, worked examples, shortcuts, or rephrases notes)
+app.post("/api/gemini/expand-edit-note", async (req, res) => {
+  try {
+    const { currentTitle, currentContent, action, customPrompt, subject } = req.body;
+    const ai = getAI();
+
+    if (!ai) {
+      return res.status(400).json({ 
+        error: "Gemini API key is required to expand or edit notes using AI." 
+      });
+    }
+
+    let instructionDetails = "";
+    switch (action) {
+      case "add_worked_examples":
+        instructionDetails = "Add 2 brand-new, challenging step-by-step worked exam problems with solutions and 30-second speed shortcuts.";
+        break;
+      case "add_speed_hacks":
+        instructionDetails = "Add a dedicated section of high-yield mental math shortcuts, rapid formula transformations, and 30-second exam hacks.";
+        break;
+      case "add_exam_traps":
+        instructionDetails = "Add a comprehensive breakdown of examiner traps, unit conversion pitfalls, and distractor options commonly placed in Ethiopian university entrance exams.";
+        break;
+      case "simplify_explanations":
+        instructionDetails = "Rephrase and clarify difficult theoretical paragraphs into intuitive, high-clarity conceptual analogies without losing mathematical rigor.";
+        break;
+      case "custom_prompt":
+        instructionDetails = customPrompt || "Expand and enhance this study note with deeper analysis and formulas.";
+        break;
+      default:
+        instructionDetails = "Expand this note substantially by adding deeper theoretical explanations, additional LaTeX formulas, and extra step-by-step worked examples.";
+    }
+
+    const prompt = `You are the Lead Master Note Author for the AASTU (Addis Ababa Science & Technology University) Entrance Exam.
+You are tasked with expanding, enriching, and editing the following study note:
+
+Note Title: "${currentTitle || "Study Note"}"
+Subject: ${subject || "General Science / STEM"}
+Action Requested: ${instructionDetails}
+
+Current Note Content:
+\`\`\`markdown
+${currentContent}
+\`\`\`
+
+Instructions:
+1. Preserve existing valuable content while integrating the requested additions/modifications seamlessly.
+2. Format all mathematical and scientific formulas in clean LaTeX notation (e.g., $v = u + at$, $\\int_0^1 x^2 dx$, $\\vec{A} \\times \\vec{B}$).
+3. Use clear markdown headers (###), bullet points, bold key terms, and boxed formulas.
+4. Output the complete updated, ready-to-read markdown note text.`;
+
+    const text = await generateContentWithFallback(ai, prompt, {
+      systemInstruction: "You are an elite academic coach. Return the full enhanced markdown note content with clean LaTeX formulas and clear headings."
+    });
+
+    return res.json({ updatedContent: text });
+  } catch (error: any) {
+    console.error("AI Note Expander error:", error);
+    return res.status(500).json({ error: error.message || "Failed to expand/edit study note" });
+  }
+});
+
 // Global Express error handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error("Express Error Handler caught:", err);

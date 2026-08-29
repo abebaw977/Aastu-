@@ -183,7 +183,23 @@ export const DailyPlanView: React.FC<DailyPlanViewProps> = ({
                   Day 1 Master Study Tutorial & Ultra-Large Comprehensive Notes Active
                 </h5>
                 <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
-                  Day 1 covers <strong>Calculus (Limits, Derivatives, Integrals & 3D Vectors)</strong> and <strong>English Grammar & Verbal Aptitude</strong>. Access the textbook-grade notes with full KaTeX formulas, worked solutions, and shortcut tricks using the <em>"Read Master Notes"</em> tab above. Complete all Day 1 study blocks before requesting Day 2 notes.
+                  Day 1 covers <strong>Calculus (Limits, Derivatives, Integrals & 3D Vectors)</strong> and <strong>English Grammar & Verbal Aptitude</strong>. Access the textbook-grade notes with full KaTeX formulas, worked solutions, and shortcut tricks using the <em>"Read Master Notes"</em> tab above.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {selectedDay.day === 2 && (
+            <div className="mt-4 p-4 rounded-xl bg-purple-50/80 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 flex items-start gap-3">
+              <div className="p-2 bg-purple-600 text-white rounded-lg shrink-0 mt-0.5">
+                <BookMarked className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h5 className="font-bold text-sm text-purple-950 dark:text-purple-200">
+                  Day 2 Master Study Tutorial & Ultra-Large Classical Mechanics & Physics Vault Active
+                </h5>
+                <p className="text-xs text-purple-800 dark:text-purple-300 leading-relaxed">
+                  Day 2 is completely dedicated to <strong>Classical Mechanics, Advanced 2D/3D Kinematics, Inclined Friction, String Constraint Pulleys, Circular & Banking Dynamics, Potential Wells $U(x)$, Restitution $e$, Rotational Inertia, Fluid Mechanics (Bernoulli/Torricelli), and Gravitational Orbits</strong>. All 4 extensive Day 2 chapters are loaded into the Master Notes Vault with step-by-step worked solutions and 30-second speed hacks.
                 </p>
               </div>
             </div>

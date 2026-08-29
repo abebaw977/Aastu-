@@ -309,6 +309,7 @@ export default function App() {
           <AITutorView
             initialQuestionContext={tutorQuestionContext}
             onClearContext={() => setTutorQuestionContext(null)}
+            onSaveUserNote={handleSaveUserNote}
           />
         )}
 
