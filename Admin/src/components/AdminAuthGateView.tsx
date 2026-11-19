@@ -138,7 +138,7 @@ export const AdminAuthGateView: React.FC<AdminAuthGateViewProps> = ({ onAdminAut
             <div>
               <h1 className="text-lg font-bold text-white">Administrator Sign In</h1>
               <p className="text-xs text-slate-400">
-                Verify Telebirr 50 ETB payments, publish PDFs & post Mid/Final Exam MCQs
+                Verify Telebirr 40 ETB payments, publish PDFs & post Mid/Final Exam MCQs
               </p>
             </div>
           </div>

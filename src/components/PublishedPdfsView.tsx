@@ -263,7 +263,7 @@ export const PublishedPdfsView: React.FC<PublishedPdfsViewProps> = ({
                 {isPaidAccessLocked
                   ? isFreeCourseSubject(c.subject)
                     ? ' (FREE)'
-                    : ' (50 ETB)'
+                    : ' (40 ETB)'
                   : ''}
               </option>
             ))}

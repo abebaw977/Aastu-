@@ -72,26 +72,20 @@ export default function App() {
     return 'blue';
   });
 
-  const [amharicSubjects, setAmharicSubjects] = useState<Record<string, boolean>>(() => {
+  const [amharicSubjects, setAmharicSubjects] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
     try {
-      const saved = localStorage.getItem('freshman_amharic_subjects');
-      return saved ? JSON.parse(saved) : {};
+      localStorage.removeItem('freshman_amharic_subjects');
+      localStorage.removeItem('freshman_amharic_subjects_v2');
     } catch {
-      return {};
+      // ignore storage errors
     }
-  });
+  }, []);
 
   const handleToggleAmharicSubject = useCallback((subject: Subject) => {
     if (!subject || subject === 'all') return;
-    setAmharicSubjects((prev) => {
-      const next = { ...prev, [subject]: !prev[subject] };
-      try {
-        localStorage.setItem('freshman_amharic_subjects', JSON.stringify(next));
-      } catch {
-        // ignore storage errors
-      }
-      return next;
-    });
+    setAmharicSubjects((prev) => ({ ...prev, [subject]: !prev[subject] }));
   }, []);
 
   const setThemeMode = useCallback((mode: ThemeMode) => {
@@ -658,8 +652,8 @@ export default function App() {
               </span>
               <span className="text-slate-300">
                 {currentUser.accountStatus === 'PENDING_VERIFICATION'
-                  ? 'Your 50 ETB Telebirr screenshot is waiting for Admin approval. Social Anthropology (Anth 1012) is 100% free while you wait!'
-                  : 'Social Anthropology (Anth 1012) is 100% FREE across all features (Modules, PDFs, Exams & Flashcards)! Unlock all 17 courses for 50 ETB.'}
+                  ? 'Your 40 ETB Telebirr screenshot is waiting for Admin approval. Social Anthropology (Anth 1012) is 100% free while you wait!'
+                  : 'Social Anthropology (Anth 1012) is 100% FREE across all features (Modules, PDFs, Exams & Flashcards)! Unlock all 17 courses for 40 ETB (20 Birr discount from 60 ETB).'}
               </span>
             </div>
             <button
@@ -672,7 +666,7 @@ export default function App() {
             >
               {currentUser.accountStatus === 'PENDING_VERIFICATION'
                 ? 'View Payment Status'
-                : 'Unlock All 17 Courses (50 ETB)'}
+                : 'Unlock All 17 Courses (40 ETB · 20 Off)'}
             </button>
           </div>
         </div>
@@ -798,7 +792,7 @@ export default function App() {
         onChangeThemeMode={setThemeMode}
       />
 
-      {/* Paid Access Required Prompt & 50 ETB Telebirr Payment Modal */}
+      {/* Paid Access Required Prompt & 40 ETB Telebirr Payment Modal */}
       {isPaidAccessLocked && isPaymentPromptOpen && (
         <PaymentGateView
           user={currentUser}

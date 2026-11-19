@@ -241,7 +241,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
                       <div className="flex items-center gap-3">
                         <Lock className="w-5 h-5 text-emerald-400" />
                         <div className="text-xs font-bold text-white">
-                          Unlock All 17 Courses (50 ETB)
+                          Unlock All 17 Courses (40 ETB · 20 Birr Off)
                         </div>
                       </div>
                       <span className="text-xs font-bold text-emerald-300">Unlock</span>

@@ -308,7 +308,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="flex items-center gap-1 px-2 xs:px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer active:scale-95 whitespace-nowrap shrink-0"
                 >
                   <Lock className="w-3.5 h-3.5 shrink-0" />
-                  <span>Unlock<span className="hidden xs:inline"> (50 ETB)</span></span>
+                  <span>Unlock<span className="hidden xs:inline"> (40 ETB)</span></span>
                 </button>
               )}
 

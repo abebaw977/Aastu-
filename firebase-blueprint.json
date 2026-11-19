@@ -105,7 +105,7 @@
     },
     "PaymentRequest": {
       "title": "PaymentRequest",
-      "description": "50 ETB Telebirr manual payment verification submission with compressed screenshot.",
+      "description": "40 ETB Telebirr manual payment verification submission (20 ETB discount off 60 ETB) with compressed screenshot.",
       "type": "object",
       "properties": {
         "id": {
@@ -136,7 +136,7 @@
         },
         "amount": {
           "type": "number",
-          "description": "Payment amount in ETB (50)."
+          "description": "Payment amount in ETB (40)."
         },
         "currency": {
           "type": "string",
@@ -438,7 +438,7 @@
     },
     "/payments/{paymentId}": {
       "schema": "PaymentRequest",
-      "description": "50 ETB Telebirr payment requests and screenshots synced from student phones to the Admin phone."
+      "description": "40 ETB Telebirr payment requests and screenshots synced from student phones to the Admin phone."
     },
     "/pdfs/{pdfId}": {
       "schema": "PublishedPdf",

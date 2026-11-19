@@ -336,10 +336,10 @@ export const DailyPlanView: React.FC<DailyPlanViewProps> = ({
                     {isHeroAmharic ? 'ምዕራፎች' : 'Chapters'}
                   </span>
                   <span>·</span>
-                  <span>{activeSubjectEntry.creditHours} Cr. Hrs</span>
+                  <span>{activeSubjectEntry.creditHours} {isHeroAmharic ? 'ክሬዲት ሰዓት' : 'Cr. Hrs'}</span>
                   {isHeroAmharic && (
                     <span className="px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold text-[10px]">
-                      አማርኛ ሁነታ (Full Amharic Textbook)
+                      አማርኛ ሁነታ
                     </span>
                   )}
                   {activeSubjectEntry.isCustomOutlineSaved && (
@@ -375,19 +375,16 @@ export const DailyPlanView: React.FC<DailyPlanViewProps> = ({
                 type="button"
                 id="hero-amharic-mode-toggle"
                 onClick={() => onToggleAmharicSubject(activeSubjectEntry.subject)}
+                aria-pressed={Boolean(amharicSubjects[activeSubjectEntry.subject])}
                 className={`px-3 py-2 rounded-xl text-xs font-bold border transition flex items-center gap-1.5 cursor-pointer ${
                   amharicSubjects[activeSubjectEntry.subject]
                     ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400 shadow-sm'
-                    : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border-slate-700'
                 }`}
-                title="Switch between English and Full Expanded Amharic Textbook Mode for this subject"
+                title="Switch between English and Amharic Mode for this subject"
               >
                 <Languages className="w-3.5 h-3.5 shrink-0" />
-                <span>
-                  {amharicSubjects[activeSubjectEntry.subject]
-                    ? 'አማርኛ Mode: ON'
-                    : 'Amharic Mode (አማርኛ)'}
-                </span>
+                <span>AMM</span>
               </button>
             )}
 
@@ -405,7 +402,7 @@ export const DailyPlanView: React.FC<DailyPlanViewProps> = ({
                 const locked = Boolean(isPaidAccessLocked && !isFree);
                 return (
                   <option key={item.id} value={item.id}>
-                    {item.shortTitle} {locked ? '(50 ETB)' : isPaidAccessLocked && isFree ? '(FREE)' : ''}
+                    {item.shortTitle} {locked ? '(40 ETB)' : isPaidAccessLocked && isFree ? '(FREE)' : ''}
                   </option>
                 );
               })}
@@ -762,15 +759,16 @@ export const DailyPlanView: React.FC<DailyPlanViewProps> = ({
                             e.stopPropagation();
                             onToggleAmharicSubject(item.subject);
                           }}
+                          aria-pressed={isCardAmharic}
                           className={`px-2 py-0.5 rounded-md text-[10px] font-bold border transition cursor-pointer flex items-center gap-1 ${
                             isCardAmharic
                               ? 'bg-emerald-600 text-white border-emerald-400'
-                              : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-emerald-500/60 hover:text-emerald-300'
+                              : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-emerald-500/60 hover:text-emerald-300'
                           }`}
                           title="Toggle Amharic Mode for this subject"
                         >
                           <Languages className="w-2.5 h-2.5" />
-                          <span>አማርኛ</span>
+                          <span>AMM</span>
                         </button>
                       )}
                       {isPaidAccessLocked && isFreeCourse && (
@@ -781,7 +779,7 @@ export const DailyPlanView: React.FC<DailyPlanViewProps> = ({
                       {isCourseLocked && (
                         <span className="text-[10px] font-semibold text-amber-300 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800/60 flex items-center gap-0.5">
                           <Lock className="w-2.5 h-2.5" />
-                          <span>50 ETB</span>
+                          <span>40 ETB</span>
                         </span>
                       )}
                       {isFullyDone && (
@@ -799,7 +797,7 @@ export const DailyPlanView: React.FC<DailyPlanViewProps> = ({
                       {item.chapters.length} {isCardAmharic ? 'ምዕራፎች' : 'Chapters'}
                     </span>
                     <span>·</span>
-                    <span>{item.creditHours} Credit Hrs</span>
+                    <span>{item.creditHours} {isCardAmharic ? 'ክሬዲት ሰዓት' : 'Credit Hrs'}</span>
                   </div>
                 </div>
 
@@ -815,7 +813,7 @@ export const DailyPlanView: React.FC<DailyPlanViewProps> = ({
                     title="Read Course Notes"
                   >
                     <BookOpen className="w-3 h-3 text-emerald-400 shrink-0" />
-                    <span>Notes</span>
+                    <span>{isCardAmharic ? 'ማስታወሻ' : 'Notes'}</span>
                   </button>
 
                   <button

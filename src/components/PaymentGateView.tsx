@@ -123,7 +123,7 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
   }, [isWaitingVerification, isRejected, user.id, user.accountStatus, user.rejectionReason, latestPayment?.id, latestPayment?.status, latestPayment?.adminNote, onUserAndPaymentUpdated]);
 
   const handleCopyPaymentNumber = () => {
-    navigator.clipboard.writeText('0928088931');
+    navigator.clipboard.writeText('0925804385');
     setCopiedPhone(true);
     setTimeout(() => setCopiedPhone(false), 2000);
   };
@@ -271,13 +271,13 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
               </div>
               <div className="space-y-1">
                 <div className="text-xs font-bold uppercase tracking-wider text-amber-400">
-                  Paid Student Access Required (50 ETB)
+                  Paid Student Access Required (40 ETB · 20 ETB Discount)
                 </div>
                 <h3 className="text-sm sm:text-base font-bold text-white">
                   Unlock Required to Access: <span className="text-amber-300">{promptFeatureName}</span>
                 </h3>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  You can preview the app dashboard for free, but opening courses, study modules, practice questions, PDFs, and AI tools requires one-time 50 ETB Telebirr payment verification.
+                  You can preview the app dashboard for free, but opening courses, study modules, practice questions, and PDFs requires a one-time 40 ETB Telebirr payment verification (20 ETB discount off 60 ETB).
                 </p>
               </div>
             </div>
@@ -303,13 +303,19 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
               Unlock Full Access to ABEFA
             </h2>
             <p className="text-xs sm:text-sm text-slate-300">
-              Complete your one-time 50 ETB Telebirr payment and upload your payment screenshot for manual admin verification.
+              Complete your one-time 40 ETB Telebirr payment (20 Birr discount from 60 Birr) and upload your payment screenshot for manual admin verification.
             </p>
           </div>
           <div className="text-left sm:text-right shrink-0">
             <div className="text-xs text-slate-400">One-Time Access Fee</div>
-            <div className="text-2xl sm:text-3xl font-bold text-emerald-400 tabular-nums">
-              50 ETB
+            <div className="flex items-baseline sm:justify-end gap-2">
+              <span className="text-sm font-semibold text-slate-500 line-through tabular-nums">60 ETB</span>
+              <span className="text-2xl sm:text-3xl font-bold text-emerald-400 tabular-nums">
+                40 ETB
+              </span>
+            </div>
+            <div className="inline-block mt-1 px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-[11px] font-bold text-emerald-300">
+              20 ETB Discount
             </div>
           </div>
         </div>
@@ -322,11 +328,14 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
               <h3 className="text-base sm:text-lg font-bold text-white mt-0.5 xs:mt-1">Payment Details</h3>
             </div>
 
-            {/* Required Clear Display: PAY 50 BIRR TO: 0928088931 Telebirr */}
+            {/* Required Clear Display: PAY 40 BIRR TO: 0925804385 Telebirr */}
             <div className="bg-slate-950 border border-emerald-500/40 rounded-xl p-5 text-center space-y-2">
-              <p className="text-xs font-bold tracking-wider text-slate-400">PAY 50 BIRR TO:</p>
+              <div className="inline-block px-2.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-[11px] font-bold text-emerald-300">
+                20 BIRR DISCOUNT · WAS 60 BIRR
+              </div>
+              <p className="text-xs font-bold tracking-wider text-slate-400">PAY 40 BIRR TO:</p>
               <div className="text-2xl sm:text-3xl font-bold text-white tracking-wide font-mono tabular-nums">
-                0928088931
+                0925804385
               </div>
               <p className="text-base font-semibold text-emerald-400">Telebirr</p>
 
@@ -339,7 +348,7 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
                   {copiedPhone ? (
                     <>
                       <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-emerald-300">Copied 0928088931</span>
+                      <span className="text-emerald-300">Copied 0925804385</span>
                     </>
                   ) : (
                     <>
@@ -356,8 +365,9 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
               <ol className="list-decimal list-inside space-y-1.5 text-slate-300">
                 <li>
                   Open your <strong className="text-white">Telebirr</strong> app and transfer{' '}
-                  <strong className="text-emerald-400">50 ETB</strong> to{' '}
-                  <strong className="text-white font-mono">0928088931</strong>.
+                  <strong className="text-emerald-400">40 ETB</strong>{' '}
+                  <span className="text-slate-400">(20 ETB discount off 60 ETB)</span> to{' '}
+                  <strong className="text-white font-mono">0925804385</strong>.
                 </li>
                 <li>Take a clear screenshot of the Telebirr payment confirmation screen.</li>
                 <li>
@@ -484,7 +494,7 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
                     <p className="text-slate-200">
                       {user.rejectionReason ||
                         latestPayment?.adminNote ||
-                        'Please ensure you transfer 50 ETB to 0928088931 via Telebirr and upload a clear payment screenshot below.'}
+                        'Please ensure you transfer 40 ETB to 0925804385 via Telebirr and upload a clear payment screenshot below.'}
                     </p>
                   </div>
                 )}
@@ -587,7 +597,7 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
                             Select Telebirr Payment Screenshot from Phone
                           </div>
                           <p className="text-xs text-slate-400">
-                            Tap here to choose your 50 ETB Telebirr receipt screenshot (JPG, PNG, WEBP)
+                            Tap here to choose your 40 ETB Telebirr receipt screenshot (JPG, PNG, WEBP)
                           </p>
                         </div>
                       )}
@@ -611,7 +621,7 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
       </main>
 
       <footer className="border-t border-slate-900 py-4 px-4 text-center text-xs text-slate-500">
-        © 2026 ABEFA · Telebirr 50 ETB Manual Payment Verification
+        © 2026 ABEFA · Telebirr 40 ETB Manual Payment Verification (20 ETB Discount)
       </footer>
     </div>
   );

@@ -505,7 +505,7 @@ async function ensureCloudAdminAccount(): Promise<FirestoreUserDoc> {
         id: 'usr_admin_default',
         username: ADMIN_PRESET_NAME,
         usernameLower: ADMIN_PRESET_NAME.toLowerCase(),
-        phoneNumber: '0928088931',
+        phoneNumber: '0925804385',
         passwordHash: ADMIN_PRESET_HASH,
         role: 'admin',
         accountStatus: 'APPROVED',
@@ -591,7 +591,7 @@ async function loadLocalApkDb(): Promise<LocalApkDbState> {
           parsed.users.unshift({
             id: 'usr_admin_default',
             username: ADMIN_PRESET_NAME,
-            phoneNumber: '0928088931',
+            phoneNumber: '0925804385',
             passwordHash: ADMIN_PRESET_HASH,
             role: 'admin',
             accountStatus: 'APPROVED',
@@ -612,7 +612,7 @@ async function loadLocalApkDb(): Promise<LocalApkDbState> {
       {
         id: 'usr_admin_default',
         username: ADMIN_PRESET_NAME,
-        phoneNumber: '0928088931',
+        phoneNumber: '0925804385',
         passwordHash: ADMIN_PRESET_HASH,
         role: 'admin',
         accountStatus: 'APPROVED',
@@ -1065,7 +1065,7 @@ export async function submitPaymentScreenshot(params: {
     userId: userDoc.id,
     username: userDoc.username,
     phoneNumber: cleanPhone,
-    amount: 50,
+    amount: 40,
     currency: 'ETB',
     paymentMethod: 'Telebirr',
     transactionRef: cleanRef,
@@ -1293,7 +1293,7 @@ export async function rejectPaymentRequest(
     const payData = paySnap.data() as FirestorePaymentDoc;
     const now = new Date().toISOString();
     const cleanReason = String(
-      reason || 'Payment screenshot could not be verified. Please submit a valid 50 ETB Telebirr receipt.'
+      reason || 'Payment screenshot could not be verified. Please submit a valid 40 ETB Telebirr receipt.'
     )
       .trim()
       .slice(0, 500);

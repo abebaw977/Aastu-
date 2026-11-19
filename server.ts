@@ -65,7 +65,7 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: "60mb" }));
 
-// Register SQLite Student Auth, Telebirr 50 ETB Manual Payment Verification & Admin PDF Library routes
+// Register SQLite Student Auth, Telebirr 40 ETB Manual Payment Verification & Admin PDF Library routes
 registerAuthPaymentPdfRoutes(app);
 
 // Lazy initialize Gemini API client and hot-reload if .env key changes

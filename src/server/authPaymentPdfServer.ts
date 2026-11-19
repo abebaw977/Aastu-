@@ -112,7 +112,7 @@ export function verifyPassword(password: string, storedHash: string): boolean {
 // Ensure Admin account (AfraimAbebaw) exists in SQLite with hashed password
 function ensureDefaultAdminAccount() {
   const targetAdminUsername = (process.env.ADMIN_USERNAME || 'AfraimAbebaw').trim();
-  const targetAdminPhone = (process.env.ADMIN_PHONE || '0928088931').trim();
+  const targetAdminPhone = (process.env.ADMIN_PHONE || '0925804385').trim();
   const targetAdminPassword = process.env.ADMIN_PASSWORD || '@@abebaw%%12&&';
   const now = new Date().toISOString();
 
@@ -192,7 +192,7 @@ function mapPaymentRow(row: any) {
     userId: row.user_id,
     username: row.username,
     phoneNumber: row.phone_number,
-    amount: Number(row.amount || 50),
+    amount: Number(row.amount || 40),
     currency: row.currency || 'ETB',
     paymentMethod: row.payment_method || 'Telebirr',
     transactionRef: row.transaction_ref || '',
@@ -419,7 +419,7 @@ export function registerAuthPaymentPdfRoutes(app: express.Express) {
     }
   });
 
-  // 5. SUBMIT TELEBIRR 50 BIRR PAYMENT SCREENSHOT
+  // 5. SUBMIT TELEBIRR 40 BIRR PAYMENT SCREENSHOT
   app.post('/api/payments/submit', (req, res) => {
     try {
       const user = getAuthenticatedUserFromRequest(req);
@@ -499,7 +499,7 @@ export function registerAuthPaymentPdfRoutes(app: express.Express) {
           id, user_id, username, phone_number, amount, currency, payment_method,
           transaction_ref, screenshot_filename, screenshot_mime, screenshot_size,
           status, submitted_at
-        ) VALUES (?, ?, ?, ?, 50, 'ETB', 'Telebirr', ?, ?, ?, ?, 'PENDING', ?)
+        ) VALUES (?, ?, ?, ?, 40, 'ETB', 'Telebirr', ?, ?, ?, ?, 'PENDING', ?)
       `).run(
         paymentId,
         user.id,

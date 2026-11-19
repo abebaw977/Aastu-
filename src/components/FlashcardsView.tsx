@@ -146,7 +146,7 @@ export const FlashcardsView: React.FC<FlashcardsViewProps> = ({
                 {isPaidAccessLocked && id !== 'all'
                   ? isFreeCourseSubject(id)
                     ? ' (FREE)'
-                    : ' (50 ETB)'
+                    : ' (40 ETB)'
                   : ''}
               </option>
             ))}

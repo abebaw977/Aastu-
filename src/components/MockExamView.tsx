@@ -481,7 +481,7 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
                       {isPaidAccessLocked
                         ? isFreeCourseSubject(c.subject)
                           ? ' (FREE)'
-                          : ' (50 ETB)'
+                          : ' (40 ETB)'
                         : ''}
                     </option>
                   ))}

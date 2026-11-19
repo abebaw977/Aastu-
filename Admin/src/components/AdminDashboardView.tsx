@@ -226,7 +226,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
     try {
       const res = await rejectPaymentRequest(
         payment.id,
-        'Your Telebirr payment screenshot could not be verified. Please submit a clear 50 ETB Telebirr receipt screenshot.'
+        'Your Telebirr payment screenshot could not be verified. Please submit a clear 40 ETB Telebirr receipt screenshot.'
       );
       showBannerMessage(res.message);
       await loadDashboardData();
@@ -777,7 +777,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               <div>
                 <h2 className="text-lg font-bold text-white">PAYMENT REQUESTS</h2>
                 <p className="text-xs text-slate-400">
-                  Review Telebirr 50 ETB payment screenshots and click APPROVE or REJECT.
+                  Review Telebirr 40 ETB payment screenshots and click APPROVE or REJECT.
                 </p>
               </div>
 
@@ -819,7 +819,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 <Clock className="w-8 h-8 text-slate-500 mx-auto" />
                 <h3 className="text-sm font-semibold text-white">No Payment Requests Found</h3>
                 <p className="text-xs text-slate-400">
-                  When students submit their 50 ETB Telebirr payment screenshots, they will appear here for verification.
+                  When students submit their 40 ETB Telebirr payment screenshots, they will appear here for verification.
                 </p>
               </div>
             ) : (

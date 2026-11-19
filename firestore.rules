@@ -119,7 +119,7 @@ service cloud.firestore {
         data.userId is string && isValidId(data.userId) &&
         data.username is string && data.username.size() >= 3 && data.username.size() <= 64 &&
         data.phoneNumber is string && data.phoneNumber.size() >= 4 && data.phoneNumber.size() <= 32 &&
-        data.amount is number && data.amount == 50 &&
+        data.amount is number && data.amount in [40, 50] &&
         data.currency is string && data.currency == 'ETB' &&
         data.paymentMethod is string && data.paymentMethod == 'Telebirr' &&
         data.transactionRef is string && data.transactionRef.size() <= 128 &&
@@ -306,13 +306,14 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // 50 ETB Telebirr Payment Requests (/payments/{paymentId})
+    // 40 ETB Telebirr Payment Requests (/payments/{paymentId})
     match /payments/{paymentId} {
       allow get: if isValidId(paymentId);
       allow list: if existing().currency == 'ETB';
 
       allow create: if isValidId(paymentId) &&
         isValidPaymentRequest(incoming(), paymentId) &&
+        incoming().amount == 40 &&
         incoming().status == 'PENDING' &&
         incoming().adminNote == '' &&
         incoming().reviewedAt == '' &&
