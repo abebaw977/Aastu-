@@ -1,0 +1,385 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Hardened Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 3 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isBootstrappedAdmin() {
+      return isSignedIn() &&
+        request.auth.token.email == 'abebawg49@gmail.com' &&
+        request.auth.token.email_verified == true;
+    }
+
+    // 3. Entity Validation Blueprints (Anti-Update-Gap)
+    function isValidUserAccount(data, userId) {
+      return data.keys().hasAll([
+          'id',
+          'username',
+          'usernameLower',
+          'phoneNumber',
+          'passwordHash',
+          'role',
+          'accountStatus',
+          'rejectionReason',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id',
+          'username',
+          'usernameLower',
+          'phoneNumber',
+          'passwordHash',
+          'role',
+          'accountStatus',
+          'rejectionReason',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.id is string && data.id == userId && data.id.size() >= 3 && data.id.size() <= 128 &&
+        data.username is string && data.username.size() >= 3 && data.username.size() <= 64 &&
+        data.usernameLower is string && data.usernameLower.size() >= 3 && data.usernameLower.size() <= 64 &&
+        data.phoneNumber is string && data.phoneNumber.size() >= 4 && data.phoneNumber.size() <= 32 &&
+        data.passwordHash is string && data.passwordHash.size() >= 20 && data.passwordHash.size() <= 256 &&
+        data.passwordHash.matches('^pbkdf2\\$[a-fA-F0-9]+\\$[a-fA-F0-9]+$') &&
+        data.role is string && data.role in ['student', 'admin'] &&
+        data.accountStatus is string &&
+        data.accountStatus in [
+          'PENDING_PAYMENT',
+          'PENDING_VERIFICATION',
+          'APPROVED',
+          'REJECTED',
+          'SUSPENDED'
+        ] &&
+        data.rejectionReason is string && data.rejectionReason.size() <= 500 &&
+        data.createdAt is string && data.createdAt.size() >= 10 && data.createdAt.size() <= 64 &&
+        data.updatedAt is string && data.updatedAt.size() >= 10 && data.updatedAt.size() <= 64;
+    }
+
+    function isValidPaymentRequest(data, paymentId) {
+      return data.keys().hasAll([
+          'id',
+          'userId',
+          'username',
+          'phoneNumber',
+          'amount',
+          'currency',
+          'paymentMethod',
+          'transactionRef',
+          'screenshotMime',
+          'screenshotSize',
+          'screenshotDataUrl',
+          'status',
+          'adminNote',
+          'submittedAt',
+          'reviewedAt',
+          'reviewedBy'
+        ]) &&
+        data.keys().hasOnly([
+          'id',
+          'userId',
+          'username',
+          'phoneNumber',
+          'amount',
+          'currency',
+          'paymentMethod',
+          'transactionRef',
+          'screenshotMime',
+          'screenshotSize',
+          'screenshotDataUrl',
+          'status',
+          'adminNote',
+          'submittedAt',
+          'reviewedAt',
+          'reviewedBy'
+        ]) &&
+        data.id is string && data.id == paymentId && data.id.size() >= 4 && data.id.size() <= 128 &&
+        data.userId is string && isValidId(data.userId) &&
+        data.username is string && data.username.size() >= 3 && data.username.size() <= 64 &&
+        data.phoneNumber is string && data.phoneNumber.size() >= 4 && data.phoneNumber.size() <= 32 &&
+        data.amount is number && data.amount == 50 &&
+        data.currency is string && data.currency == 'ETB' &&
+        data.paymentMethod is string && data.paymentMethod == 'Telebirr' &&
+        data.transactionRef is string && data.transactionRef.size() <= 128 &&
+        data.screenshotMime is string && data.screenshotMime.size() >= 5 && data.screenshotMime.size() <= 64 &&
+        data.screenshotSize is number && data.screenshotSize >= 10 && data.screenshotSize <= 1000000 &&
+        data.screenshotDataUrl is string && data.screenshotDataUrl.size() >= 20 && data.screenshotDataUrl.size() <= 950000 &&
+        data.status is string && data.status in ['PENDING', 'APPROVED', 'REJECTED'] &&
+        data.adminNote is string && data.adminNote.size() <= 500 &&
+        data.submittedAt is string && data.submittedAt.size() >= 10 && data.submittedAt.size() <= 64 &&
+        data.reviewedAt is string && data.reviewedAt.size() <= 64 &&
+        data.reviewedBy is string && data.reviewedBy.size() <= 64;
+    }
+
+    function isValidPublishedPdf(data, pdfId) {
+      return data.keys().hasAll([
+          'id',
+          'title',
+          'subject',
+          'courseCode',
+          'semester',
+          'category',
+          'description',
+          'originalFilename',
+          'fileSize',
+          'isPublished',
+          'uploadedBy',
+          'createdAt',
+          'chunkCount'
+        ]) &&
+        data.keys().hasOnly([
+          'id',
+          'title',
+          'subject',
+          'courseCode',
+          'semester',
+          'category',
+          'description',
+          'originalFilename',
+          'fileSize',
+          'isPublished',
+          'uploadedBy',
+          'createdAt',
+          'chunkCount'
+        ]) &&
+        data.id is string && data.id == pdfId && data.id.size() >= 4 && data.id.size() <= 128 &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+        data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 64 &&
+        data.courseCode is string && data.courseCode.size() <= 64 &&
+        data.semester is number && data.semester in [1, 2] &&
+        data.category is string && data.category.size() >= 1 && data.category.size() <= 100 &&
+        data.description is string && data.description.size() <= 2000 &&
+        data.originalFilename is string && data.originalFilename.size() >= 1 && data.originalFilename.size() <= 255 &&
+        data.fileSize is number && data.fileSize >= 0 && data.fileSize <= 60000000 &&
+        data.isPublished is bool &&
+        data.uploadedBy is string && data.uploadedBy.size() >= 1 && data.uploadedBy.size() <= 64 &&
+        data.createdAt is string && data.createdAt.size() >= 10 && data.createdAt.size() <= 64 &&
+        data.chunkCount is number && data.chunkCount >= 1 && data.chunkCount <= 120;
+    }
+
+    function isValidPdfChunk(data, chunkId) {
+      return data.keys().hasAll(['id', 'pdfId', 'chunkIndex', 'data']) &&
+        data.keys().hasOnly(['id', 'pdfId', 'chunkIndex', 'data']) &&
+        data.id is string && data.id == chunkId && data.id.size() >= 4 && data.id.size() <= 128 &&
+        data.pdfId is string && isValidId(data.pdfId) &&
+        data.chunkIndex is number && data.chunkIndex >= 0 && data.chunkIndex <= 120 &&
+        data.data is string && data.data.size() >= 1 && data.data.size() <= 750000;
+    }
+
+    function isValidPracticePost(data, postId) {
+      return data.keys().hasAll([
+          'id',
+          'postType',
+          'subject',
+          'examType',
+          'title',
+          'question',
+          'options',
+          'correctAnswer',
+          'explanation',
+          'imageDataUrl',
+          'uploadedBy',
+          'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id',
+          'postType',
+          'subject',
+          'examType',
+          'title',
+          'question',
+          'options',
+          'correctAnswer',
+          'explanation',
+          'imageDataUrl',
+          'uploadedBy',
+          'createdAt'
+        ]) &&
+        data.id is string && data.id == postId && data.id.size() >= 4 && data.id.size() <= 128 &&
+        data.postType is string && data.postType in ['mcq', 'image'] &&
+        data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 64 &&
+        data.examType is string && data.examType in ['midterm', 'final'] &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+        data.question is string && data.question.size() <= 4000 &&
+        data.options is list && data.options.size() <= 6 &&
+        data.correctAnswer is number && data.correctAnswer >= 0 && data.correctAnswer <= 5 &&
+        data.explanation is string && data.explanation.size() <= 4000 &&
+        data.imageDataUrl is string && data.imageDataUrl.size() <= 950000 &&
+        data.uploadedBy is string && data.uploadedBy.size() >= 1 && data.uploadedBy.size() <= 64 &&
+        data.createdAt is string && data.createdAt.size() >= 10 && data.createdAt.size() <= 64;
+    }
+
+    // 4. Collection Match Blocks
+
+    // Connection Probe (/test/connection)
+    match /test/{docId} {
+      allow get: if isValidId(docId) && docId == 'connection';
+      allow list, create, update, delete: if false;
+    }
+
+    // Student & Admin Accounts (/users/{userId})
+    match /users/{userId} {
+      allow get: if isValidId(userId);
+      allow list: if existing().usernameLower >= '';
+
+      allow create: if isValidId(userId) &&
+        isValidUserAccount(incoming(), userId) && (
+          // Action 1: Student Self-Signup (strictly role == 'student' & status == 'PENDING_PAYMENT')
+          (incoming().role == 'student' &&
+            incoming().accountStatus == 'PENDING_PAYMENT' &&
+            incoming().rejectionReason == '') ||
+          // Action 2: Bootstrapped Default Admin Account Initialization
+          (userId == 'usr_admin_default' &&
+            incoming().role == 'admin' &&
+            incoming().accountStatus == 'APPROVED') ||
+          isBootstrappedAdmin()
+        );
+
+      allow update: if isValidId(userId) &&
+        isValidUserAccount(incoming(), userId) &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt && (
+          isBootstrappedAdmin() ||
+          // Action 1: Student Payment Submission Status Transition
+          (incoming().role == existing().role &&
+            incoming().passwordHash == existing().passwordHash &&
+            incoming().accountStatus == 'PENDING_VERIFICATION' &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'accountStatus',
+              'rejectionReason',
+              'updatedAt',
+              'phoneNumber'
+            ])) ||
+          // Action 2: Admin Account Status Update (Approve / Reject / Suspend / Pending)
+          (incoming().role == existing().role &&
+            incoming().passwordHash == existing().passwordHash &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'accountStatus',
+              'rejectionReason',
+              'updatedAt'
+            ])) ||
+          // Action 3: User Profile & Credential Modification (Username, Phone, Password)
+          (incoming().role == existing().role &&
+            incoming().accountStatus == existing().accountStatus &&
+            incoming().rejectionReason == existing().rejectionReason &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'username',
+              'usernameLower',
+              'phoneNumber',
+              'passwordHash',
+              'updatedAt'
+            ]))
+        );
+
+      allow delete: if false;
+    }
+
+    // 50 ETB Telebirr Payment Requests (/payments/{paymentId})
+    match /payments/{paymentId} {
+      allow get: if isValidId(paymentId);
+      allow list: if existing().currency == 'ETB';
+
+      allow create: if isValidId(paymentId) &&
+        isValidPaymentRequest(incoming(), paymentId) &&
+        incoming().status == 'PENDING' &&
+        incoming().adminNote == '' &&
+        incoming().reviewedAt == '' &&
+        incoming().reviewedBy == '' &&
+        exists(/databases/$(database)/documents/users/$(incoming().userId));
+
+      allow update: if isValidId(paymentId) &&
+        isValidPaymentRequest(incoming(), paymentId) &&
+        incoming().id == existing().id &&
+        incoming().userId == existing().userId &&
+        incoming().submittedAt == existing().submittedAt &&
+        incoming().screenshotDataUrl == existing().screenshotDataUrl && (
+          isBootstrappedAdmin() ||
+          // Action: Admin Approval or Rejection of Telebirr Payment
+          (incoming().status in ['APPROVED', 'REJECTED'] &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'status',
+              'adminNote',
+              'reviewedAt',
+              'reviewedBy'
+            ]))
+        );
+
+      allow delete: if false;
+    }
+
+    // Published PDF Study Modules (/pdfs/{pdfId})
+    match /pdfs/{pdfId} {
+      allow get: if isValidId(pdfId);
+      allow list: if existing().semester in [1, 2];
+
+      allow create: if isValidId(pdfId) &&
+        isValidPublishedPdf(incoming(), pdfId);
+
+      allow update: if isValidId(pdfId) &&
+        isValidPublishedPdf(incoming(), pdfId) &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt && (
+          isBootstrappedAdmin() ||
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'title',
+            'subject',
+            'courseCode',
+            'semester',
+            'category',
+            'description',
+            'isPublished'
+          ])
+        );
+
+      allow delete: if isValidId(pdfId);
+    }
+
+    // PDF Base64 Chunks (/pdf_chunks/{chunkId})
+    match /pdf_chunks/{chunkId} {
+      allow get: if isValidId(chunkId);
+      allow list: if existing().chunkIndex >= 0;
+
+      allow create: if isValidId(chunkId) &&
+        isValidPdfChunk(incoming(), chunkId);
+
+      allow update: if false;
+      allow delete: if isValidId(chunkId);
+    }
+
+    // Admin Practice Exam Posts (/practice_posts/{postId})
+    match /practice_posts/{postId} {
+      allow get: if isValidId(postId);
+      allow list: if existing().examType in ['midterm', 'final'];
+
+      allow create: if isValidId(postId) &&
+        isValidPracticePost(incoming(), postId);
+
+      allow update: if isValidId(postId) &&
+        isValidPracticePost(incoming(), postId) &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt;
+
+      allow delete: if isValidId(postId);
+    }
+  }
+}

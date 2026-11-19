@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { FLASHCARDS_DATA } from '../data/flashcards';
+import { ALL_FRESHMAN_FLASHCARDS } from '../data/freshmanFlashcards';
+import {
+  OFFICIAL_17_FRESHMAN_COURSES,
+  getSubjectDisplayName,
+  normalizeSubjectTo19,
+} from '../data/freshmanCourseCatalog';
 import { Subject, Flashcard } from '../types';
+import { isFreeCourseSubject } from '../utils/authPaymentService';
 import { MathRenderer } from './MathRenderer';
 import { 
   RotateCw, 
@@ -9,21 +16,48 @@ import {
   HelpCircle, 
   Shuffle, 
   RefreshCcw, 
-  Sparkles,
-  BrainCircuit,
-  ArrowRight,
-  ArrowLeft
+  Sparkles, 
+  BrainCircuit, 
+  ArrowRight, 
+  ArrowLeft 
 } from 'lucide-react';
 
-export const FlashcardsView: React.FC = () => {
-  const [selectedSubject, setSelectedSubject] = useState<Subject>('all');
-  const [cards, setCards] = useState<Flashcard[]>(FLASHCARDS_DATA);
+const COMBINED_FLASHCARDS: Flashcard[] = [...ALL_FRESHMAN_FLASHCARDS, ...FLASHCARDS_DATA];
+
+interface FlashcardsViewProps {
+  initialSubject?: Subject | 'all';
+  isPaidAccessLocked?: boolean;
+  onRequirePaidAccess?: (featureName: string) => void;
+}
+
+export const FlashcardsView: React.FC<FlashcardsViewProps> = ({
+  initialSubject = 'all',
+  isPaidAccessLocked = false,
+  onRequirePaidAccess,
+}) => {
+  const [selectedSubject, setSelectedSubject] = useState<Subject>(() =>
+    isPaidAccessLocked ? 'anthropology' : initialSubject || 'all'
+  );
+  const [cards, setCards] = useState<Flashcard[]>(COMBINED_FLASHCARDS);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [showHint, setShowHint] = useState<boolean>(false);
   const [masteredIds, setMasteredIds] = useState<Record<string, boolean>>({});
 
-  const filteredCards = cards.filter(c => selectedSubject === 'all' || c.subject === selectedSubject);
+  React.useEffect(() => {
+    if (isPaidAccessLocked) {
+      setSelectedSubject('anthropology');
+    } else if (initialSubject) {
+      setSelectedSubject(initialSubject);
+    }
+  }, [isPaidAccessLocked, initialSubject]);
+
+  const filteredCards = cards.filter(
+    (c) =>
+      (!isPaidAccessLocked || isFreeCourseSubject(normalizeSubjectTo19(c.subject))) &&
+      (selectedSubject === 'all' ||
+        normalizeSubjectTo19(c.subject) === normalizeSubjectTo19(selectedSubject))
+  );
   const currentCard = filteredCards[currentIndex] || filteredCards[0];
   const isMastered = currentCard ? Boolean(masteredIds[currentCard.id]) : false;
 
@@ -33,7 +67,7 @@ export const FlashcardsView: React.FC = () => {
     if (currentIndex < filteredCards.length - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
-      setCurrentIndex(0); // loop
+      setCurrentIndex(0);
     }
   };
 
@@ -49,9 +83,9 @@ export const FlashcardsView: React.FC = () => {
 
   const handleMarkMastered = (mastered: boolean) => {
     if (!currentCard) return;
-    setMasteredIds(prev => ({
+    setMasteredIds((prev) => ({
       ...prev,
-      [currentCard.id]: mastered
+      [currentCard.id]: mastered,
     }));
     handleNext();
   };
@@ -64,59 +98,68 @@ export const FlashcardsView: React.FC = () => {
     setShowHint(false);
   };
 
-  const masteredCount = filteredCards.filter(c => masteredIds[c.id]).length;
-  const masteryPercentage = filteredCards.length > 0 ? Math.round((masteredCount / filteredCards.length) * 100) : 0;
+  const masteredCount = filteredCards.filter((c) => masteredIds[c.id]).length;
+  const masteryPercentage =
+    filteredCards.length > 0 ? Math.round((masteredCount / filteredCards.length) * 100) : 0;
+
+  const freshmanSubjects: { id: Subject; label: string }[] = [
+    { id: 'all', label: 'All Subjects' },
+    ...OFFICIAL_17_FRESHMAN_COURSES.map((c) => ({
+      id: c.subject,
+      label: c.shortTitle,
+    })),
+  ];
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 rounded-2xl p-6 text-white border border-blue-800/40 shadow-lg flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
-            <BrainCircuit className="w-6 h-6 text-blue-400" />
-            AASTU Speed Flashcards & Rapid Recall
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-300 mt-1">
-            Test and lock in formulas, rules, and traps under pressure before exam day.
-          </p>
+    <div className="max-w-3xl mx-auto space-y-4">
+      {/* Compact All-in-One Header & Subject Picker */}
+      <div className="bg-slate-900 rounded-2xl p-4 text-white border border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <BrainCircuit className="w-5 h-5 text-blue-400 shrink-0" />
+          <div>
+            <h2 className="text-base sm:text-lg font-bold">Flashcards</h2>
+            <p className="text-xs text-slate-400">
+              Mastered: <strong className="text-emerald-400">{masteredCount}/{filteredCards.length} ({masteryPercentage}%)</strong>
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleShuffle}
-            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg border border-slate-700 flex items-center gap-1.5 transition"
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={selectedSubject}
+            onChange={(e) => {
+              const id = e.target.value as Subject;
+              if (isPaidAccessLocked && id !== 'all' && !isFreeCourseSubject(id)) {
+                onRequirePaidAccess?.(`Flashcards (${getSubjectDisplayName(id)})`);
+                return;
+              }
+              setSelectedSubject(id);
+              setCurrentIndex(0);
+              setIsFlipped(false);
+              setShowHint(false);
+            }}
+            className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs font-semibold text-white focus:outline-none focus:border-blue-500"
           >
-            <Shuffle className="w-3.5 h-3.5" /> Shuffle Deck
+            {freshmanSubjects.map(({ id, label }) => (
+              <option key={id} value={id}>
+                {label}
+                {isPaidAccessLocked && id !== 'all'
+                  ? isFreeCourseSubject(id)
+                    ? ' (FREE)'
+                    : ' (50 ETB)'
+                  : ''}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="button"
+            onClick={handleShuffle}
+            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-xl border border-slate-700 flex items-center gap-1.5 transition text-slate-200 cursor-pointer"
+          >
+            <Shuffle className="w-3.5 h-3.5" />
+            <span>Shuffle</span>
           </button>
-        </div>
-      </div>
-
-      {/* Filter and Mastery Tracker */}
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1.5">
-          {(['all', 'mathematics', 'physics', 'chemistry', 'aptitude'] as Subject[]).map((subj) => (
-            <button
-              key={subj}
-              onClick={() => {
-                setSelectedSubject(subj);
-                setCurrentIndex(0);
-                setIsFlipped(false);
-                setShowHint(false);
-              }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition ${
-                selectedSubject === subj
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-              }`}
-            >
-              {subj === 'aptitude' ? 'Aptitude & English' : subj}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-          <span>Mastered:</span>
-          <strong className="text-emerald-600 dark:text-emerald-400">{masteredCount}/{filteredCards.length} ({masteryPercentage}%)</strong>
         </div>
       </div>
 
@@ -130,8 +173,8 @@ export const FlashcardsView: React.FC = () => {
             {/* Top card bar */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-extrabold px-2.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 uppercase">
-                  {currentCard.subject}
+                <span className="text-xs font-extrabold px-2.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300">
+                  {getSubjectDisplayName(currentCard.subject)}
                 </span>
                 <span className="text-xs font-medium text-slate-400">
                   {currentCard.category}

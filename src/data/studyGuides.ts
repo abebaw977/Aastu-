@@ -5,7 +5,7 @@ export const STUDY_GUIDES: StudyGuideTopic[] = [
     id: 'sg-math-1',
     subject: 'mathematics',
     title: 'Differential & Integral Calculus Cheat Sheet',
-    summary: 'Calculus makes up approximately 35-40% of the AASTU Mathematics entrance paper. Fast execution of limits, derivative rules, and integration tricks is essential.',
+    summary: 'Calculus makes up approximately 35-40% of the Freshman Mathematics (Math 1011) final paper. Fast execution of limits, derivative rules, and integration tricks is essential.',
     keyFormulas: [
       {
         name: "L'Hôpital's Rule",
@@ -99,7 +99,7 @@ export const STUDY_GUIDES: StudyGuideTopic[] = [
     id: 'sg-phys-1',
     subject: 'physics',
     title: 'Mechanics, Dynamics & Conservation Laws',
-    summary: 'The backbone of the AASTU Physics section: 1D/2D kinematics, Newton\'s laws on inclines, conservation of momentum, and work-energy.',
+    summary: 'The backbone of the Freshman General Physics (Phys 1011) section: 1D/2D kinematics, Newton\'s laws on inclines, conservation of momentum, and work-energy.',
     keyFormulas: [
       {
         name: "Projectile Motion Formulas",

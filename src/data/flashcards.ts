@@ -74,7 +74,7 @@ export const FLASHCARDS_DATA: Flashcard[] = [
     category: 'Modern Physics',
     front: "In the photoelectric effect, does increasing light intensity increase the kinetic energy of emitted electrons?",
     back: "NO! Intensity increases the NUMBER of photoelectrons (photocurrent). Kinetic energy depends ONLY on frequency (E = hf - Φ).",
-    hint: "Classic AASTU exam trap."
+    hint: "Classic Freshman Math 1011 exam trap."
   },
   {
     id: 'fc-p5',

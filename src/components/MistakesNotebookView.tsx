@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
-import { Question } from '../types';
+import { Question, Subject } from '../types';
+import { getSubjectDisplayName } from '../data/freshmanCourseCatalog';
 import { MathRenderer } from './MathRenderer';
 import { 
   RotateCcw, 
   Trash2, 
   CheckCircle, 
   XCircle, 
-  HelpCircle, 
-  Sparkles, 
-  BookOpen,
-  ArrowRight,
   Flame
 } from 'lucide-react';
 
@@ -17,14 +14,12 @@ interface MistakesNotebookViewProps {
   mistakeQuestions: Question[];
   onRemoveMistake: (id: string) => void;
   onClearAllMistakes: () => void;
-  onOpenAITutor: (q: Question) => void;
 }
 
 export const MistakesNotebookView: React.FC<MistakesNotebookViewProps> = ({
   mistakeQuestions,
   onRemoveMistake,
   onClearAllMistakes,
-  onOpenAITutor,
 }) => {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>({});
   const [showExplanations, setShowExplanations] = useState<Record<string, boolean>>({});
@@ -73,7 +68,7 @@ export const MistakesNotebookView: React.FC<MistakesNotebookViewProps> = ({
             Targeted Mistakes & Weakness Notebook
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
-            Re-solve your missed problems to ensure you don't repeat the same mistakes on the real AASTU entrance exam.
+            Re-solve your missed problems to ensure you don't repeat the same mistakes on your University Freshman Midterm & Final Exams.
           </p>
         </div>
 
@@ -100,8 +95,8 @@ export const MistakesNotebookView: React.FC<MistakesNotebookViewProps> = ({
             >
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase">
-                    {q.subject}
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    {getSubjectDisplayName(q.subject as Subject)}
                   </span>
                   <span className="text-xs text-slate-500 font-medium">
                     {q.topic}
@@ -109,13 +104,6 @@ export const MistakesNotebookView: React.FC<MistakesNotebookViewProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => onOpenAITutor(q)}
-                    className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 rounded text-xs font-semibold flex items-center gap-1"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" /> Ask AI Tutor
-                  </button>
-
                   <button
                     onClick={() => onRemoveMistake(q.id)}
                     className="text-slate-400 hover:text-rose-500 p-1 rounded transition"

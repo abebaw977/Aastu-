@@ -1,6 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { STUDY_GUIDES } from '../data/studyGuides';
 import { ALL_FORMULAS, FORMULA_STATS, FORMULA_CATEGORIES } from '../data/formulas';
+import { ALL_FRESHMAN_FORMULAS } from '../data/freshmanFormulas';
+import {
+  OFFICIAL_17_FRESHMAN_COURSES,
+  getSubjectDisplayName,
+} from '../data/freshmanCourseCatalog';
 import { Subject, FormulaItem } from '../types';
 import { MathRenderer } from './MathRenderer';
 import { 
@@ -21,8 +26,16 @@ import {
   Layers,
   Award,
   Download,
-  Info
+  Info,
+  Dna,
+  Scale,
+  Activity,
+  Globe,
+  Cpu
 } from 'lucide-react';
+
+// Combined master list of formulas
+const COMBINED_FORMULAS: FormulaItem[] = [...ALL_FRESHMAN_FORMULAS, ...ALL_FORMULAS];
 
 interface StudyGuidesViewProps {
   initialSubject?: Subject;
@@ -77,7 +90,7 @@ export const StudyGuidesView: React.FC<StudyGuidesViewProps> = ({
 
   // Filtered Formulas
   const filteredFormulas = useMemo(() => {
-    return ALL_FORMULAS.filter((f) => {
+    return COMBINED_FORMULAS.filter((f) => {
       const matchSubject = selectedSubject === 'all' || f.subject === selectedSubject;
       const matchCategory = selectedCategory === 'all' || selectedCategory === 'All Categories' || f.category === selectedCategory;
       const matchDifficulty = selectedDifficulty === 'all' || f.difficulty === selectedDifficulty;
@@ -111,20 +124,62 @@ export const StudyGuidesView: React.FC<StudyGuidesViewProps> = ({
 
   const getSubjectIcon = (subj: Subject) => {
     switch (subj) {
-      case 'mathematics': return <Calculator className="w-4 h-4 text-blue-500" />;
-      case 'physics': return <Compass className="w-4 h-4 text-purple-500" />;
-      case 'chemistry': return <FlaskConical className="w-4 h-4 text-emerald-500" />;
-      default: return <Brain className="w-4 h-4 text-amber-500" />;
+      case 'mathematics':
+      case 'math_applied_2':
+        return <Calculator className="w-4 h-4 text-blue-500" />;
+      case 'physics':
+      case 'physics_2':
+        return <Compass className="w-4 h-4 text-cyan-500" />;
+      case 'chemistry':
+      case 'chemistry_2':
+        return <FlaskConical className="w-4 h-4 text-emerald-500" />;
+      case 'biology':
+      case 'biology_2':
+        return <Dna className="w-4 h-4 text-teal-500" />;
+      case 'english':
+      case 'english_2':
+        return <BookOpen className="w-4 h-4 text-indigo-500" />;
+      case 'critical_thinking':
+        return <Brain className="w-4 h-4 text-amber-500" />;
+      case 'civics':
+        return <Scale className="w-4 h-4 text-purple-500" />;
+      case 'fitness':
+        return <Activity className="w-4 h-4 text-rose-500" />;
+      case 'psychology':
+        return <Brain className="w-4 h-4 text-rose-400" />;
+      case 'geography':
+      case 'geography_history':
+        return <Globe className="w-4 h-4 text-amber-500" />;
+      case 'history':
+        return <Globe className="w-4 h-4 text-orange-500" />;
+      case 'emerging_tech':
+        return <Cpu className="w-4 h-4 text-sky-500" />;
+      default:
+        return <Brain className="w-4 h-4 text-amber-500" />;
     }
   };
 
   const getSubjectColor = (subj: Subject) => {
     switch (subj) {
-      case 'mathematics': return 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800';
-      case 'physics': return 'bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800';
-      case 'chemistry': return 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800';
-      default: return 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800';
+      case 'mathematics':
+      case 'math_applied_2':
+        return 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800';
+      case 'physics':
+      case 'physics_2':
+        return 'bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800';
+      case 'chemistry':
+      case 'chemistry_2':
+        return 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800';
+      case 'biology':
+      case 'biology_2':
+        return 'bg-teal-100 dark:bg-teal-900/40 text-teal-800 dark:text-teal-300 border-teal-300 dark:border-teal-800';
+      default:
+        return 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800';
     }
+  };
+
+  const formatCourseLabel = (subj: Subject) => {
+    return getSubjectDisplayName(subj);
   };
 
   return (
@@ -135,48 +190,48 @@ export const StudyGuidesView: React.FC<StudyGuidesViewProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
             <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
               <BookOpen className="w-6 h-6 text-blue-400" />
-              AASTU 350+ Master Formula Compendium & Guides
+              Freshman Formulas, Theorems & Laws Compendium
             </h2>
             <div className="flex items-center gap-2">
               <span className="bg-blue-500/20 text-blue-300 border border-blue-500/30 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5">
                 <Award className="w-3.5 h-3.5 text-blue-400" />
-                {FORMULA_STATS.total} Core Formulas Available
+                {COMBINED_FORMULAS.length} Core Formulas & Theorems
               </span>
             </div>
           </div>
           <p className="text-slate-300 text-sm max-w-3xl leading-relaxed">
-            The definitive Ethiopian university STEM entrance formula bank. Contains governing equations, 
-            unit breakdowns, variable definitions, and 30-to-45 second speed hacks for rapid exam problem solving.
+            The definitive Ethiopian university freshman formula compendium across all subjects. Contains governing equations, 
+            equivalence rules, theorem statements, variable definitions, and 30-to-45 second speed hacks for rapid exam problem solving.
           </p>
 
-          {/* Quick Stats Grid */}
+          {/* Quick Stats Grid across all 17 Freshman Common Courses */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-slate-800/80">
             <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/50 flex items-center gap-2.5">
               <Calculator className="w-5 h-5 text-blue-400 shrink-0" />
               <div>
-                <div className="text-xs text-slate-400">Mathematics</div>
-                <div className="text-sm font-bold text-white">{FORMULA_STATS.mathematics} Formulas</div>
+                <div className="text-xs text-slate-400">Math I & II + Logic</div>
+                <div className="text-sm font-bold text-white">{COMBINED_FORMULAS.filter(f => ['mathematics', 'math_applied_2', 'critical_thinking'].includes(f.subject)).length} Formulas</div>
               </div>
             </div>
             <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/50 flex items-center gap-2.5">
               <Compass className="w-5 h-5 text-purple-400 shrink-0" />
               <div>
-                <div className="text-xs text-slate-400">Physics</div>
-                <div className="text-sm font-bold text-white">{FORMULA_STATS.physics} Formulas</div>
+                <div className="text-xs text-slate-400">Physics I & II + Tech</div>
+                <div className="text-sm font-bold text-white">{COMBINED_FORMULAS.filter(f => ['physics', 'physics_2', 'emerging_tech'].includes(f.subject)).length} Formulas</div>
               </div>
             </div>
             <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/50 flex items-center gap-2.5">
               <FlaskConical className="w-5 h-5 text-emerald-400 shrink-0" />
               <div>
-                <div className="text-xs text-slate-400">Chemistry</div>
-                <div className="text-sm font-bold text-white">{FORMULA_STATS.chemistry} Formulas</div>
+                <div className="text-xs text-slate-400">Chemistry & Biology I & II</div>
+                <div className="text-sm font-bold text-white">{COMBINED_FORMULAS.filter(f => ['chemistry', 'chemistry_2', 'biology', 'biology_2', 'fitness'].includes(f.subject)).length} Formulas</div>
               </div>
             </div>
             <div className="bg-slate-800/50 p-2.5 rounded-lg border border-slate-700/50 flex items-center gap-2.5">
               <Brain className="w-5 h-5 text-amber-400 shrink-0" />
               <div>
-                <div className="text-xs text-slate-400">Aptitude & English</div>
-                <div className="text-sm font-bold text-white">{FORMULA_STATS.aptitude} Formulas</div>
+                <div className="text-xs text-slate-400">English, Social & Psych</div>
+                <div className="text-sm font-bold text-white">{COMBINED_FORMULAS.filter(f => ['english', 'english_2', 'civics', 'psychology', 'geography', 'geography_history', 'history', 'aptitude'].includes(f.subject)).length} Rules & Laws</div>
               </div>
             </div>
           </div>
@@ -213,38 +268,64 @@ export const StudyGuidesView: React.FC<StudyGuidesViewProps> = ({
       {/* Control Bar: Filters & Search */}
       <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* Subject Pills */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {(['all', 'mathematics', 'physics', 'chemistry', 'aptitude'] as Subject[]).map((subj) => (
+          {/* Subject Pills & Search */}
+          <div className="space-y-2.5 w-full">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Filter by Subject ({OFFICIAL_17_FRESHMAN_COURSES.length} Subjects)
+              </span>
+
+              {/* Search Box */}
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search formula, LaTeX, rule..."
+                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full scrollbar-none">
               <button
-                key={subj}
-                id={`guide-filter-${subj}`}
+                id="guide-filter-all"
                 onClick={() => {
-                  setSelectedSubject(subj);
+                  setSelectedSubject('all');
                   setSelectedCategory('all');
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition flex items-center gap-1.5 ${
-                  selectedSubject === subj
-                    ? 'bg-blue-600 text-white shadow-sm'
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition flex items-center gap-1 ${
+                  selectedSubject === 'all'
+                    ? 'bg-blue-600 text-white shadow-xs'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
-                {subj !== 'all' && getSubjectIcon(subj)}
-                {subj === 'aptitude' ? 'Aptitude & English' : subj}
+                <span>All Subjects</span>
               </button>
-            ))}
-          </div>
 
-          {/* Search Box */}
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search formula, LaTeX, rule..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+              {OFFICIAL_17_FRESHMAN_COURSES.map((course) => {
+                  const isSelected = selectedSubject === course.subject;
+                  return (
+                    <button
+                      key={course.id}
+                      id={`guide-filter-${course.subject}`}
+                      onClick={() => {
+                        setSelectedSubject(course.subject);
+                        setSelectedCategory('all');
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition flex items-center gap-1.5 border ${
+                        isSelected
+                          ? 'bg-blue-600 border-blue-500 text-white shadow-xs'
+                          : 'bg-slate-100 dark:bg-slate-800/80 border-slate-200/50 dark:border-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {getSubjectIcon(course.subject)}
+                      <span>{course.shortTitle}</span>
+                    </button>
+                  );
+                })}
+            </div>
           </div>
         </div>
 
@@ -318,7 +399,7 @@ export const StudyGuidesView: React.FC<StudyGuidesViewProps> = ({
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <div className="flex items-center gap-1.5">
                           <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${getSubjectColor(f.subject)}`}>
-                            {f.subject}
+                            {formatCourseLabel(f.subject)}
                           </span>
                           <span className="text-[10px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
                             {f.category}
@@ -412,7 +493,7 @@ export const StudyGuidesView: React.FC<StudyGuidesViewProps> = ({
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 flex items-center gap-1">
                     {getSubjectIcon(guide.subject)}
-                    {guide.subject}
+                    {formatCourseLabel(guide.subject)}
                   </span>
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white">

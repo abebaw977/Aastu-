@@ -1,0 +1,11 @@
+{
+  "name": "Freshman Admin Control",
+  "short_name": "Freshman Admin",
+  "description": "Standalone Administrator Control Center for Freshman Academy Hub — Payment Approvals, PDF Publishing & Exam MCQs",
+  "theme_color": "#0f172a",
+  "background_color": "#0f172a",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "/",
+  "scope": "/"
+}

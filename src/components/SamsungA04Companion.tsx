@@ -1,7 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ALL_FORMULAS } from '../data/formulas';
+import { ALL_FRESHMAN_FORMULAS } from '../data/freshmanFormulas';
+import { OFFICIAL_17_FRESHMAN_COURSES } from '../data/freshmanCourseCatalog';
 import { FormulaItem, Subject } from '../types';
 import { MathRenderer } from './MathRenderer';
+
+const COMBINED_PEEK_FORMULAS: FormulaItem[] = [...ALL_FRESHMAN_FORMULAS, ...ALL_FORMULAS];
 import { 
   Smartphone, 
   Timer, 
@@ -29,6 +33,7 @@ interface SamsungA04CompanionProps {
   isScratchpadOpen: boolean;
   onCloseScratchpad: () => void;
   onOpenScratchpad: () => void;
+  hideFloatingButtons?: boolean;
 }
 
 export const SamsungA04Companion: React.FC<SamsungA04CompanionProps> = ({
@@ -37,6 +42,7 @@ export const SamsungA04Companion: React.FC<SamsungA04CompanionProps> = ({
   isScratchpadOpen,
   onCloseScratchpad,
   onOpenScratchpad,
+  hideFloatingButtons = false,
 }) => {
   // Mini 30-Sec Pocket Stopwatch HUD
   const [isTimerOpen, setIsTimerOpen] = useState(false);
@@ -144,7 +150,7 @@ export const SamsungA04Companion: React.FC<SamsungA04CompanionProps> = ({
   };
 
   // Filtered Formulas for Quick-Peek Drawer
-  const filteredPeekFormulas = ALL_FORMULAS.filter(f => {
+  const filteredPeekFormulas = COMBINED_PEEK_FORMULAS.filter(f => {
     const matchSubj = selectedSubject === 'all' || f.subject === selectedSubject;
     const q = formulaSearch.toLowerCase().trim();
     const matchQ = !q || 
@@ -162,7 +168,8 @@ export const SamsungA04Companion: React.FC<SamsungA04CompanionProps> = ({
 
   return (
     <>
-      {/* Floating Speed Widget on Mobile for Samsung A04 users */}
+      {/* Floating Speed Widget on Mobile */}
+      {!hideFloatingButtons && (
       <div className="fixed bottom-18 right-3 z-30 flex flex-col gap-2 items-end lg:bottom-6 lg:right-6">
         {/* Quick 30-Sec Timer HUD */}
         {isTimerOpen ? (
@@ -186,7 +193,7 @@ export const SamsungA04Companion: React.FC<SamsungA04CompanionProps> = ({
               }`}>
                 00:{timerSeconds < 10 ? `0${timerSeconds}` : timerSeconds}
               </div>
-              <div className="text-[10px] text-slate-400 mt-1">AASTU Target Pace: 30-45s / Question</div>
+              <div className="text-[10px] text-slate-400 mt-1">Freshman Exam Target Pace: 30-45s / Question</div>
             </div>
 
             <div className="flex items-center justify-center gap-2">
@@ -225,17 +232,6 @@ export const SamsungA04Companion: React.FC<SamsungA04CompanionProps> = ({
           </button>
         )}
 
-        {/* Quick Formula Search Peek Button */}
-        <button
-          id="samsung-a04-formula-peek-btn"
-          onClick={() => setIsFormulaSheetOpen(true)}
-          className="p-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full shadow-lg hover:scale-105 transition-transform flex items-center gap-1.5 text-xs font-bold border border-blue-400/40"
-          title="Quick 350+ Formula Peek"
-        >
-          <Zap className="w-4 h-4" />
-          <span className="hidden sm:inline">Formula Peek</span>
-        </button>
-
         {/* Quick Scratchpad Floating Button */}
         <button
           id="samsung-a04-scratchpad-btn"
@@ -247,6 +243,7 @@ export const SamsungA04Companion: React.FC<SamsungA04CompanionProps> = ({
           <span className="hidden sm:inline">Scratchpad</span>
         </button>
       </div>
+      )}
 
       {/* Quick Formula Peek Bottom Sheet */}
       {isFormulaSheetOpen && (
@@ -288,17 +285,27 @@ export const SamsungA04Companion: React.FC<SamsungA04CompanionProps> = ({
               </div>
 
               <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1">
-                {(['all', 'mathematics', 'physics', 'chemistry', 'aptitude'] as (Subject | 'all')[]).map(subj => (
+                <button
+                  onClick={() => setSelectedSubject('all')}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition ${
+                    selectedSubject === 'all'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  All 19 Subjects
+                </button>
+                {OFFICIAL_17_FRESHMAN_COURSES.map(course => (
                   <button
-                    key={subj}
-                    onClick={() => setSelectedSubject(subj)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap capitalize transition ${
-                      selectedSubject === subj
+                    key={course.id}
+                    onClick={() => setSelectedSubject(course.subject)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition ${
+                      selectedSubject === course.subject
                         ? 'bg-blue-600 text-white'
                         : 'bg-slate-800 text-slate-400 hover:text-white'
                     }`}
                   >
-                    {subj === 'aptitude' ? 'Aptitude' : subj}
+                    {course.shortTitle}
                   </button>
                 ))}
               </div>

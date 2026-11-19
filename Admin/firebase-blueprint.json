@@ -1,0 +1,451 @@
+{
+  "entities": {
+    "ConnectionTest": {
+      "title": "ConnectionTest",
+      "description": "Read-only connectivity probe document used to verify Firestore reachability on boot.",
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "Connectivity status string.",
+          "maxLength": 32
+        }
+      },
+      "required": ["status"]
+    },
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "Student or Admin account record for Freshman Academy Hub.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique user ID matching the document ID.",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "username": {
+          "type": "string",
+          "description": "Display username chosen by the user.",
+          "minLength": 3,
+          "maxLength": 64
+        },
+        "usernameLower": {
+          "type": "string",
+          "description": "Lowercase normalized username for case-insensitive lookup.",
+          "minLength": 3,
+          "maxLength": 64
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Student or admin phone number.",
+          "minLength": 4,
+          "maxLength": 32
+        },
+        "passwordHash": {
+          "type": "string",
+          "description": "Salted PBKDF2-SHA256 password hash.",
+          "minLength": 20,
+          "maxLength": 256
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of the user in the platform.",
+          "enum": ["student", "admin"]
+        },
+        "accountStatus": {
+          "type": "string",
+          "description": "Payment and access verification status of the account.",
+          "enum": [
+            "PENDING_PAYMENT",
+            "PENDING_VERIFICATION",
+            "APPROVED",
+            "REJECTED",
+            "SUSPENDED"
+          ]
+        },
+        "rejectionReason": {
+          "type": "string",
+          "description": "Optional rejection reason or empty string if none.",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 creation timestamp.",
+          "minLength": 10,
+          "maxLength": 64
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 last update timestamp.",
+          "minLength": 10,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "usernameLower",
+        "phoneNumber",
+        "passwordHash",
+        "role",
+        "accountStatus",
+        "rejectionReason",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PaymentRequest": {
+      "title": "PaymentRequest",
+      "description": "50 ETB Telebirr manual payment verification submission with compressed screenshot.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique payment ID matching the document ID.",
+          "minLength": 4,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "ID of the student who submitted the payment.",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "username": {
+          "type": "string",
+          "description": "Username of the student who submitted the payment.",
+          "minLength": 3,
+          "maxLength": 64
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "Telebirr sender phone number.",
+          "minLength": 4,
+          "maxLength": 32
+        },
+        "amount": {
+          "type": "number",
+          "description": "Payment amount in ETB (50)."
+        },
+        "currency": {
+          "type": "string",
+          "description": "Payment currency code.",
+          "enum": ["ETB"]
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "Payment method used.",
+          "enum": ["Telebirr"]
+        },
+        "transactionRef": {
+          "type": "string",
+          "description": "Optional Telebirr transaction reference.",
+          "maxLength": 128
+        },
+        "screenshotMime": {
+          "type": "string",
+          "description": "MIME type of the uploaded payment screenshot.",
+          "minLength": 5,
+          "maxLength": 64
+        },
+        "screenshotSize": {
+          "type": "number",
+          "description": "Byte length of the compressed payment screenshot."
+        },
+        "screenshotDataUrl": {
+          "type": "string",
+          "description": "Base64 Data URL of the compressed Telebirr payment screenshot.",
+          "minLength": 20,
+          "maxLength": 950000
+        },
+        "status": {
+          "type": "string",
+          "description": "Verification status of the payment request.",
+          "enum": ["PENDING", "APPROVED", "REJECTED"]
+        },
+        "adminNote": {
+          "type": "string",
+          "description": "Admin review note or rejection reason.",
+          "maxLength": 500
+        },
+        "submittedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 submission timestamp.",
+          "minLength": 10,
+          "maxLength": 64
+        },
+        "reviewedAt": {
+          "type": "string",
+          "description": "ISO-8601 review timestamp or empty string if pending.",
+          "maxLength": 64
+        },
+        "reviewedBy": {
+          "type": "string",
+          "description": "Admin username who reviewed the payment or empty string.",
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "username",
+        "phoneNumber",
+        "amount",
+        "currency",
+        "paymentMethod",
+        "transactionRef",
+        "screenshotMime",
+        "screenshotSize",
+        "screenshotDataUrl",
+        "status",
+        "adminNote",
+        "submittedAt",
+        "reviewedAt",
+        "reviewedBy"
+      ]
+    },
+    "PublishedPdf": {
+      "title": "PublishedPdf",
+      "description": "Metadata for an admin-uploaded PDF study module or exam document.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique PDF document ID.",
+          "minLength": 4,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the PDF resource.",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "subject": {
+          "type": "string",
+          "description": "Subject code associated with the PDF.",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "courseCode": {
+          "type": "string",
+          "description": "Course code associated with the PDF.",
+          "maxLength": 64
+        },
+        "semester": {
+          "type": "number",
+          "description": "Freshman semester number (1 or 2)."
+        },
+        "category": {
+          "type": "string",
+          "description": "Document category.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "description": {
+          "type": "string",
+          "description": "Document description.",
+          "maxLength": 2000
+        },
+        "originalFilename": {
+          "type": "string",
+          "description": "Original uploaded PDF filename.",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "fileSize": {
+          "type": "number",
+          "description": "Size of the PDF in bytes."
+        },
+        "isPublished": {
+          "type": "boolean",
+          "description": "Whether the PDF is visible to approved students."
+        },
+        "uploadedBy": {
+          "type": "string",
+          "description": "Admin username who uploaded the PDF.",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 creation timestamp.",
+          "minLength": 10,
+          "maxLength": 64
+        },
+        "chunkCount": {
+          "type": "number",
+          "description": "Number of base64 chunks stored in pdf_chunks."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "subject",
+        "courseCode",
+        "semester",
+        "category",
+        "description",
+        "originalFilename",
+        "fileSize",
+        "isPublished",
+        "uploadedBy",
+        "createdAt",
+        "chunkCount"
+      ]
+    },
+    "PdfChunk": {
+      "title": "PdfChunk",
+      "description": "Base64 data chunk belonging to a PublishedPdf document.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Chunk document ID.",
+          "minLength": 4,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "pdfId": {
+          "type": "string",
+          "description": "Parent PDF document ID.",
+          "minLength": 4,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "chunkIndex": {
+          "type": "number",
+          "description": "Zero-based index of this chunk."
+        },
+        "data": {
+          "type": "string",
+          "description": "Base64 slice of the PDF data URL.",
+          "minLength": 1,
+          "maxLength": 750000
+        }
+      },
+      "required": ["id", "pdfId", "chunkIndex", "data"]
+    },
+    "PracticePost": {
+      "title": "PracticePost",
+      "description": "Admin-posted Midterm or Final exam question (MCQ or Image) for the Practice bar.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique practice post ID.",
+          "minLength": 4,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "postType": {
+          "type": "string",
+          "description": "Whether the post is an interactive MCQ or an exam image.",
+          "enum": ["mcq", "image"]
+        },
+        "subject": {
+          "type": "string",
+          "description": "Freshman subject identifier.",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "examType": {
+          "type": "string",
+          "description": "Exam type classification (midterm or final).",
+          "enum": ["midterm", "final"]
+        },
+        "title": {
+          "type": "string",
+          "description": "Topic or exam title.",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "question": {
+          "type": "string",
+          "description": "Question prompt or image instructions.",
+          "maxLength": 4000
+        },
+        "options": {
+          "type": "array",
+          "description": "Multiple-choice options A, B, C, D."
+        },
+        "correctAnswer": {
+          "type": "number",
+          "description": "Index of the correct option (0 to 3)."
+        },
+        "explanation": {
+          "type": "string",
+          "description": "Step-by-step explanation or answer key.",
+          "maxLength": 4000
+        },
+        "imageDataUrl": {
+          "type": "string",
+          "description": "Optional compressed base64 image data URL.",
+          "maxLength": 950000
+        },
+        "uploadedBy": {
+          "type": "string",
+          "description": "Admin username who posted the item.",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 creation timestamp.",
+          "minLength": 10,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "id",
+        "postType",
+        "subject",
+        "examType",
+        "title",
+        "question",
+        "options",
+        "correctAnswer",
+        "explanation",
+        "imageDataUrl",
+        "uploadedBy",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/test/{docId}": {
+      "schema": "ConnectionTest",
+      "description": "Connectivity verification collection."
+    },
+    "/users/{userId}": {
+      "schema": "UserAccount",
+      "description": "Student and Admin accounts synced across all APK and Web devices."
+    },
+    "/payments/{paymentId}": {
+      "schema": "PaymentRequest",
+      "description": "50 ETB Telebirr payment requests and screenshots synced from student phones to the Admin phone."
+    },
+    "/pdfs/{pdfId}": {
+      "schema": "PublishedPdf",
+      "description": "Published PDF module metadata uploaded by the Admin."
+    },
+    "/pdf_chunks/{chunkId}": {
+      "schema": "PdfChunk",
+      "description": "Base64 data chunks for uploaded PDF documents."
+    },
+    "/practice_posts/{postId}": {
+      "schema": "PracticePost",
+      "description": "Admin-posted Mid and Final exam images and MCQs for the Practice bar."
+    }
+  }
+}

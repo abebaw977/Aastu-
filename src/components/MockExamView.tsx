@@ -1,261 +1,222 @@
-import React, { useState, useEffect } from 'react';
-import { Question, ExamResult, Subject, SavedExamRecord } from '../types';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  Question,
+  ExamResult,
+  Subject,
+  SavedExamRecord,
+  AdminPracticePost,
+} from '../types';
+import {
+  OFFICIAL_17_FRESHMAN_COURSES,
+  getSubjectDisplayName,
+} from '../data/freshmanCourseCatalog';
+import {
+  fetchAdminPracticePosts,
+  getCachedPracticePosts,
+  subscribeToPracticePosts,
+  isFreeCourseSubject,
+} from '../utils/authPaymentService';
 import { MathRenderer } from './MathRenderer';
 import confetti from 'canvas-confetti';
-import { 
-  Clock, 
-  Flag, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
-  ArrowRight, 
-  ArrowLeft, 
+import {
+  Clock,
+  Flag,
+  CheckCircle,
+  XCircle,
+  ArrowRight,
+  ArrowLeft,
   RotateCcw,
-  Sparkles,
   Trophy,
   BarChart3,
-  Sliders,
-  Layers,
-  Zap,
-  BookOpen,
-  Check,
-  ChevronRight,
-  Flame,
-  HelpCircle,
   RefreshCw,
-  Award,
-  Atom,
-  Calculator,
-  FlaskConical,
-  BrainCircuit,
-  Plus,
   History,
   Trash2,
   Eye,
-  Calendar
+  Calendar,
+  GraduationCap,
+  Search,
+  Lock,
+  Image as ImageIcon,
+  X,
+  Play,
+  BookOpen,
 } from 'lucide-react';
 
 interface MockExamViewProps {
-  allQuestions: Question[];
   onSaveMistakes: (wrongQuestions: Question[]) => void;
-  onOpenAITutorWithQuestion: (q: Question) => void;
-  onAddCustomQuestionsToBank?: (questions: Question[]) => void;
   examHistory?: SavedExamRecord[];
   onSaveExamRecord?: (record: SavedExamRecord) => void;
   onDeleteExamRecord?: (id: string) => void;
+  initialSubject?: Subject | 'all';
+  isPaidAccessLocked?: boolean;
+  onRequirePaidAccess?: (featureName: string) => void;
+}
+
+interface GroupedExamTest {
+  key: string;
+  title: string;
+  subject: Subject;
+  examType: 'midterm' | 'final';
+  posts: AdminPracticePost[];
+  latestCreatedAt: string;
+}
+
+function practicePostToQuestion(post: AdminPracticePost): Question {
+  return {
+    id: post.id,
+    subject: post.subject,
+    topic: post.title || `${post.examType === 'final' ? 'Final' : 'Midterm'} Exam`,
+    question: post.question || post.title || 'Exam Question',
+    options: Array.isArray(post.options) ? post.options : [],
+    correctAnswer: typeof post.correctAnswer === 'number' ? post.correctAnswer : 0,
+    explanation: post.explanation || 'Verified answer key uploaded by Academy Admin.',
+    difficulty: 'medium',
+    examType: post.examType,
+    imageDataUrl: post.imageDataUrl || undefined,
+    postType: post.postType,
+  };
 }
 
 export const MockExamView: React.FC<MockExamViewProps> = ({
-  allQuestions,
   onSaveMistakes,
-  onOpenAITutorWithQuestion,
-  onAddCustomQuestionsToBank,
   examHistory = [],
   onSaveExamRecord,
   onDeleteExamRecord,
+  initialSubject,
+  isPaidAccessLocked = false,
+  onRequirePaidAccess,
 }) => {
+  // Admin-Uploaded Practice Posts State
+  const [practicePosts, setPracticePosts] = useState<AdminPracticePost[]>(() =>
+    getCachedPracticePosts()
+  );
+  const [loadingPosts, setLoadingPosts] = useState<boolean>(false);
+
+  // Filters & Sub-tabs
+  const [examMode, setExamMode] = useState<'uploaded' | 'history'>('uploaded');
+  const [selectedSubject, setSelectedSubject] = useState<Subject>(() =>
+    isPaidAccessLocked ? 'anthropology' : initialSubject || 'all'
+  );
+  const [selectedExamType, setSelectedExamType] = useState<'all' | 'midterm' | 'final'>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [useTimer, setUseTimer] = useState<boolean>(true);
+
+  // Exam Sheet Image Modal State
+  const [inspectedSheet, setInspectedSheet] = useState<AdminPracticePost | null>(null);
+  const [showSheetKeyId, setShowSheetKeyId] = useState<Record<string, boolean>>({});
+
   // Exam Execution State
   const [examStarted, setExamStarted] = useState<boolean>(false);
   const [examCompleted, setExamCompleted] = useState<boolean>(false);
-  const [durationMinutes, setDurationMinutes] = useState<number>(20);
-  const [timeLeftSeconds, setTimeLeftSeconds] = useState<number>(20 * 60);
+  const [durationMinutes, setDurationMinutes] = useState<number>(15);
+  const [timeLeftSeconds, setTimeLeftSeconds] = useState<number>(15 * 60);
+  const examStartTimeRef = useRef<number>(Date.now());
   const [examQuestions, setExamQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
   const [flaggedIds, setFlaggedIds] = useState<Record<string, boolean>>({});
   const [examResult, setExamResult] = useState<ExamResult | null>(null);
   const [reviewFilter, setReviewFilter] = useState<'all' | 'incorrect' | 'flagged'>('all');
-  const [examTitle, setExamTitle] = useState<string>('Custom AI Mock Exam');
+  const [examTitle, setExamTitle] = useState<string>('Uploaded Exam Test');
 
-  // AI Exam Creator Configuration State
-  const [examMode, setExamMode] = useState<'ai_custom' | 'standard' | 'history'>('ai_custom');
-  const [customCount, setCustomCount] = useState<number>(10);
-  const [customSubjects, setCustomSubjects] = useState<Subject[]>([
-    'mathematics', 
-    'physics', 
-    'chemistry', 
-    'aptitude'
-  ]);
-  const [customDifficulty, setCustomDifficulty] = useState<'easy' | 'medium' | 'hard' | 'mixed'>('medium');
-  const [customContentFocus, setCustomContentFocus] = useState<string>('Full AASTU High-Yield Syllabus');
-  const [customTopicInput, setCustomTopicInput] = useState<string>('');
-  
-  // AI Generation State
-  const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [generationStep, setGenerationStep] = useState<string>('');
-  const [generationError, setGenerationError] = useState<string | null>(null);
-
-  // Content Topic Presets
-  const TOPIC_PRESETS = [
-    { label: '🌟 Full High-Yield Syllabus', value: 'Full AASTU High-Yield STEM Syllabus (Calculus, Physics Mechanics, Chemistry Equilibrium, Aptitude)' },
-    { label: '📐 Calculus & Vectors', value: 'Calculus (Limits, Derivatives, Integrals) and 3D Vectors & Geometry' },
-    { label: '⚡ Mechanics & Electromagnetism', value: 'Newtonian Mechanics, Work-Energy, Circuits, and Magnetic Induction' },
-    { label: '🧪 Stoichiometry & Organic', value: 'Stoichiometry, Acid-Base Equilibria, Thermochemistry & Organic Reactions' },
-    { label: '🧠 Logic & Analytical Series', value: 'Analytical Reasoning, Number Patterns, Syllogisms & Word Aptitude' },
-    { label: '🚀 Matrices, Sequences & Complex', value: 'Matrices, Determinants, Arithmetic/Geometric Sequences & Complex Numbers' },
-    { label: '🔬 Thermodynamics & Waves', value: 'First/Second Laws of Thermodynamics, Wave Optics & Sound Waves' },
-  ];
-
-  // Subject details with icons & colors
-  const SUBJECT_CONFIGS: { id: Subject; name: string; icon: React.ReactNode; color: string; bg: string }[] = [
-    { id: 'mathematics', name: 'Mathematics', icon: <Calculator className="w-4 h-4" />, color: 'text-blue-400', bg: 'bg-blue-600/20 border-blue-500/30' },
-    { id: 'physics', name: 'Physics', icon: <Atom className="w-4 h-4" />, color: 'text-cyan-400', bg: 'bg-cyan-600/20 border-cyan-500/30' },
-    { id: 'chemistry', name: 'Chemistry', icon: <FlaskConical className="w-4 h-4" />, color: 'text-emerald-400', bg: 'bg-emerald-600/20 border-emerald-500/30' },
-    { id: 'aptitude', name: 'Analytical Aptitude', icon: <BrainCircuit className="w-4 h-4" />, color: 'text-amber-400', bg: 'bg-amber-600/20 border-amber-500/30' },
-  ];
-
-  const handleToggleSubject = (subj: Subject) => {
-    if (customSubjects.includes(subj)) {
-      if (customSubjects.length === 1) return; // keep at least 1
-      setCustomSubjects(customSubjects.filter(s => s !== subj));
-    } else {
-      setCustomSubjects([...customSubjects, subj]);
+  useEffect(() => {
+    if (isPaidAccessLocked) {
+      setSelectedSubject('anthropology');
+    } else if (initialSubject) {
+      setSelectedSubject(initialSubject);
     }
-  };
+  }, [isPaidAccessLocked, initialSubject]);
 
-  const handleSelectAllSubjects = () => {
-    setCustomSubjects(['mathematics', 'physics', 'chemistry', 'aptitude']);
-  };
-
-  // Fallback offline synthesizer from existing question bank
-  const synthesizeOfflineExamSet = (count: number, subjects: Subject[], difficulty: string, focus: string): Question[] => {
-    let pool = allQuestions.filter(q => subjects.includes(q.subject));
-    
-    // Filter by difficulty if not mixed
-    if (difficulty !== 'mixed') {
-      const diffPool = pool.filter(q => q.difficulty === difficulty);
-      if (diffPool.length >= count) {
-        pool = diffPool;
-      }
-    }
-
-    // Filter by keyword if specific
-    const lowerFocus = focus.toLowerCase();
-    const keywordPool = pool.filter(q => 
-      q.topic.toLowerCase().includes(lowerFocus) || 
-      q.question.toLowerCase().includes(lowerFocus) ||
-      (q.shortcutTip && q.shortcutTip.toLowerCase().includes(lowerFocus))
-    );
-
-    if (keywordPool.length >= count) {
-      pool = keywordPool;
-    }
-
-    // Shuffle
-    const shuffled = [...pool].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
-  };
-
-  // Generate AI Mock Exam
-  const handleGenerateAIMockExam = async () => {
-    setIsGenerating(true);
-    setGenerationError(null);
-    setGenerationStep('Connecting to Gemini STEM Exam Engine...');
-
-    const activeFocus = customTopicInput.trim() || customContentFocus;
-
+  const refreshPosts = async () => {
+    setLoadingPosts(true);
     try {
-      setGenerationStep('Synthesizing high-yield questions & LaTeX formatting...');
-      
-      const response = await fetch('/api/gemini/generate-exam-set', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          count: customCount,
-          subjects: customSubjects,
-          contentFocus: activeFocus,
-          difficulty: customDifficulty
-        })
-      });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || 'Server error generating questions');
-      }
-
-      const data = await response.json();
-      
-      if (!data.questions || !Array.isArray(data.questions) || data.questions.length === 0) {
-        throw new Error('No valid questions generated');
-      }
-
-      setGenerationStep('Finalizing mock exam test suite & answer keys...');
-
-      const generatedSet: Question[] = data.questions;
-
-      // Optional: add to master bank in App state
-      if (onAddCustomQuestionsToBank) {
-        onAddCustomQuestionsToBank(generatedSet);
-      }
-
-      // Start the generated exam directly
-      setExamTitle(`AI Mock: ${customDifficulty.toUpperCase()} • ${customCount} Qs`);
-      setExamQuestions(generatedSet);
-      
-      const calcDuration = durationMinutes > 0 ? durationMinutes : Math.max(10, Math.round(customCount * 1.8));
-      setDurationMinutes(calcDuration);
-      setTimeLeftSeconds(calcDuration * 60);
-      setUserAnswers({});
-      setFlaggedIds({});
-      setCurrentIndex(0);
-      setExamStarted(true);
-      setExamCompleted(false);
-      setExamResult(null);
-
-    } catch (err: any) {
-      console.warn('AI Exam Generation API fallback:', err);
-      // Fallback synthesizer so student is NEVER blocked
-      setGenerationStep('Creating balanced practice set from AASTU offline vault...');
-      
-      setTimeout(() => {
-        const fallbackSet = synthesizeOfflineExamSet(customCount, customSubjects, customDifficulty, activeFocus);
-        
-        if (fallbackSet.length === 0) {
-          setGenerationError('Could not assemble question set. Please select more subjects or reduce question count.');
-          setIsGenerating(false);
-          return;
-        }
-
-        setExamTitle(`AI Mock (${customDifficulty.toUpperCase()}) • ${fallbackSet.length} Questions`);
-        setExamQuestions(fallbackSet);
-        
-        const calcDuration = durationMinutes > 0 ? durationMinutes : Math.max(10, Math.round(fallbackSet.length * 1.8));
-        setDurationMinutes(calcDuration);
-        setTimeLeftSeconds(calcDuration * 60);
-        setUserAnswers({});
-        setFlaggedIds({});
-        setCurrentIndex(0);
-        setExamStarted(true);
-        setExamCompleted(false);
-        setExamResult(null);
-        setIsGenerating(false);
-      }, 700);
-      return;
+      const posts = await fetchAdminPracticePosts();
+      setPracticePosts(posts);
     } finally {
-      setIsGenerating(false);
+      setLoadingPosts(false);
     }
   };
 
-  // Start standard 22-question benchmark exam
-  const handleStartStandardExam = () => {
-    const mathQs = allQuestions.filter(q => q.subject === 'mathematics');
-    const physQs = allQuestions.filter(q => q.subject === 'physics');
-    const chemQs = allQuestions.filter(q => q.subject === 'chemistry');
-    const aptQs = allQuestions.filter(q => q.subject === 'aptitude');
+  useEffect(() => {
+    refreshPosts();
+    const unsubscribe = subscribeToPracticePosts((posts) => {
+      setPracticePosts(posts);
+    });
+    return () => unsubscribe();
+  }, []);
 
-    const selected = [
-      ...mathQs.slice(0, 7),
-      ...physQs.slice(0, 6),
-      ...chemQs.slice(0, 5),
-      ...aptQs.slice(0, 4)
-    ];
+  const filteredPosts = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return practicePosts.filter((p) => {
+      const matchSubj = selectedSubject === 'all' || p.subject === selectedSubject;
+      const matchType = selectedExamType === 'all' || p.examType === selectedExamType;
+      const subjName = getSubjectDisplayName(p.subject).toLowerCase();
+      const matchQuery =
+        !q ||
+        p.title.toLowerCase().includes(q) ||
+        p.question.toLowerCase().includes(q) ||
+        subjName.includes(q);
+      return matchSubj && matchType && matchQuery;
+    });
+  }, [practicePosts, selectedSubject, selectedExamType, searchQuery]);
 
-    const finalSet = selected.length > 0 ? selected : allQuestions;
+  // Group MCQ posts into structured Exam Tests (Q1..QN ordered chronologically by upload index)
+  const groupedTests: GroupedExamTest[] = useMemo(() => {
+    const map = new Map<string, GroupedExamTest>();
+    for (const p of filteredPosts) {
+      if (p.postType !== 'mcq') continue;
+      const key = `${p.subject}::${p.examType}::${(p.title || 'Exam Test').trim()}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.posts.push(p);
+        if (p.createdAt > existing.latestCreatedAt) {
+          existing.latestCreatedAt = p.createdAt;
+        }
+      } else {
+        map.set(key, {
+          key,
+          title: p.title || 'Uploaded Exam Test',
+          subject: p.subject,
+          examType: p.examType,
+          posts: [p],
+          latestCreatedAt: p.createdAt,
+        });
+      }
+    }
 
-    setExamTitle('Standard AASTU Entrance Benchmark (22 Qs)');
-    setExamQuestions(finalSet);
-    setDurationMinutes(45);
-    setTimeLeftSeconds(45 * 60);
+    return Array.from(map.values())
+      .map((g) => ({
+        ...g,
+        posts: [...g.posts].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+      }))
+      .sort((a, b) => b.latestCreatedAt.localeCompare(a.latestCreatedAt));
+  }, [filteredPosts]);
+
+  const allFilteredMcqQuestions: Question[] = useMemo(() => {
+    return filteredPosts
+      .filter((p) => p.postType === 'mcq')
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+      .map(practicePostToQuestion);
+  }, [filteredPosts]);
+
+  const imagePosts = useMemo(
+    () => filteredPosts.filter((p) => p.postType === 'image'),
+    [filteredPosts]
+  );
+
+  const launchExamSession = (title: string, questionsList: Question[], subjectForGate: Subject) => {
+    if (isPaidAccessLocked && !isFreeCourseSubject(subjectForGate)) {
+      onRequirePaidAccess?.(`Uploaded Exam (${getSubjectDisplayName(subjectForGate)})`);
+      return;
+    }
+    if (questionsList.length === 0) return;
+
+    const mins = useTimer ? Math.max(5, Math.round(questionsList.length * 1.5)) : 0;
+    setExamTitle(title);
+    setExamQuestions(questionsList);
+    setDurationMinutes(mins);
+    setTimeLeftSeconds(mins * 60);
+    examStartTimeRef.current = Date.now();
     setUserAnswers({});
     setFlaggedIds({});
     setCurrentIndex(0);
@@ -264,10 +225,10 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
     setExamResult(null);
   };
 
-  // Timer tick
+  // Timer tick (only counts down when durationMinutes > 0)
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (examStarted && !examCompleted && timeLeftSeconds > 0) {
+    let timer: ReturnType<typeof setInterval>;
+    if (examStarted && !examCompleted && durationMinutes > 0 && timeLeftSeconds > 0) {
       timer = setInterval(() => {
         setTimeLeftSeconds((prev) => {
           if (prev <= 1) {
@@ -280,7 +241,7 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [examStarted, examCompleted, timeLeftSeconds]);
+  }, [examStarted, examCompleted, durationMinutes, timeLeftSeconds]);
 
   const formatTime = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -291,34 +252,32 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
   const handleSelectAnswer = (optIndex: number) => {
     const q = examQuestions[currentIndex];
     if (!q) return;
-    setUserAnswers(prev => ({
+    setUserAnswers((prev) => ({
       ...prev,
-      [q.id]: optIndex
+      [q.id]: optIndex,
     }));
   };
 
   const handleToggleFlag = () => {
     const q = examQuestions[currentIndex];
     if (!q) return;
-    setFlaggedIds(prev => ({
+    setFlaggedIds((prev) => ({
       ...prev,
-      [q.id]: !prev[q.id]
+      [q.id]: !prev[q.id],
     }));
   };
 
   const handleSubmitExam = () => {
-    const totalTimeSpent = (durationMinutes * 60) - timeLeftSeconds;
+    const elapsedFromRef = Math.max(1, Math.round((Date.now() - examStartTimeRef.current) / 1000));
+    const totalTimeSpent =
+      durationMinutes > 0
+        ? Math.max(1, durationMinutes * 60 - timeLeftSeconds)
+        : elapsedFromRef;
     let correctCount = 0;
     const wrongList: Question[] = [];
+    const breakdown: ExamResult['subjectBreakdown'] = {};
 
-    const breakdown: ExamResult['subjectBreakdown'] = {
-      mathematics: { total: 0, correct: 0 },
-      physics: { total: 0, correct: 0 },
-      chemistry: { total: 0, correct: 0 },
-      aptitude: { total: 0, correct: 0 },
-    };
-
-    const answersReport = examQuestions.map(q => {
+    const answersReport = examQuestions.map((q) => {
       const selected = userAnswers[q.id] !== undefined ? userAnswers[q.id] : null;
       const isCorrect = selected === q.correctAnswer;
 
@@ -328,19 +287,24 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
         wrongList.push(q);
       }
 
-      if (breakdown[q.subject]) {
-        breakdown[q.subject].total++;
-        if (isCorrect) breakdown[q.subject].correct++;
+      const subjKey = q.subject || 'general';
+      if (!breakdown[subjKey]) {
+        breakdown[subjKey] = { total: 0, correct: 0 };
+      }
+      breakdown[subjKey].total++;
+      if (isCorrect) {
+        breakdown[subjKey].correct++;
       }
 
       return {
         questionId: q.id,
         userSelected: selected,
-        isCorrect
+        isCorrect,
       };
     });
 
-    const scorePercentage = Math.round((correctCount / examQuestions.length) * 100);
+    const scorePercentage =
+      examQuestions.length > 0 ? Math.round((correctCount / examQuestions.length) * 100) : 0;
 
     const result: ExamResult = {
       id: `exam-${Date.now()}`,
@@ -350,25 +314,27 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
       scorePercentage,
       timeSpentSeconds: totalTimeSpent,
       subjectBreakdown: breakdown,
-      answers: answersReport
+      answers: answersReport,
     };
 
     setExamResult(result);
     setExamCompleted(true);
     setExamStarted(false);
 
-    // Save to permanent exam history
     if (onSaveExamRecord) {
       const record: SavedExamRecord = {
         id: result.id,
         title: examTitle,
-        date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date:
+          new Date().toLocaleDateString() +
+          ' ' +
+          new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         timestamp: Date.now(),
         totalQuestions: examQuestions.length,
         correctCount,
         scorePercentage,
         timeSpentSeconds: totalTimeSpent,
-        difficulty: customDifficulty,
+        difficulty: 'official',
         subjectBreakdown: breakdown,
         questions: examQuestions,
         answers: answersReport,
@@ -376,17 +342,15 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
       onSaveExamRecord(record);
     }
 
-    // Save wrong questions to Mistakes Notebook
     if (wrongList.length > 0) {
       onSaveMistakes(wrongList);
     }
 
-    // Trigger celebration if high score
     if (scorePercentage >= 70) {
       confetti({
         particleCount: 100,
         spread: 70,
-        origin: { y: 0.6 }
+        origin: { y: 0.6 },
       });
     }
   };
@@ -394,10 +358,10 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
   const handleReviewPastExam = (record: SavedExamRecord) => {
     setExamTitle(record.title);
     setExamQuestions(record.questions);
-    setDurationMinutes(Math.round(record.timeSpentSeconds / 60) || 20);
+    setDurationMinutes(Math.round(record.timeSpentSeconds / 60) || 15);
     setTimeLeftSeconds(0);
     const remappedAnswers: Record<string, number> = {};
-    record.answers.forEach(a => {
+    record.answers.forEach((a) => {
       if (a.userSelected !== null) {
         remappedAnswers[a.questionId] = a.userSelected;
       }
@@ -417,426 +381,397 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
     setExamCompleted(true);
   };
 
-  // Pre-exam Landing Screen with AI Custom Builder, Standard & History Modes
+  // Pre-exam Hub Screen
   if (!examStarted && !examCompleted) {
+    const totalUploadedMcqs = practicePosts.filter((p) => p.postType === 'mcq').length;
+
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Mode Selector Header Bar */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-1.5 flex flex-wrap items-center gap-1.5 shadow-sm">
+      <div className="space-y-4">
+        {/* Top Mode Tabs */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-1.5 flex items-center gap-1.5 shadow-sm">
           <button
-            id="exam-mode-ai-custom-btn"
-            onClick={() => setExamMode('ai_custom')}
-            className={`flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition ${
-              examMode === 'ai_custom'
-                ? 'bg-blue-600 text-white shadow-md'
+            type="button"
+            onClick={() => setExamMode('uploaded')}
+            className={`flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer ${
+              examMode === 'uploaded'
+                ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            <Sparkles className="w-4 h-4 text-amber-300" />
-            <span className="hidden sm:inline">AI Custom Exam</span>
-            <span className="sm:hidden">AI Custom</span>
-            <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1 py-0.2 rounded font-bold uppercase">
-              NEW
-            </span>
+            <GraduationCap className="w-4 h-4 text-emerald-300 shrink-0" />
+            <span>Exam Tests & MCQs ({groupedTests.length + imagePosts.length})</span>
           </button>
 
           <button
-            id="exam-mode-standard-btn"
-            onClick={() => setExamMode('standard')}
-            className={`flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition ${
-              examMode === 'standard'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-            }`}
-          >
-            <Trophy className="w-4 h-4 text-amber-400" />
-            <span className="hidden sm:inline">Standard 22-Q Mock</span>
-            <span className="sm:hidden">Standard Mock</span>
-          </button>
-
-          <button
-            id="exam-mode-history-btn"
+            type="button"
             onClick={() => setExamMode('history')}
-            className={`flex-1 py-3 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition ${
+            className={`flex-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition cursor-pointer ${
               examMode === 'history'
-                ? 'bg-blue-600 text-white shadow-md'
+                ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
           >
-            <History className="w-4 h-4 text-emerald-400" />
-            <span>Past Exam History</span>
-            {examHistory.length > 0 && (
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.2 rounded-full font-bold">
-                {examHistory.length}
-              </span>
-            )}
+            <History className="w-4 h-4 text-amber-300 shrink-0" />
+            <span>Past Scores ({examHistory.length})</span>
           </button>
         </div>
 
-        {/* AI Custom Exam Builder Screen */}
-        {examMode === 'ai_custom' && (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-xl space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-4">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  AI Custom Mock Exam Creator
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  Customize your mock exam: select question count, specific subjects, topic content, and target difficulty.
-                </p>
-              </div>
-              <div className="text-xs bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 px-3 py-1.5 rounded-xl font-semibold flex items-center gap-1.5 self-start">
-                <Flame className="w-4 h-4 text-amber-500" />
-                Gemini 3.7 Powered
-              </div>
-            </div>
-
-            {/* 1. Number of Questions */}
-            <div className="space-y-2.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center justify-between">
-                <span>1. How Many Questions?</span>
-                <span className="text-blue-600 dark:text-blue-400 font-extrabold normal-case">
-                  {customCount} Questions (~{Math.round(customCount * 1.8)} mins)
-                </span>
-              </label>
-
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                {[5, 10, 15, 20, 25, 30].map((num) => (
-                  <button
-                    key={num}
-                    id={`ai-exam-count-${num}`}
-                    type="button"
-                    onClick={() => {
-                      setCustomCount(num);
-                      setDurationMinutes(Math.round(num * 1.8));
-                    }}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition text-center flex flex-col items-center justify-center gap-0.5 ${
-                      customCount === num
-                        ? 'bg-blue-600 border-blue-500 text-white shadow-sm ring-2 ring-blue-400/40'
-                        : 'bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-slate-400'
-                    }`}
-                  >
-                    <span className="text-sm sm:text-base font-black">{num}</span>
-                    <span className="text-[10px] font-normal opacity-80">Questions</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 2. Choose Subject(s) */}
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  2. Select Subject(s) to Include
-                </label>
-                <button
-                  type="button"
-                  onClick={handleSelectAllSubjects}
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-semibold"
-                >
-                  Select All 4 Subjects
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                {SUBJECT_CONFIGS.map((s) => {
-                  const isSelected = customSubjects.includes(s.id);
-                  return (
-                    <button
-                      key={s.id}
-                      id={`ai-exam-subject-${s.id}`}
-                      type="button"
-                      onClick={() => handleToggleSubject(s.id)}
-                      className={`p-3 rounded-xl border text-left flex items-center justify-between transition ${
-                        isSelected
-                          ? `${s.bg} border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/30 text-slate-900 dark:text-white`
-                          : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-400'}`}>
-                          {s.icon}
-                        </div>
-                        <span className="text-xs font-bold">{s.name}</span>
-                      </div>
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center ${isSelected ? 'bg-blue-600 text-white' : 'border border-slate-300 dark:border-slate-600'}`}>
-                        {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 3. Question Difficulty Level */}
-            <div className="space-y-2.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                3. Target Difficulty Level
-              </label>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                {[
-                  { id: 'easy', label: 'Easy', desc: 'Foundations & Direct Formulas', color: 'emerald', border: 'border-emerald-500/40', activeBg: 'bg-emerald-600' },
-                  { id: 'medium', label: 'Medium', desc: 'Standard AASTU Exam Level', color: 'blue', border: 'border-blue-500/40', activeBg: 'bg-blue-600' },
-                  { id: 'hard', label: 'Hard', desc: 'Challenger / Multi-step Math', color: 'rose', border: 'border-rose-500/40', activeBg: 'bg-rose-600' },
-                  { id: 'mixed', label: 'Mixed', desc: 'Realistic Exam Distribution', color: 'indigo', border: 'border-indigo-500/40', activeBg: 'bg-indigo-600' },
-                ].map((diff) => {
-                  const isSelected = customDifficulty === diff.id;
-                  return (
-                    <button
-                      key={diff.id}
-                      id={`ai-exam-diff-${diff.id}`}
-                      type="button"
-                      onClick={() => setCustomDifficulty(diff.id as any)}
-                      className={`p-3 rounded-xl border text-left transition flex flex-col justify-between ${
-                        isSelected
-                          ? `bg-slate-900 dark:bg-slate-800 text-white ${diff.border} ring-2 ring-blue-400/30`
-                          : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-extrabold capitalize">{diff.label}</span>
-                        {isSelected && <span className={`w-2 h-2 rounded-full ${diff.activeBg}`} />}
-                      </div>
-                      <p className="text-[10px] opacity-80 leading-tight">{diff.desc}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 4. Content & Topic Scope */}
-            <div className="space-y-3">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                4. Topic / Content Focus Scope
-              </label>
-
-              {/* Quick Topic Chips */}
-              <div className="flex flex-wrap gap-1.5">
-                {TOPIC_PRESETS.map((preset) => (
-                  <button
-                    key={preset.label}
-                    type="button"
-                    onClick={() => {
-                      setCustomContentFocus(preset.value);
-                      setCustomTopicInput('');
-                    }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
-                      customContentFocus === preset.value && !customTopicInput
-                        ? 'bg-blue-600 border-blue-500 text-white shadow-sm'
-                        : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Custom Topic Input */}
-              <div className="space-y-1">
-                <div className="relative">
-                  <input
-                    id="ai-custom-topic-input"
-                    type="text"
-                    value={customTopicInput}
-                    onChange={(e) => setCustomTopicInput(e.target.value)}
-                    placeholder="Or type specific topics (e.g. 'Integrals, Projectile Motion & Acid-Base titrations')..."
-                    className="w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {customTopicInput && (
-                    <button
-                      type="button"
-                      onClick={() => setCustomTopicInput('')}
-                      className="absolute right-2.5 top-2.5 text-xs text-slate-400 hover:text-slate-200"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* 5. Exam Duration Timing */}
-            <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-blue-500" />
-                  <span>5. Exam Timer Limit</span>
-                </label>
-                <span className="text-xs font-bold text-slate-500">
-                  {durationMinutes > 0 ? `${durationMinutes} Minutes` : 'Untimed Practice'}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { label: 'Auto (Recommended)', mins: Math.round(customCount * 1.8) },
-                  { label: '15 Mins', mins: 15 },
-                  { label: '30 Mins', mins: 30 },
-                  { label: '45 Mins', mins: 45 },
-                  { label: '60 Mins', mins: 60 },
-                ].map((t) => (
-                  <button
-                    key={t.label}
-                    type="button"
-                    onClick={() => setDurationMinutes(t.mins)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                      durationMinutes === t.mins
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-                    }`}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Error Notification */}
-            {generationError && (
-              <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{generationError}</span>
-              </div>
-            )}
-
-            {/* Generate & Launch Action Button */}
-            <div className="pt-2">
-              <button
-                id="generate-ai-mock-exam-btn"
-                type="button"
-                onClick={handleGenerateAIMockExam}
-                disabled={isGenerating}
-                className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-sm sm:text-base shadow-lg shadow-blue-600/30 hover:scale-[1.01] active:scale-[0.99] transition flex items-center justify-center gap-2.5 disabled:opacity-50"
-              >
-                {isGenerating ? (
-                  <>
-                    <RefreshCw className="w-5 h-5 animate-spin text-amber-300" />
-                    <span>{generationStep || 'Generating Custom AI Exam...'}</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
-                    <span>Generate & Launch {customCount}-Question AI Mock Exam</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Standard Benchmark Mock Exam Mode */}
-        {examMode === 'standard' && (
-          <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 rounded-2xl p-6 sm:p-8 text-white border border-blue-800/40 shadow-xl text-center space-y-5">
-            <div className="inline-flex p-3 rounded-2xl bg-blue-600/30 border border-blue-400/40 text-blue-300 mx-auto">
-              <Trophy className="w-8 h-8 text-amber-400" />
-            </div>
-
-            <h2 className="text-2xl sm:text-3xl font-black text-white">
-              Standard AASTU Entrance Mock Exam
-            </h2>
-            <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-              Full-length 22-question benchmark exam balancing Mathematics, Physics, Chemistry, and Analytical Aptitude under standard 45-minute timed exam conditions.
-            </p>
-
-            {/* Exam Specs */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto pt-2 text-left">
-              <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
-                <div className="text-xs text-slate-400">Total Questions</div>
-                <div className="text-lg font-bold text-white">22 Questions</div>
-              </div>
-              <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
-                <div className="text-xs text-slate-400">Time Limit</div>
-                <div className="text-lg font-bold text-blue-400">45 Minutes</div>
-              </div>
-              <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
-                <div className="text-xs text-slate-400">Pacing</div>
-                <div className="text-lg font-bold text-emerald-400">~2 min / Q</div>
-              </div>
-              <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
-                <div className="text-xs text-slate-400">Passing Target</div>
-                <div className="text-lg font-bold text-amber-400">75%+ Score</div>
-              </div>
-            </div>
-
-            {/* Launch Button */}
-            <div className="pt-4">
-              <button
-                id="start-standard-exam-btn"
-                onClick={handleStartStandardExam}
-                className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-sm sm:text-base shadow-lg shadow-blue-600/40 hover:scale-[1.02] active:scale-[0.98] transition flex items-center gap-2 mx-auto"
-              >
-                Start Standard Mock Exam <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Past Exam History Mode */}
-        {examMode === 'history' && (
-          <div className="space-y-5">
-            {/* History Metrics Banner */}
-            <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 rounded-2xl p-6 text-white border border-blue-800/40 shadow-xl space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-blue-800/60 pb-4">
+        {examMode === 'uploaded' ? (
+          <div className="space-y-4">
+            {/* Filter & Controls Bar */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h3 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
-                    <History className="w-6 h-6 text-emerald-400" />
-                    Permanent Mock Exam History & Diagnostic Records
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-300 mt-1">
-                    Every mock test you finish is permanently archived here with full question breakdown and answer logs.
+                  <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5 text-blue-400" />
+                    <span>Admin-Uploaded Exams & MCQs</span>
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Select any official Midterm or Final exam test uploaded by your Academy Admin ({totalUploadedMcqs} MCQs total).
                   </p>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setUseTimer((prev) => !prev)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border flex items-center gap-1.5 transition cursor-pointer ${
+                      useTimer
+                        ? 'bg-amber-950/50 border-amber-600/50 text-amber-300'
+                        : 'bg-slate-800 border-slate-700 text-slate-300'
+                    }`}
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>{useTimer ? 'Timed Mode' : 'Untimed'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={refreshPosts}
+                    disabled={loadingPosts}
+                    className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${loadingPosts ? 'animate-spin' : ''}`} />
+                    <span>Refresh</span>
+                  </button>
+                </div>
               </div>
 
-              {examHistory.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                  <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
-                    <div className="text-xs text-slate-400">Total Exams Completed</div>
-                    <div className="text-lg font-bold text-white mt-0.5">{examHistory.length} Exams</div>
-                  </div>
-                  <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
-                    <div className="text-xs text-slate-400">Average Score</div>
-                    <div className="text-lg font-bold text-blue-300 mt-0.5">
-                      {Math.round(examHistory.reduce((acc, h) => acc + h.scorePercentage, 0) / examHistory.length)}%
-                    </div>
-                  </div>
-                  <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
-                    <div className="text-xs text-slate-400">Highest Score</div>
-                    <div className="text-lg font-bold text-emerald-400 mt-0.5">
-                      {Math.max(...examHistory.map(h => h.scorePercentage))}%
-                    </div>
-                  </div>
-                  <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
-                    <div className="text-xs text-slate-400">Total Questions Tested</div>
-                    <div className="text-lg font-bold text-amber-300 mt-0.5">
-                      {examHistory.reduce((acc, h) => acc + h.totalQuestions, 0)} Qs
-                    </div>
-                  </div>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                <select
+                  value={selectedSubject}
+                  onChange={(e) => {
+                    const nextSubj = e.target.value as Subject;
+                    if (
+                      isPaidAccessLocked &&
+                      nextSubj !== 'all' &&
+                      !isFreeCourseSubject(nextSubj)
+                    ) {
+                      onRequirePaidAccess?.(`Uploaded Exams — ${getSubjectDisplayName(nextSubj)}`);
+                      return;
+                    }
+                    setSelectedSubject(nextSubj);
+                  }}
+                  className="px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm font-semibold text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="all">All Subjects</option>
+                  {OFFICIAL_17_FRESHMAN_COURSES.map((c) => (
+                    <option key={c.id} value={c.subject}>
+                      {c.shortTitle}
+                      {isPaidAccessLocked
+                        ? isFreeCourseSubject(c.subject)
+                          ? ' (FREE)'
+                          : ' (50 ETB)'
+                        : ''}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="flex items-center gap-1 p-1 bg-slate-950 border border-slate-800 rounded-xl text-xs shrink-0">
+                  {(['all', 'midterm', 'final'] as const).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setSelectedExamType(t)}
+                      className={`px-3 py-1.5 rounded-lg font-semibold capitalize transition cursor-pointer ${
+                        selectedExamType === t
+                          ? 'bg-blue-600 text-white'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {t === 'all' ? 'All Exams' : t}
+                    </button>
+                  ))}
                 </div>
-              )}
+
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search exam test title or topic..."
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* List of Past Exams */}
+            {/* Combined Practice Banner when multiple tests exist for a filtered subject */}
+            {selectedSubject !== 'all' &&
+              groupedTests.length > 1 &&
+              allFilteredMcqQuestions.length > 0 && (
+                <div className="bg-slate-900 border border-blue-800/50 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-bold text-blue-400 uppercase">
+                      Combined Subject Practice
+                    </div>
+                    <div className="text-sm font-bold text-white mt-0.5">
+                      All {getSubjectDisplayName(selectedSubject)} Uploaded MCQs ({allFilteredMcqQuestions.length} Questions)
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      launchExamSession(
+                        `${getSubjectDisplayName(selectedSubject)} — All Uploaded MCQs`,
+                        allFilteredMcqQuestions,
+                        selectedSubject
+                      )
+                    }
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <Play className="w-3.5 h-3.5" />
+                    <span>Practice All ({allFilteredMcqQuestions.length} Qs)</span>
+                  </button>
+                </div>
+              )}
+
+            {/* Empty State or Uploaded Exam Cards */}
+            {loadingPosts && practicePosts.length === 0 ? (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center text-xs text-slate-400">
+                Loading uploaded exam tests & MCQs...
+              </div>
+            ) : groupedTests.length === 0 && imagePosts.length === 0 ? (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-10 sm:p-12 text-center space-y-3">
+                <GraduationCap className="w-10 h-10 text-slate-500 mx-auto" />
+                <h3 className="text-base font-bold text-white">
+                  {practicePosts.length === 0
+                    ? 'No Exam Tests Uploaded Yet'
+                    : 'No Matching Exam Tests Found'}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+                  {practicePosts.length === 0
+                    ? 'Exams, MCQs, and test papers uploaded by your Admin will appear here automatically for you to practice.'
+                    : 'Try switching the subject or exam type filter above.'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* MCQ Exam Tests Grid */}
+                {groupedTests.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {groupedTests.map((group) => {
+                      const isLocked = isPaidAccessLocked && !isFreeCourseSubject(group.subject);
+                      const firstQuestion = group.posts[0]?.question || '';
+
+                      return (
+                        <div
+                          key={group.key}
+                          className="bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-2xl p-5 flex flex-col justify-between gap-4 transition"
+                        >
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase border bg-blue-950/90 text-blue-300 border-blue-700/60">
+                                {group.examType}
+                              </span>
+                              <span className="font-semibold text-blue-400">
+                                {getSubjectDisplayName(group.subject)}
+                              </span>
+                              <span className="text-slate-500">·</span>
+                              <span className="text-emerald-400 font-bold">
+                                {group.posts.length} MCQ{group.posts.length === 1 ? '' : 's'}
+                              </span>
+                            </div>
+
+                            <h3 className="text-base font-bold text-white leading-snug">
+                              {group.title}
+                            </h3>
+
+                            {firstQuestion && (
+                              <p className="text-xs text-slate-400 line-clamp-2">
+                                Q1: {firstQuestion}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-3">
+                            <span className="text-[11px] text-slate-400 tabular-nums">
+                              Uploaded {new Date(group.latestCreatedAt).toLocaleDateString()}
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                launchExamSession(
+                                  group.title,
+                                  group.posts.map(practicePostToQuestion),
+                                  group.subject
+                                )
+                              }
+                              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap"
+                            >
+                              {isLocked ? (
+                                <Lock className="w-3.5 h-3.5" />
+                              ) : (
+                                <Play className="w-3.5 h-3.5" />
+                              )}
+                              <span>Start Exam ({group.posts.length} Qs)</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Uploaded Exam Sheet Images */}
+                {imagePosts.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4 text-emerald-400" />
+                      <span>Uploaded Exam Papers & Answer Sheets ({imagePosts.length})</span>
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {imagePosts.map((sheet) => {
+                        const isLocked = isPaidAccessLocked && !isFreeCourseSubject(sheet.subject);
+                        const showKey = Boolean(showSheetKeyId[sheet.id]);
+
+                        return (
+                          <div
+                            key={sheet.id}
+                            className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="space-y-1 min-w-0">
+                                <div className="flex items-center gap-1.5 text-[11px]">
+                                  <span className="px-2 py-0.5 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-700/60 font-extrabold uppercase">
+                                    {sheet.examType} Paper
+                                  </span>
+                                  <span className="text-blue-400 font-semibold">
+                                    {getSubjectDisplayName(sheet.subject)}
+                                  </span>
+                                </div>
+                                <h4 className="text-sm font-bold text-white">{sheet.title}</h4>
+                              </div>
+                            </div>
+
+                            {!isLocked && (
+                              <img
+                                src={sheet.imageDataUrl}
+                                alt={sheet.title}
+                                onClick={() => setInspectedSheet(sheet)}
+                                className="w-full max-h-56 object-contain rounded-xl bg-slate-950 border border-slate-800 cursor-pointer"
+                              />
+                            )}
+
+                            {sheet.explanation && showKey && !isLocked && (
+                              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 whitespace-pre-wrap">
+                                {sheet.explanation}
+                              </div>
+                            )}
+
+                            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
+                              <span className="text-[11px] text-slate-400">
+                                {new Date(sheet.createdAt).toLocaleDateString()}
+                              </span>
+
+                              <div className="flex items-center gap-2">
+                                {sheet.explanation && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (isLocked) {
+                                        onRequirePaidAccess?.(sheet.title);
+                                        return;
+                                      }
+                                      setShowSheetKeyId((prev) => ({
+                                        ...prev,
+                                        [sheet.id]: !prev[sheet.id],
+                                      }));
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                                    <span>{showKey ? 'Hide Key' : 'Answer Key'}</span>
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (isLocked) {
+                                      onRequirePaidAccess?.(sheet.title);
+                                      return;
+                                    }
+                                    setInspectedSheet(sheet);
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white flex items-center gap-1 cursor-pointer"
+                                >
+                                  {isLocked ? (
+                                    <Lock className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <Eye className="w-3.5 h-3.5" />
+                                  )}
+                                  <span>View Full Paper</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Past Exam History Mode */
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div>
+                <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <History className="w-5 h-5 text-blue-600" />
+                  Completed Exams & Score History
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Review your past uploaded exam attempts, scores, and detailed solutions.
+                </p>
+              </div>
+            </div>
+
             {examHistory.length === 0 ? (
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3">
-                <History className="w-12 h-12 mx-auto text-slate-400 stroke-1" />
-                <h4 className="text-base font-bold text-slate-800 dark:text-slate-200">No past exams recorded yet</h4>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  Take your first AI Custom Exam or Standard 22-Q AASTU benchmark mock exam. Your score logs and questions will appear here permanently!
+              <div className="py-16 text-center text-slate-400 space-y-3">
+                <Trophy className="w-12 h-12 mx-auto stroke-1 text-slate-300" />
+                <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">
+                  No Past Exam History Yet
+                </h3>
+                <p className="text-xs max-w-sm mx-auto text-slate-500">
+                  Take any uploaded exam test and submit it to track your performance here.
                 </p>
                 <button
-                  onClick={() => setExamMode('ai_custom')}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl shadow transition"
+                  type="button"
+                  onClick={() => setExamMode('uploaded')}
+                  className="px-4 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl shadow transition"
                 >
-                  Generate Mock Exam Now
+                  Browse Uploaded Exams
                 </button>
               </div>
             ) : (
-              <div className="space-y-3">
-                {examHistory.slice().reverse().map((record, rIdx) => {
+              <div className="space-y-4">
+                {examHistory.map((record) => {
                   const mins = Math.floor(record.timeSpentSeconds / 60);
                   const secs = record.timeSpentSeconds % 60;
                   const isHighScore = record.scorePercentage >= 75;
@@ -844,13 +779,13 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
 
                   return (
                     <div
-                      key={record.id || rIdx}
-                      className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition"
+                      key={record.id}
+                      className="p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-slate-300 transition space-y-3"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+                            <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
                               {record.title}
                             </span>
                             <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
@@ -866,43 +801,47 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
                           </div>
                         </div>
 
-                        {/* Score Badge */}
                         <div className="flex items-center gap-3">
-                          <div className={`px-3 py-1.5 rounded-xl font-black text-sm sm:text-base border flex items-center gap-1.5 ${
-                            isHighScore
-                              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300'
-                              : isMidScore
-                              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300'
-                              : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-300'
-                          }`}>
+                          <div
+                            className={`px-3 py-1.5 rounded-xl font-black text-sm sm:text-base border flex items-center gap-1.5 ${
+                              isHighScore
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300'
+                                : isMidScore
+                                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300'
+                                : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-300'
+                            }`}
+                          >
                             <Trophy className="w-4 h-4" />
                             <span>{record.scorePercentage}%</span>
-                            <span className="text-[11px] font-normal opacity-80">({record.correctCount}/{record.totalQuestions})</span>
+                            <span className="text-[11px] font-normal opacity-80">
+                              ({record.correctCount}/{record.totalQuestions})
+                            </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Subject breakdown pills */}
                       <div className="flex flex-wrap gap-2 pt-1">
-                        {record.subjectBreakdown && Object.entries(record.subjectBreakdown).map(([subj, rawStats]) => {
-                          const stats = rawStats as { total: number; correct: number } | undefined;
-                          if (!stats || stats.total === 0) return null;
-                          const sPct = Math.round((stats.correct / stats.total) * 100);
-                          return (
-                            <span
-                              key={subj}
-                              className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium capitalize"
-                            >
-                              <strong>{subj}:</strong> {stats.correct}/{stats.total} ({sPct}%)
-                            </span>
-                          );
-                        })}
+                        {record.subjectBreakdown &&
+                          Object.entries(record.subjectBreakdown).map(([subj, rawStats]) => {
+                            const stats = rawStats as { total: number; correct: number } | undefined;
+                            if (!stats || stats.total === 0) return null;
+                            const sPct = Math.round((stats.correct / stats.total) * 100);
+                            const subjLabel = getSubjectDisplayName(subj);
+                            return (
+                              <span
+                                key={subj}
+                                className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium"
+                              >
+                                <strong>{subjLabel}:</strong> {stats.correct}/{stats.total} ({sPct}%)
+                              </span>
+                            );
+                          })}
                       </div>
 
-                      {/* Actions */}
                       <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/80">
                         <div className="flex items-center gap-2">
                           <button
+                            type="button"
                             onClick={() => handleReviewPastExam(record)}
                             className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
                           >
@@ -910,12 +849,16 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
                           </button>
 
                           <button
+                            type="button"
                             onClick={() => {
-                              // Retake with same questions
+                              const mins = useTimer
+                                ? Math.max(5, Math.round(record.questions.length * 1.5))
+                                : 0;
                               setExamTitle(`Retake: ${record.title}`);
                               setExamQuestions(record.questions);
-                              setDurationMinutes(Math.round(record.questions.length * 1.8));
-                              setTimeLeftSeconds(Math.round(record.questions.length * 1.8) * 60);
+                              setDurationMinutes(mins);
+                              setTimeLeftSeconds(mins * 60);
+                              examStartTimeRef.current = Date.now();
                               setUserAnswers({});
                               setFlaggedIds({});
                               setCurrentIndex(0);
@@ -931,11 +874,8 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
 
                         {onDeleteExamRecord && (
                           <button
-                            onClick={() => {
-                              if (window.confirm('Delete this exam record from history?')) {
-                                onDeleteExamRecord(record.id);
-                              }
-                            }}
+                            type="button"
+                            onClick={() => onDeleteExamRecord(record.id)}
                             className="p-1.5 text-slate-400 hover:text-rose-600 transition"
                             title="Delete Record"
                           >
@@ -950,6 +890,40 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
             )}
           </div>
         )}
+
+        {/* Exam Sheet Image Fullscreen Modal */}
+        {inspectedSheet && (
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
+              <div className="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between gap-2">
+                <div className="text-xs sm:text-sm font-bold text-white truncate">
+                  {inspectedSheet.title} ({getSubjectDisplayName(inspectedSheet.subject)} ·{' '}
+                  {inspectedSheet.examType.toUpperCase()})
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setInspectedSheet(null)}
+                  className="p-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-auto p-4 bg-slate-950 flex flex-col items-center gap-3">
+                <img
+                  src={inspectedSheet.imageDataUrl}
+                  alt={inspectedSheet.title}
+                  className="max-h-[70vh] w-auto object-contain rounded-lg"
+                />
+                {inspectedSheet.explanation && (
+                  <div className="w-full p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 whitespace-pre-wrap">
+                    <strong className="block text-emerald-400 mb-1">Instructions / Answer Key:</strong>
+                    {inspectedSheet.explanation}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -957,16 +931,24 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
   // Active Exam In-Progress Screen
   if (examStarted && !examCompleted) {
     const currentQ = examQuestions[currentIndex];
-    const isAnswered = userAnswers[currentQ?.id] !== undefined;
     const isFlagged = Boolean(flaggedIds[currentQ?.id]);
     const answeredCount = Object.keys(userAnswers).length;
 
     return (
       <div className="space-y-4">
-        {/* Exam Control Top Bar */}
         <div className="bg-slate-900 text-white p-4 rounded-xl border border-slate-800 flex flex-wrap items-center justify-between gap-3 sticky top-16 z-30 shadow-lg">
-          <div className="flex items-center gap-3">
-            <span className="font-extrabold text-sm text-blue-400 truncate max-w-[200px] sm:max-w-none">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => {
+                setExamStarted(false);
+                setExamCompleted(false);
+              }}
+              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 cursor-pointer"
+            >
+              Exit
+            </button>
+            <span className="font-extrabold text-sm text-blue-400 truncate max-w-[180px] sm:max-w-md">
               {examTitle}
             </span>
             <span className="text-xs text-slate-400 hidden sm:inline">
@@ -975,19 +957,21 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Countdown timer badge */}
-            <div className={`px-3 py-1.5 rounded-lg font-mono font-bold text-xs sm:text-sm flex items-center gap-1.5 border ${
-              timeLeftSeconds < 300 
-                ? 'bg-rose-950 text-rose-300 border-rose-700 animate-pulse' 
-                : 'bg-slate-800 text-amber-300 border-slate-700'
-            }`}>
+            <div
+              className={`px-3 py-1.5 rounded-lg font-mono font-bold text-xs sm:text-sm flex items-center gap-1.5 border ${
+                durationMinutes > 0 && timeLeftSeconds < 300
+                  ? 'bg-rose-950 text-rose-300 border-rose-700 animate-pulse'
+                  : 'bg-slate-800 text-amber-300 border-slate-700'
+              }`}
+            >
               <Clock className="w-3.5 h-3.5" />
-              <span>{formatTime(timeLeftSeconds)}</span>
+              <span>{durationMinutes > 0 ? formatTime(timeLeftSeconds) : 'Untimed'}</span>
             </div>
 
             <button
+              type="button"
               onClick={handleSubmitExam}
-              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow transition"
+              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow transition cursor-pointer"
             >
               Submit Exam
             </button>
@@ -995,30 +979,22 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Question Area (3 Cols) */}
+          {/* Main Question Area */}
           <div className="lg:col-span-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-md space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 gap-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-extrabold px-2.5 py-1 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 uppercase">
-                  {currentQ?.subject}
+                <span className="text-xs font-extrabold px-2.5 py-1 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300">
+                  {currentQ?.subject ? getSubjectDisplayName(currentQ.subject) : ''}
                 </span>
                 <span className="text-xs text-slate-500 font-medium truncate max-w-[180px] sm:max-w-none">
                   {currentQ?.topic}
                 </span>
-                {currentQ?.difficulty && (
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded capitalize ${
-                    currentQ.difficulty === 'easy' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                    currentQ.difficulty === 'hard' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
-                    'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                  }`}>
-                    {currentQ.difficulty}
-                  </span>
-                )}
               </div>
 
               <button
+                type="button"
                 onClick={handleToggleFlag}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shrink-0 ${
+                className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shrink-0 cursor-pointer ${
                   isFlagged
                     ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300'
                     : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -1034,27 +1010,41 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
               <MathRenderer text={currentQ?.question || ''} />
             </div>
 
-            {/* Options List */}
+            {currentQ?.imageDataUrl && (
+              <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-950 p-2">
+                <img
+                  src={currentQ.imageDataUrl}
+                  alt="Question illustration"
+                  className="max-h-72 mx-auto object-contain rounded-lg"
+                />
+              </div>
+            )}
+
             <div className="space-y-2.5">
               {currentQ?.options.map((opt, idx) => {
                 const isSelected = userAnswers[currentQ.id] === idx;
                 return (
                   <button
                     key={idx}
+                    type="button"
                     id={`mock-opt-${idx}`}
                     onClick={() => handleSelectAnswer(idx)}
-                    className={`w-full text-left p-3.5 sm:p-4 rounded-xl border transition flex items-center justify-between text-xs sm:text-base gap-3 ${
+                    className={`w-full text-left p-3.5 sm:p-4 rounded-xl border transition flex items-center justify-between text-xs sm:text-base gap-3 cursor-pointer ${
                       isSelected
                         ? 'border-blue-600 bg-blue-50 dark:bg-blue-950/50 text-blue-900 dark:text-blue-200 font-semibold ring-2 ring-blue-400/30'
                         : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-200'
                     }`}
                   >
-                    <span className="overflow-x-auto"><MathRenderer text={opt} /></span>
-                    <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-xs font-bold shrink-0 ${
-                      isSelected 
-                        ? 'border-blue-600 bg-blue-600 text-white' 
-                        : 'border-slate-300 dark:border-slate-700 text-slate-400'
-                    }`}>
+                    <span className="overflow-x-auto">
+                      <MathRenderer text={opt} />
+                    </span>
+                    <span
+                      className={`w-5 h-5 rounded-full border flex items-center justify-center text-xs font-bold shrink-0 ${
+                        isSelected
+                          ? 'border-blue-600 bg-blue-600 text-white'
+                          : 'border-slate-300 dark:border-slate-700 text-slate-400'
+                      }`}
+                    >
                       {String.fromCharCode(65 + idx)}
                     </span>
                   </button>
@@ -1062,12 +1052,12 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
               })}
             </div>
 
-            {/* Navigation buttons */}
             <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
               <button
+                type="button"
                 onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
                 disabled={currentIndex === 0}
-                className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 flex items-center gap-1.5 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" /> Prev
               </button>
@@ -1077,22 +1067,22 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
               </span>
 
               <button
+                type="button"
                 onClick={() => setCurrentIndex(Math.min(examQuestions.length - 1, currentIndex + 1))}
                 disabled={currentIndex === examQuestions.length - 1}
-                className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 flex items-center gap-1.5 cursor-pointer"
               >
                 Next <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Question Palette Sidebar (1 Col) */}
+          {/* Question Navigator Sidebar */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
             <h4 className="font-bold text-xs uppercase tracking-wider text-slate-500">
               Question Navigator
             </h4>
 
-            {/* Color Legend */}
             <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-600 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded bg-blue-600 inline-block" /> Answered
@@ -1108,7 +1098,6 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
               </div>
             </div>
 
-            {/* Number grid */}
             <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 max-h-[300px] overflow-y-auto p-0.5">
               {examQuestions.map((q, idx) => {
                 const ans = userAnswers[q.id] !== undefined;
@@ -1125,8 +1114,9 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
                 return (
                   <button
                     key={q.id}
+                    type="button"
                     onClick={() => setCurrentIndex(idx)}
-                    className={`h-9 rounded-lg text-xs font-semibold flex items-center justify-center transition ${btnBg} ${
+                    className={`h-9 rounded-lg text-xs font-semibold flex items-center justify-center transition cursor-pointer ${btnBg} ${
                       isCur ? 'ring-2 ring-blue-400 ring-offset-2 dark:ring-offset-slate-900 scale-105' : ''
                     }`}
                   >
@@ -1138,8 +1128,9 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
 
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
               <button
+                type="button"
                 onClick={handleSubmitExam}
-                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition text-center"
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition text-center cursor-pointer"
               >
                 End & Submit Exam
               </button>
@@ -1155,8 +1146,8 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
     const minutesSpent = Math.floor(examResult.timeSpentSeconds / 60);
     const secondsSpent = examResult.timeSpentSeconds % 60;
 
-    const filteredReportQuestions = examQuestions.filter(q => {
-      const rep = examResult.answers.find(a => a.questionId === q.id);
+    const filteredReportQuestions = examQuestions.filter((q) => {
+      const rep = examResult.answers.find((a) => a.questionId === q.id);
       if (reviewFilter === 'incorrect') return rep && !rep.isCorrect;
       if (reviewFilter === 'flagged') return Boolean(flaggedIds[q.id]);
       return true;
@@ -1164,7 +1155,6 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
 
     return (
       <div className="space-y-6">
-        {/* Scorecard Hero */}
         <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 rounded-2xl p-6 sm:p-8 text-white border border-blue-800/40 shadow-xl">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-blue-800/60 pb-6">
             <div>
@@ -1172,31 +1162,31 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
                 {examTitle} • Performance Report
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
-                Diagnostic Score: {examResult.scorePercentage}%
+                Score: {examResult.scorePercentage}%
               </h2>
               <p className="text-sm text-slate-300 mt-0.5">
                 {examResult.scorePercentage >= 75
-                  ? '🎉 Outstanding! You are well-positioned for the AASTU Entrance Exam.'
+                  ? 'Outstanding! Strong mastery on this exam.'
                   : examResult.scorePercentage >= 50
-                  ? '👍 Good progress! Focus on your weak subject areas below to push into top ranking.'
-                  : '💪 Keep pushing! Review the step-by-step explanations and repeat the 5-day daily plan.'}
+                  ? 'Good progress! Review the missed questions below to boost your score.'
+                  : 'Keep practicing! Study the solution breakdowns and check your Mistakes Notebook.'}
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={() => {
                   setExamStarted(false);
                   setExamCompleted(false);
                 }}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5 cursor-pointer"
               >
-                <RotateCcw className="w-4 h-4" /> Create Another Mock Exam
+                <RotateCcw className="w-4 h-4" /> Back to Uploaded Exams
               </button>
             </div>
           </div>
 
-          {/* Quick Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6">
             <div className="bg-slate-800/80 p-3.5 rounded-xl border border-slate-700">
               <div className="text-xs text-slate-400">Score & Accuracy</div>
@@ -1233,14 +1223,29 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {(Object.entries(examResult.subjectBreakdown) as [string, { total: number; correct: number }][]).map(([subj, stats]) => {
+            {(
+              Object.entries(examResult.subjectBreakdown) as [
+                string,
+                { total: number; correct: number }
+              ][]
+            ).map(([subj, stats]) => {
               if (stats.total === 0) return null;
               const subjPct = Math.round((stats.correct / stats.total) * 100);
+              const subjLabel = getSubjectDisplayName(subj);
               return (
-                <div key={subj} className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <div className="flex items-center justify-between mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">
-                    <span>{subj}</span>
-                    <span className={subjPct >= 70 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600'}>
+                <div
+                  key={subj}
+                  className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700"
+                >
+                  <div className="flex items-center justify-between mb-1 text-xs font-bold uppercase tracking-wider text-slate-500 gap-1">
+                    <span className="truncate">{subjLabel}</span>
+                    <span
+                      className={
+                        subjPct >= 70
+                          ? 'text-emerald-600 dark:text-emerald-400 shrink-0'
+                          : 'text-amber-600 shrink-0'
+                      }
+                    >
                       {subjPct}%
                     </span>
                   </div>
@@ -1248,8 +1253,14 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
                     {stats.correct} of {stats.total} correct
                   </div>
                   <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full ${subjPct >= 70 ? 'bg-emerald-500' : subjPct >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                    <div
+                      className={`h-full ${
+                        subjPct >= 70
+                          ? 'bg-emerald-500'
+                          : subjPct >= 50
+                          ? 'bg-amber-500'
+                          : 'bg-rose-500'
+                      }`}
                       style={{ width: `${subjPct}%` }}
                     />
                   </div>
@@ -1259,20 +1270,20 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
           </div>
         </div>
 
-        {/* In-Depth Question Review Section */}
+        {/* Question Review Section */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
             <h3 className="font-bold text-lg text-slate-900 dark:text-white">
-              Full Answer Review & Step-by-Step Solutions ({filteredReportQuestions.length} Questions)
+              Answer Review & Solutions ({filteredReportQuestions.length} Questions)
             </h3>
 
-            {/* Filter buttons */}
             <div className="flex items-center gap-1.5">
-              {(['all', 'incorrect', 'flagged'] as ('all' | 'incorrect' | 'flagged')[]).map((f) => (
+              {(['all', 'incorrect', 'flagged'] as const).map((f) => (
                 <button
                   key={f}
+                  type="button"
                   onClick={() => setReviewFilter(f)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition cursor-pointer ${
                     reviewFilter === f
                       ? 'bg-blue-600 text-white'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
@@ -1286,23 +1297,23 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
 
           <div className="space-y-6">
             {filteredReportQuestions.map((q) => {
-              const rep = examResult.answers.find(a => a.questionId === q.id);
+              const rep = examResult.answers.find((a) => a.questionId === q.id);
               const userPick = rep?.userSelected;
               const isCorrect = rep?.isCorrect;
 
               return (
-                <div 
+                <div
                   key={q.id}
                   className={`rounded-xl border p-5 space-y-4 ${
-                    isCorrect 
-                      ? 'border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/20' 
+                    isCorrect
+                      ? 'border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/20'
                       : 'border-rose-200 dark:border-rose-900/40 bg-rose-50/20'
                   }`}
                 >
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase">
-                        {q.subject}
+                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                        {getSubjectDisplayName(q.subject)}
                       </span>
                       <span className="text-xs text-slate-500">{q.topic}</span>
                     </div>
@@ -1317,13 +1328,6 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
                           <XCircle className="w-4 h-4" /> Incorrect
                         </span>
                       )}
-
-                      <button
-                        onClick={() => onOpenAITutorWithQuestion(q)}
-                        className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 rounded text-xs font-semibold flex items-center gap-1"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" /> Ask AI Tutor
-                      </button>
                     </div>
                   </div>
 
@@ -1331,39 +1335,52 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
                     <MathRenderer text={q.question} />
                   </div>
 
-                  {/* Options with markers */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
                     {q.options.map((opt, oIdx) => {
                       const isChosen = userPick === oIdx;
                       const isAnswer = q.correctAnswer === oIdx;
 
-                      let badgeClass = 'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300';
+                      let badgeClass =
+                        'border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300';
                       if (isAnswer) {
-                        badgeClass = 'border-emerald-500 bg-emerald-100/60 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 font-bold';
+                        badgeClass =
+                          'border-emerald-500 bg-emerald-100/60 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 font-bold';
                       } else if (isChosen && !isAnswer) {
-                        badgeClass = 'border-rose-500 bg-rose-100/60 dark:bg-rose-950/60 text-rose-900 dark:text-rose-200 line-through';
+                        badgeClass =
+                          'border-rose-500 bg-rose-100/60 dark:bg-rose-950/60 text-rose-900 dark:text-rose-200 line-through';
                       }
 
                       return (
-                        <div key={oIdx} className={`p-2.5 rounded-lg border flex items-center justify-between ${badgeClass}`}>
-                          <span className="overflow-x-auto"><MathRenderer text={opt} /></span>
-                          {isAnswer && <span className="text-[10px] font-bold uppercase bg-emerald-600 text-white px-1.5 py-0.5 rounded shrink-0">Correct</span>}
-                          {isChosen && !isAnswer && <span className="text-[10px] font-bold uppercase bg-rose-600 text-white px-1.5 py-0.5 rounded shrink-0">Your Pick</span>}
+                        <div
+                          key={oIdx}
+                          className={`p-2.5 rounded-lg border flex items-center justify-between ${badgeClass}`}
+                        >
+                          <span className="overflow-x-auto">
+                            <MathRenderer text={opt} />
+                          </span>
+                          {isAnswer && (
+                            <span className="text-[10px] font-bold uppercase bg-emerald-600 text-white px-1.5 py-0.5 rounded shrink-0">
+                              Correct
+                            </span>
+                          )}
+                          {isChosen && !isAnswer && (
+                            <span className="text-[10px] font-bold uppercase bg-rose-600 text-white px-1.5 py-0.5 rounded shrink-0">
+                              Your Pick
+                            </span>
+                          )}
                         </div>
                       );
                     })}
                   </div>
 
-                  {/* Step-by-Step Explanation */}
-                  <div className="bg-slate-50 dark:bg-slate-800/90 rounded-lg p-3.5 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed overflow-x-auto">
-                    <strong className="block text-slate-900 dark:text-white mb-1 font-bold">Solution Breakdown:</strong>
-                    <MathRenderer text={q.explanation} />
-                    {q.shortcutTip && (
-                      <div className="mt-2 text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 p-2 rounded border border-amber-200 dark:border-amber-800/40">
-                        ⚡ <strong>Exam Tip:</strong> {q.shortcutTip}
-                      </div>
-                    )}
-                  </div>
+                  {q.explanation && (
+                    <div className="bg-slate-50 dark:bg-slate-800/90 rounded-lg p-3.5 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed overflow-x-auto">
+                      <strong className="block text-slate-900 dark:text-white mb-1 font-bold">
+                        Solution Breakdown:
+                      </strong>
+                      <MathRenderer text={q.explanation} />
+                    </div>
+                  )}
                 </div>
               );
             })}

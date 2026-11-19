@@ -7,7 +7,7 @@ export const DAY1_ENGLISH_MASTER_NOTES: MasterNoteChapter[] = [
     chapterNumber: 2,
     title: 'English & Verbal Aptitude: Advanced Grammar, Sentence Correction & Conditionals',
     gradeLevel: 'University Prep',
-    overview: 'Massive, exhaustive grammar handbook specifically engineered for the AASTU English & Verbal section. Covers Subject-Verb Agreement exceptions, all 4 Conditional forms with Subjunctive Inversions, Active vs Passive voice in STEM contexts, Direct/Indirect speech transformations, Relative Pronouns (who/whom/whose/which/that), Modals of deduction, Parallelism, and Dangling Modifiers.',
+    overview: 'Massive, exhaustive grammar handbook specifically engineered for the Freshman Communicative English (Flen 1011 / Flen 1012) curriculum. Covers Subject-Verb Agreement exceptions, all 4 Conditional forms with Subjunctive Inversions, Active vs Passive voice in STEM contexts, Direct/Indirect speech transformations, Relative Pronouns (who/whom/whose/which/that), Modals of deduction, Parallelism, and Dangling Modifiers.',
     estimatedReadTimeMinutes: 40,
     sections: [
       {
@@ -134,7 +134,7 @@ In formal English and university entrance testing, **'were'** is strictly used f
 
 ---
 
-### Advanced Subjunctive Inversions (High-Scoring AASTU Pattern)
+### Advanced Subjunctive Inversions (High-Scoring Freshman English Pattern)
 Entrance examiners frequently omit the word **'If'** and invert the subject and auxiliary verb. You must recognize these immediately:
 
 #### 1. Inversion of First Conditional (Should):
@@ -226,7 +226,7 @@ In scientific and engineering writing, the **Passive Voice** is preferred becaus
 
 ---
 
-### 3. High-Speed Reading Comprehension Tactics for AASTU
+### 3. High-Speed Reading Comprehension Tactics for Freshman English
 The English section contains 2–3 reading passages. You have an average of **45 seconds per question**.
 
 1. **Read Questions First**: Scan the 4–5 questions before touching the passage to know what keywords (names, dates, specialized terms) to locate.

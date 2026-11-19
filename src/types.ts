@@ -1,10 +1,126 @@
-export type Subject = 'mathematics' | 'physics' | 'chemistry' | 'aptitude' | 'all';
+export type Subject = 
+  | 'anthropology'
+  | 'biology' 
+  | 'geography' 
+  | 'entrepreneur'
+  | 'global_affairs'
+  | 'chemistry' 
+  | 'history' 
+  | 'civics' 
+  | 'inclusive'
+  | 'critical_thinking' 
+  | 'mathematics' 
+  | 'economics'
+  | 'math_applied_2'
+  | 'emerging_tech' 
+  | 'math_social'
+  | 'english' 
+  | 'physics' 
+  | 'english_2'
+  | 'psychology' 
+  | 'fitness' 
+  | 'physics_2'
+  | 'chemistry_2'
+  | 'biology_2'
+  | 'geography_history' 
+  | 'aptitude' 
+  | 'all';
+
+export type Semester = 1 | 2;
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
+export type ExamType = 'midterm' | 'final' | 'quiz' | 'custom';
+
+export type AccountStatus = 'PENDING_PAYMENT' | 'PENDING_VERIFICATION' | 'APPROVED' | 'REJECTED';
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  phoneNumber: string;
+  role: 'student' | 'admin';
+  accountStatus: AccountStatus;
+  rejectionReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentRequestRecord {
+  id: string;
+  userId: string;
+  username: string;
+  phoneNumber: string;
+  amount: number;
+  currency: string;
+  paymentMethod: string;
+  transactionRef?: string;
+  screenshotMime: string;
+  screenshotSize: number;
+  screenshotUrl: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  adminNote: string | null;
+  submittedAt: string;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+}
+
+export const LTMW_PDF_CATEGORIES = [
+  'Lecture notes',
+  'Textbook',
+  'Mid and Final exam',
+  'Worksheet and assignment',
+] as const;
+
+export type LtmwPdfCategory = (typeof LTMW_PDF_CATEGORIES)[number];
+
+export interface PublishedPdfDocument {
+  id: string;
+  title: string;
+  subject: Subject;
+  courseCode: string;
+  semester: Semester;
+  category: string;
+  description: string;
+  originalFilename: string;
+  fileSize: number;
+  isPublished: boolean;
+  uploadedBy: string;
+  createdAt: string;
+  fileUrl: string;
+  chunkCount?: number;
+}
+
+export interface OutlineChapterItem {
+  id: string;
+  chapterNumber: number;
+  title: string;
+  topics: string[];
+  readings?: string;
+}
+
+export interface CustomCourseOutline {
+  id: string;
+  courseId: string;
+  courseCode: string;
+  courseTitle: string;
+  subject: Subject;
+  semester: Semester;
+  instructorName?: string;
+  academicYear?: string;
+  syllabusOverview?: string;
+  gradingPolicy?: string;
+  referenceMaterials?: string[];
+  chapters: OutlineChapterItem[];
+  customLectureNotes?: string;
+  createdAt?: string;
+  updatedAt: string;
+}
+
 export interface Question {
   id: string;
-  subject: 'mathematics' | 'physics' | 'chemistry' | 'aptitude';
+  subject: Subject;
+  semester?: Semester;
+  courseCode?: string; // e.g., 'Math1011', 'Phys1011', 'LoCT1011'
   topic: string;
   question: string;
   codeSnippet?: string;
@@ -16,12 +132,37 @@ export interface Question {
   difficulty: Difficulty;
   isAIGenerated?: boolean;
   generatedAt?: string;
+  sourcePdfId?: string;
+  sourcePdfTitle?: string;
+  examType?: 'midterm' | 'final';
+  imageDataUrl?: string;
+  postType?: 'mcq' | 'image';
+}
+
+export type ThemeMode = 'blue' | 'black' | 'white';
+
+export interface AdminPracticePost {
+  id: string;
+  postType: 'mcq' | 'image';
+  subject: Subject;
+  examType: 'midterm' | 'final';
+  title: string;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+  imageDataUrl: string;
+  uploadedBy: string;
+  createdAt: string;
 }
 
 export interface UserStudyNote {
   id: string;
   title: string;
   subject: Subject;
+  courseId?: string;
+  courseCode?: string;
+  semester?: Semester;
   topic?: string;
   content: string;
   tags?: string[];
@@ -35,16 +176,49 @@ export interface SavedExamRecord {
   title: string;
   date: string;
   timestamp: number;
+  semester?: Semester;
+  courseCode?: string;
+  examType?: ExamType;
   totalQuestions: number;
   correctCount: number;
   scorePercentage: number;
   timeSpentSeconds: number;
   difficulty: string;
-  subjectBreakdown: ExamResult['subjectBreakdown'];
+  subjectBreakdown: Record<string, { total: number; correct: number }>;
   questions: Question[];
-  answers: ExamResult['answers'];
+  answers: {
+    questionId: string;
+    userSelected: number | null;
+    isCorrect: boolean;
+  }[];
 }
 
+export interface WeekPlan {
+  week: number;
+  semester: Semester;
+  title: string;
+  focusCourses: string[];
+  tagline: string;
+  estimatedHours: number;
+  timeBlocks: {
+    period: 'Morning (3h)' | 'Afternoon (3h)' | 'Evening (2.5h)';
+    subject: Subject;
+    courseTitle: string;
+    topics: string[];
+    objectives: string[];
+    actionableTargets: {
+      id: string;
+      text: string;
+      category?: 'Practice' | 'Concept' | 'Proof' | 'Writing';
+    }[];
+    recommendedPracticeCount: number;
+  }[];
+  highYieldTopics: string[];
+  examTraps: string[];
+  keyFormulasToMemorize: string[];
+}
+
+// Backwards compatibility alias for components expecting DayPlan
 export interface DayPlan {
   day: number;
   title: string;
@@ -65,7 +239,8 @@ export interface DayPlan {
 
 export interface StudyGuideTopic {
   id: string;
-  subject: 'mathematics' | 'physics' | 'chemistry' | 'aptitude';
+  subject: Subject;
+  semester?: Semester;
   title: string;
   summary: string;
   keyFormulas: {
@@ -80,8 +255,11 @@ export interface StudyGuideTopic {
 
 export interface Flashcard {
   id: string;
-  subject: 'mathematics' | 'physics' | 'chemistry' | 'aptitude';
+  subject: Subject;
+  semester?: Semester;
+  courseCode?: string;
   category: string;
+  topic?: string;
   front: string;
   back: string;
   hint?: string;
@@ -90,11 +268,12 @@ export interface Flashcard {
 export interface MasterNoteSection {
   id: string;
   heading: string;
-  content: string; // Markdown / detailed theoretical notes
+  content: string; // Markdown / detailed theoretical notes with LaTeX
   equations?: {
     name: string;
     formula: string;
-    explanation: string;
+    explanation?: string;
+    description?: string;
   }[];
   workedExamples?: {
     problem: string;
@@ -102,18 +281,38 @@ export interface MasterNoteSection {
     shortcutTip?: string;
   }[];
   examTraps?: string[];
-  keyTakeaways: string[];
+  keyTakeaways?: string[];
 }
 
 export interface MasterNoteChapter {
   id: string;
-  subject: 'mathematics' | 'physics' | 'chemistry' | 'aptitude';
+  subject: Subject;
+  semester?: Semester;
+  courseCode?: string;
   chapterNumber: number;
   title: string;
-  gradeLevel: 'Grade 11 & 12 Advanced' | 'University Prep';
+  moduleName?: string;
+  gradeLevel?: string;
   overview: string;
   estimatedReadTimeMinutes: number;
   sections: MasterNoteSection[];
+}
+
+export interface FreshmanCourse {
+  id: string;
+  code: string;
+  title: string;
+  shortTitle?: string;
+  semester: Semester;
+  subject: Subject;
+  creditHours: number;
+  overview: string;
+  prerequisites?: string;
+  keyTopics: string[];
+  chapters: MasterNoteChapter[];
+  midtermWeight: string;
+  finalWeight: string;
+  assessmentBreakdown?: { item: string; weight: string }[];
 }
 
 export interface TutorChatMessage {
@@ -121,6 +320,9 @@ export interface TutorChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  modelUsed?: string;
+  roleId?: string;
+  roleName?: string;
 }
 
 export interface TutorChatSession {
@@ -135,7 +337,8 @@ export interface TutorChatSession {
 
 export interface FormulaItem {
   id: string;
-  subject: 'mathematics' | 'physics' | 'chemistry' | 'aptitude';
+  subject: Subject;
+  semester?: Semester;
   topic: string;
   category: string;
   name: string;
@@ -150,16 +353,15 @@ export interface FormulaItem {
 export interface ExamResult {
   id: string;
   date: string;
+  examType?: ExamType;
+  courseCode?: string;
   totalQuestions: number;
   correctCount: number;
   scorePercentage: number;
   timeSpentSeconds: number;
-  subjectBreakdown: {
-    mathematics: { total: number; correct: number };
-    physics: { total: number; correct: number };
-    chemistry: { total: number; correct: number };
-    aptitude: { total: number; correct: number };
-  };
+  letterGrade?: 'A+' | 'A' | 'A-' | 'B+' | 'B' | 'B-' | 'C+' | 'C' | 'D' | 'F';
+  gpaPoints?: number;
+  subjectBreakdown: Record<string, { total: number; correct: number }>;
   answers: {
     questionId: string;
     userSelected: number | null;

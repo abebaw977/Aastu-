@@ -7,7 +7,7 @@ export const MATH_MASTER_NOTES: MasterNoteChapter[] = [
     chapterNumber: 1,
     title: 'Differential Calculus: Limits, Continuity, Derivative Theorems & Optimization',
     gradeLevel: 'Grade 11 & 12 Advanced',
-    overview: 'Exhaustive textbook-grade guide to Differential Calculus for the AASTU entrance exam. Covers rigorous limit theorems, indeterminate algebraic forms, trigonometric limits, L’Hôpital’s rule, continuity conditions, differentiability, full derivative tables, chain rules, implicit differentiation, higher-order derivatives, tangent & normal lines, Mean Value Theorem, Rolle’s Theorem, critical points, concavity, and real-world optimization problems.',
+    overview: 'Exhaustive textbook-grade guide to Differential Calculus for Freshman Mathematics (Math 1011). Covers rigorous limit theorems, indeterminate algebraic forms, trigonometric limits, L’Hôpital’s rule, continuity conditions, differentiability, full derivative tables, chain rules, implicit differentiation, higher-order derivatives, tangent & normal lines, Mean Value Theorem, Rolle’s Theorem, critical points, concavity, and real-world optimization problems.',
     estimatedReadTimeMinutes: 45,
     sections: [
       {
@@ -56,7 +56,7 @@ $$\\lim_{x \\to c} [f(x)]^{g(x)} = e^K$$
 
 ---
 
-### 4. Must-Know Special Limits for AASTU Entrance:
+### 4. Must-Know Special Limits for Freshman Math 1011:
 - **Trigonometric Limits**:
   - $\\lim_{x \\to 0} \\frac{\\sin(kx)}{x} = k$
   - $\\lim_{x \\to 0} \\frac{\\tan(kx)}{x} = k$
@@ -175,7 +175,7 @@ where $F_x$ is the partial derivative treating $y$ as a constant, and $F_y$ is t
           {
             name: "Partial Derivative Implicit Shortcut",
             formula: "\\frac{dy}{dx} = -\\frac{F_x}{F_y} \\quad \\text{for } F(x, y) = 0",
-            explanation: "Fastest way on AASTU exam to find implicit slopes without tedious algebraic isolation."
+            explanation: "Fastest way on Freshman Math 1011 exams to find implicit slopes without tedious algebraic isolation."
           }
         ],
         workedExamples: [

@@ -16,7 +16,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Using the fundamental trigonometric limit \\lim_{u \\to 0} \\frac{\\sin(u)}{u} = 1 and \\lim_{u \\to 0} \\frac{\\tan(u)}{u} = 1:\n\\lim_{x \\to 0} \\frac{\\sin(5x)}{\\tan(2x)} = \\lim_{x \\to 0} \\left(\\frac{\\sin(5x)}{5x} \\cdot 5x \\cdot \\frac{2x}{\\tan(2x)} \\cdot \\frac{1}{2x}\\right) = 1 \\cdot 1 \\cdot \\frac{5}{2} = 5/2.\nAlternatively by L\'Hôpital\'s Rule: \\lim_{x \\to 0} \\frac{5\\cos(5x)}{2\\sec^2(2x)} = \\frac{5(1)}{2(1)} = 5/2.',
     shortcutTip: 'For limits of form sin(ax)/tan(bx) or sin(ax)/sin(bx) as x → 0, the answer is directly the coefficient ratio a/b = 5/2.',
-    yearReference: 'AASTU Standard Pattern',
+    yearReference: 'Freshman Math 1011 Standard',
     difficulty: 'easy'
   },
   {
@@ -33,7 +33,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 1,
     explanation: 'The slope of the tangent is given by the first derivative f\'(x).\nf\'(x) = \\frac{d}{dx}(x^3 - 3x^2 + 4x - 5) = 3x^2 - 6x + 4.\nSubstitute x = 2:\nf\'(2) = 3(2)^2 - 6(2) + 4 = 3(4) - 12 + 4 = 12 - 12 + 4 = 4.',
     shortcutTip: 'Differentiate term by term using power rule nx^(n-1), plug in x = 2 immediately.',
-    yearReference: 'AASTU 2022 Pattern',
+    yearReference: 'Freshman Math 1011 Pattern',
     difficulty: 'easy'
   },
   {
@@ -50,7 +50,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'The dot product u · v = u_x v_x + u_y v_y + u_z v_z.\nu · v = (2)(1) + (-1)(4) + (3)(-2) = 2 - 4 - 6 = -8.\nSince u · v ≠ 0, the vectors are not perpendicular (they are only perpendicular if dot product equals 0).',
     shortcutTip: 'Two vectors are orthogonal if and only if their scalar product is zero. Here (-8 ≠ 0), so not perpendicular.',
-    yearReference: 'AASTU Prep Core',
+    yearReference: 'Freshman Math 1011 Core',
     difficulty: 'easy'
   },
   {
@@ -67,7 +67,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Antiderivative F(x) = \\int (3x^2 - 4x + 1) dx = x^3 - 2x^2 + x.\nEvaluating from 0 to 2:\nF(2) = (2)^3 - 2(2)^2 + (2) = 8 - 8 + 2 = 2.\nF(0) = 0.\nF(2) - F(0) = 2 - 0 = 2.',
     shortcutTip: 'Integrate: x^3 - 2x^2 + x, plug in 2: 8 - 8 + 2 = 2.',
-    yearReference: 'EUEE / AASTU Natural Science',
+    yearReference: 'Freshman Math 1012 Calculus',
     difficulty: 'medium'
   },
   {
@@ -84,7 +84,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'For a 2x2 matrix [[a, b], [c, d]], det(A) = ad - bc.\ndet(A) = (4)(5) - (3)(2) = 20 - 6 = 14.',
     shortcutTip: 'Main diagonal product minus anti-diagonal product: (4×5) - (3×2) = 14.',
-    yearReference: 'AASTU Math Core',
+    yearReference: 'Freshman Math 1011 Core',
     difficulty: 'easy'
   },
   {
@@ -101,7 +101,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'For an infinite geometric series with |r| < 1, the sum to infinity is given by:\nS_∞ = \\frac{a}{1 - r} = \\frac{12}{1 - 1/3} = \\frac{12}{2/3} = 12 \\times \\frac{3}{2} = 18.',
     shortcutTip: 'S_∞ = a / (1 - r) = 12 / (2/3) = 18.',
-    yearReference: 'AASTU Standard',
+    yearReference: 'Freshman Math 1011 Standard',
     difficulty: 'easy'
   },
   {
@@ -118,7 +118,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Complete the square for x and y terms:\n(x^2 - 6x + 9) + (y^2 + 8y + 16) = 0 + 9 + 16\n(x - 3)^2 + (y + 4)^2 = 25\nThis is in standard form (x - h)^2 + (y - k)^2 = r^2.\nCenter (h, k) = (3, -4), Radius r = \\sqrt{25} = 5.',
     shortcutTip: 'Center formula: (-coeff(x)/2, -coeff(y)/2) = (-(-6)/2, -(8)/2) = (3, -4). Radius = √(h² + k² - c) = √(9 + 16 - 0) = 5.',
-    yearReference: 'AASTU Prep',
+    yearReference: 'Freshman Math 1011 Prep',
     difficulty: 'medium'
   },
   {
@@ -135,7 +135,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Using the double angle identity for cosine:\n\\cos(2\\theta) = 1 - 2\\sin^2(\\theta).\nSince \\sin(\\theta) = 3/5:\n\\cos(2\\theta) = 1 - 2(3/5)^2 = 1 - 2(9/25) = 1 - 18/25 = 7/25.\n(Notice that in this formula we don\'t even need cos(θ) directly!).',
     shortcutTip: 'cos(2θ) = 1 - 2sin²θ = 1 - 2(9/25) = 7/25. Positive regardless of quadrant II because sin²θ is always positive.',
-    yearReference: 'AASTU Math Set',
+    yearReference: 'Freshman Math 1011 Set',
     difficulty: 'medium'
   },
   {
@@ -152,7 +152,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Let u = x^2, then du = 2x dx.\nThe integral transforms into \\int e^u du = e^u + C = e^{x^2} + C.',
     shortcutTip: 'Notice 2x is the exact derivative of x^2. The integral of f\'(x)e^{f(x)} is simply e^{f(x)} + C.',
-    yearReference: 'AASTU Calculus',
+    yearReference: 'Freshman Math 1012 Calculus',
     difficulty: 'easy'
   },
   {
@@ -169,7 +169,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Modulus |z| = \\sqrt{(-1)^2 + (\\sqrt{3})^2} = \\sqrt{1 + 3} = \\sqrt{4} = 2.\nFor argument: Real part x = -1 < 0, Imaginary part y = \\sqrt{3} > 0 (Quadrant II).\nReference angle \\alpha = \\arctan(\\sqrt{3}/1) = \\pi/3 (60°).\nArgument in Quadrant II = \\pi - \\pi/3 = 2\\pi/3 (120°).',
     shortcutTip: 'Modulus = √(1+3) = 2. Point (-1, √3) is in Quadrant II, so angle is 180° - 60° = 120° = 2π/3.',
-    yearReference: 'AASTU Complex Set',
+    yearReference: 'Freshman Math 1011 Complex Set',
     difficulty: 'medium'
   },
 
@@ -188,7 +188,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Maximum height H = \\frac{u^2 \\sin^2(\\theta)}{2g}.\nHere u = 20 m/s, \\theta = 30° (so \\sin(30°) = 0.5), g = 10 m/s².\nH = \\frac{(20)^2 \\cdot (0.5)^2}{2(10)} = \\frac{400 \\cdot 0.25}{20} = \\frac{100}{20} = 5\\text{ m}.',
     shortcutTip: 'Vertical velocity u_y = 20 sin(30°) = 10 m/s. Max height = u_y² / (2g) = 100 / 20 = 5 m.',
-    yearReference: 'AASTU Physics Core',
+    yearReference: 'Freshman Phys 1011 Core',
     difficulty: 'easy'
   },
   {
@@ -205,7 +205,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'On a frictionless incline of angle \\theta, the component of gravity parallel to the incline is F_{net} = mg \\sin(\\theta).\nBy Newton\'s 2nd Law, a = F_{net}/m = g \\sin(\\theta).\na = 9.8 \\cdot \\sin(30°) = 9.8 \\cdot 0.5 = 4.9\\text{ m/s²}. (Notice mass cancels out!).',
     shortcutTip: 'Frictionless incline acceleration is always a = g sin(θ). 9.8 × 0.5 = 4.9 m/s².',
-    yearReference: 'AASTU Mechanics',
+    yearReference: 'Freshman Phys 1011 Mechanics',
     difficulty: 'easy'
   },
   {
@@ -222,7 +222,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'At constant speed, upward tension force F = mg = 200 kg \\times 10 m/s² = 2000 N.\nPower P = F \\cdot v = 2000 N \\times 3 m/s = 6000 W (or 6 kW).',
     shortcutTip: 'P = mgv = 200 × 10 × 3 = 6,000 Watts.',
-    yearReference: 'AASTU Physics Set',
+    yearReference: 'Freshman Phys 1011 Set',
     difficulty: 'easy'
   },
   {
@@ -239,7 +239,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'For parallel resistors: R_{eq} = \\frac{R_1 R_2}{R_1 + R_2} = \\frac{6 \\times 12}{6 + 12} = \\frac{72}{18} = 4\\,\\Omega.\nTotal current I = \\frac{V}{R_{eq}} = \\frac{24\\text{ V}}{4\\,\\Omega} = 6\\text{ A}.\nAlternatively, branch currents: I_1 = 24/6 = 4 A, I_2 = 24/12 = 2 A. Total I = 4 + 2 = 6 A.',
     shortcutTip: 'Parallel branch shortcut: I = I_1 + I_2 = (24/6) + (24/12) = 4 + 2 = 6 A.',
-    yearReference: 'AASTU Circuit Theory',
+    yearReference: 'Freshman Phys 1011 Circuit Theory',
     difficulty: 'easy'
   },
   {
@@ -256,7 +256,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Doppler formula when source moves toward stationary observer:\nf\' = f \\left(\\frac{v}{v - v_s}\\right) = 500 \\left(\\frac{340}{340 - 34}\\right) = 500 \\left(\\frac{340}{306}\\right) = 500 \\times 1.1111 = 555.6\\text{ Hz}.',
     shortcutTip: 'Approaching source always increases perceived frequency: 500 × (340/306) ≈ 555.6 Hz.',
-    yearReference: 'AASTU Waves',
+    yearReference: 'Freshman Phys 1011 Waves',
     difficulty: 'medium'
   },
   {
@@ -273,7 +273,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Using the thin lens equation: 1/f = 1/d_o + 1/d_i\n1/10 = 1/20 + 1/d_i\n1/d_i = 1/10 - 1/20 = 1/20 \\implies d_i = 20\\text{ cm}.\nMagnification m = -d_i/d_o = -20/20 = -1 (same size, inverted, real since d_i > 0).',
     shortcutTip: 'When an object is placed at 2f (2 × 10 = 20 cm), the image is ALWAYS formed at 2f (20 cm) on the other side, real, inverted, and equal in size.',
-    yearReference: 'AASTU Optics',
+    yearReference: 'Freshman Phys 1011 Optics',
     difficulty: 'medium'
   },
   {
@@ -290,7 +290,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Einstein\'s photoelectric equation: K_{max} = hf - \\Phi.\nK_{max} depends ONLY on the photon frequency f and the metal\'s work function \\Phi, NOT on light intensity.\nDoubling intensity increases the number of photons (and hence the photocurrent), but individual photon energy remains hf, so K_{max} is unchanged.',
     shortcutTip: 'Classic exam trap: Intensity controls current (number of electrons); Frequency controls Kinetic Energy (voltage / speed).',
-    yearReference: 'AASTU Modern Physics Trap',
+    yearReference: 'Freshman Phys 1011 Modern Physics',
     difficulty: 'medium'
   },
   {
@@ -307,7 +307,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Gay-Lussac\'s Law for constant volume: P_1/T_1 = P_2/T_2, where temperatures MUST be in Kelvin!\nT_1 = 27 + 273 = 300 K\nT_2 = 327 + 273 = 600 K\nP_2 = P_1 \\times (T_2/T_1) = P_1 \\times (600/300) = 2 P_1.\nThe pressure doubles (increases by a factor of 2).',
     shortcutTip: 'Always convert Celsius to Kelvin before calculating gas laws! 300 K to 600 K is a 2x increase.',
-    yearReference: 'AASTU Thermodynamics',
+    yearReference: 'Freshman Phys 1011 Thermodynamics',
     difficulty: 'medium'
   },
 
@@ -326,7 +326,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Quantum rules:\n1. Principal quantum number n = 1, 2, 3, ...\n2. Angular momentum quantum number l = 0, 1, ..., (n-1). For n = 3, the maximum value of l is (3-1) = 2 (s, p, d orbitals).\nTherefore, l = 3 is strictly FORBIDDEN when n = 3.',
     shortcutTip: 'Rule: l must always be strictly less than n (l < n). Since l = 3 = n, option A is invalid.',
-    yearReference: 'AASTU Chemistry Standard',
+    yearReference: 'Freshman Chem 1012 Standard',
     difficulty: 'easy'
   },
   {
@@ -343,7 +343,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Both CH₄ and NH₃ have steric number 4 (CH₄: 4 bond pairs, 0 lone pairs; NH₃: 3 bond pairs, 1 lone pair) → both sp³ hybridized.\nDue to lone pair-bond pair repulsion in NH₃, its molecular geometry is trigonal pyramidal (bond angle ~107°), while CH₄ is tetrahedral (~109.5°).',
     shortcutTip: 'Steric number = bonds + lone pairs. 4 pairs = sp³. 1 lone pair compresses tetrahedral into trigonal pyramidal.',
-    yearReference: 'AASTU Bonding Core',
+    yearReference: 'Freshman Chem 1012 Bonding Core',
     difficulty: 'medium'
   },
   {
@@ -360,7 +360,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Moles of N₂ = 28 g / (28 g/mol) = 1.0 mol.\nMoles of H₂ = 12 g / (2 g/mol) = 6.0 mol.\nStoichiometric ratio requires 3 moles of H₂ for 1 mole of N₂.\nFor 1.0 mol N₂, we only need 3.0 mol H₂. We have 6.0 mol H₂ (excess), so N₂ is the LIMITING REACTANT.\n1.0 mol N₂ produces 2.0 mol NH₃.\nMass of NH₃ = 2.0 mol × 17 g/mol = 34 g.',
     shortcutTip: '1 mol N₂ gives 2 mol NH₃ = 2 × 17 = 34 g. H₂ is in excess.',
-    yearReference: 'AASTU Stoichiometry',
+    yearReference: 'Freshman Chem 1012 Stoichiometry',
     difficulty: 'medium'
   },
   {
@@ -377,7 +377,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'By Le Chatelier\'s Principle:\n1. Since reaction is exothermic (releases heat), decreasing temperature shifts equilibrium toward the forward exothermic direction (RIGHT).\n2. Gaseous moles: Reactants = 2 + 1 = 3 moles, Products = 2 moles. Increasing pressure shifts toward fewer gas moles (RIGHT).\nBoth factors favor SO₃ production.',
     shortcutTip: 'Exothermic + fewer product gas moles = Lower T + Higher P shifts right.',
-    yearReference: 'AASTU Equilibrium Trap',
+    yearReference: 'Freshman Chem 1012 Equilibrium',
     difficulty: 'medium'
   },
   {
@@ -394,7 +394,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'H₂SO₄ is a diprotic acid: H₂SO₄ → 2H⁺ + SO₄²⁻.\n[H⁺] = 2 × 0.005 M = 0.01 M = 10⁻² M.\npH = -log[H⁺] = -log(10⁻²) = 2.0.',
     shortcutTip: 'Don\'t forget the factor of 2 for diprotic H₂SO₄: [H⁺] = 2 × 0.005 = 0.01 M = 10⁻² => pH = 2.',
-    yearReference: 'AASTU Acid-Base Core',
+    yearReference: 'Freshman Chem 1012 Acid-Base Core',
     difficulty: 'easy'
   },
   {
@@ -411,7 +411,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Cathode (reduction): Cu²⁺ + 2e⁻ → Cu, E°_cat = +0.34 V\nAnode (oxidation): Zn → Zn²⁺ + 2e⁻, E°_an = -0.76 V\nE°_cell = E°_cathode - E°_anode = +0.34 - (-0.76) = +0.34 + 0.76 = +1.10 V.\nPositive EMF means the reaction is spontaneous.',
     shortcutTip: 'E°_cell = E°_red(cathode) - E°_red(anode) = 0.34 - (-0.76) = 1.10 V.',
-    yearReference: 'AASTU Galvanic Cells',
+    yearReference: 'Freshman Chem 1012 Electrochemistry',
     difficulty: 'easy'
   },
   {
@@ -428,7 +428,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Number the 4-carbon parent chain starting from the end closest to the principal -OH functional group:\nC1: -CH₂-OH\nC2: -CH₂-\nC3: -CH(CH₃)-\nC4: -CH₃\nParent is butan-1-ol with a methyl substituent at carbon 3 -> 3-methylbutan-1-ol.',
     shortcutTip: 'Functional group -OH gets lowest locator number (C1). Substituent methyl is at position 3.',
-    yearReference: 'AASTU Organic Nomenclature',
+    yearReference: 'Freshman Chem 1012 Nomenclature',
     difficulty: 'easy'
   },
 
@@ -447,7 +447,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Rate of Abebe = 1/6 jobs/hr.\nRate of Chala = 1/3 = 2/6 jobs/hr.\nCombined rate = 1/6 + 2/6 = 3/6 = 1/2 jobs/hr.\nTime taken = 1 / (1/2) = 2 hours.',
     shortcutTip: 'Work shortcut formula: Time = (A × B) / (A + B) = (6 × 3) / (6 + 3) = 18 / 9 = 2 hours.',
-    yearReference: 'AASTU Aptitude Standard',
+    yearReference: 'Freshman LoCT 1011 Standard',
     difficulty: 'easy'
   },
   {
@@ -464,14 +464,14 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Pattern 1: Each term is generated by (2 × previous term + 1):\n3 × 2 + 1 = 7\n7 × 2 + 1 = 15\n15 × 2 + 1 = 31\n31 × 2 + 1 = 63\n63 × 2 + 1 = 127.\n\nPattern 2: The differences are powers of 2: +4, +8, +16, +32, so next difference is +64 -> 63 + 64 = 127.',
     shortcutTip: 'Pattern is 2n + 1 (or 2^(k+1) - 1). 63 × 2 + 1 = 127.',
-    yearReference: 'AASTU Logical Patterns',
+    yearReference: 'Freshman LoCT 1011 Logical Patterns',
     difficulty: 'easy'
   },
   {
     id: 'apt-3',
     subject: 'aptitude',
     topic: 'English - Sentence Structure & Conditionals',
-    question: 'Choose the correct option to complete the sentence: "If she _______ harder during the semester, she would have passed the AASTU entrance exam with distinction."',
+    question: 'Choose the correct option to complete the sentence: "If she _______ harder during the semester, she would have passed the University Freshman final exam with distinction."',
     options: [
       'A) had studied',
       'B) studied',
@@ -481,7 +481,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'This is a Third Conditional sentence expressing an unreal past condition and its hypothetical past result.\nStructure: If + Past Perfect (had + V3), ... would have + V3.\nTherefore, "had studied" is the grammatically correct option.',
     shortcutTip: 'Third conditional pattern: If + had + past participle -> would have + past participle.',
-    yearReference: 'AASTU English Grammar',
+    yearReference: 'Freshman Flen 1011 Grammar',
     difficulty: 'easy'
   },
   {
@@ -498,7 +498,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: 'Distance = Length of train = 150 m.\nTime = 15 s.\nSpeed in m/s = Distance / Time = 150 / 15 = 10 m/s.\nTo convert m/s to km/h, multiply by 18/5 (or 3.6):\nSpeed = 10 × (18/5) = 36 km/h.',
     shortcutTip: 'Conversion rule: m/s to km/h multiply by 18/5. 10 m/s × 3.6 = 36 km/h.',
-    yearReference: 'AASTU Aptitude Word Problems',
+    yearReference: 'Freshman LoCT 1011 Word Problems',
     difficulty: 'easy'
   },
   {
@@ -515,7 +515,7 @@ export const QUESTION_BANK: Question[] = [
     correctAnswer: 0,
     explanation: '"Pragmatic" means dealing with things sensibly and realistically in a way that is based on practical rather than theoretical considerations.',
     shortcutTip: 'Context clue: "rather than relying on unproven theoretical models" indicates the opposite of theoretical, which is practical.',
-    yearReference: 'AASTU English Vocabulary',
+    yearReference: 'Freshman Flen 1011 Vocabulary',
     difficulty: 'easy'
   }
 ];

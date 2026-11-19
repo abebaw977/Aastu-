@@ -21,10 +21,18 @@ export const FORMULA_STATS = {
   aptitude: APTITUDE_FORMULAS.length,
 };
 
-export const FORMULA_CATEGORIES: Record<Subject, string[]> = {
+export const FORMULA_CATEGORIES: Partial<Record<Subject, string[]>> = {
   all: ['All Categories'],
   mathematics: Array.from(new Set(MATH_FORMULAS.map(f => f.category))),
   physics: Array.from(new Set(PHYSICS_FORMULAS.map(f => f.category))),
   chemistry: Array.from(new Set(CHEMISTRY_FORMULAS.map(f => f.category))),
   aptitude: Array.from(new Set(APTITUDE_FORMULAS.map(f => f.category))),
+  biology: ['Genetics', 'Respiration', 'Cell Structure', 'Ecology'],
+  english: ['Grammar & Concord', 'Conditionals', 'Academic Referencing'],
+  critical_thinking: ['Logic Rules', 'Fallacies', 'Categorical Syllogisms'],
+  civics: ['Moral Theories', 'Constitutional Law', 'Ethics'],
+  fitness: ['Cardiovascular', 'Exercise Physiology'],
+  psychology: ['Conditioning', 'Cognitive Psychology'],
+  geography_history: ['Drainage Basins', 'Geology of Ethiopia'],
+  emerging_tech: ['Machine Learning', 'Cloud Architecture', 'Cybersecurity'],
 };

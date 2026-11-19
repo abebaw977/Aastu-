@@ -1,0 +1,15 @@
+{
+  "name": "freshman-admin-control",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Standalone Freshman Admin Control Application & Android APK (edu.freshmanacademy.admin)",
+  "scripts": {
+    "dev": "vite --config vite.config.ts",
+    "build": "vite build --config vite.config.ts",
+    "cap:sync": "vite build --config vite.config.ts && npx cap sync android",
+    "cap:copy": "vite build --config vite.config.ts && npx cap copy android",
+    "android:apk:debug": "vite build --config vite.config.ts && npx cap copy android && chmod +x ./android/gradlew && ./android/gradlew -p android assembleDebug",
+    "android:apk:release": "vite build --config vite.config.ts && npx cap copy android && chmod +x ./android/gradlew && ./android/gradlew -p android assembleRelease"
+  }
+}

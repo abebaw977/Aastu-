@@ -7,7 +7,7 @@ export const DAY2_PHYSICS_MASTER_NOTES: MasterNoteChapter[] = [
     chapterNumber: 4,
     title: 'Day 2 Master Notes: Advanced Kinematics, Projectile Trajectories & Relative Motion',
     gradeLevel: 'University Prep',
-    overview: 'Exhaustive university-level kinematics handbook for Day 2 of the AASTU blueprint. Covers variable acceleration calculus relations, SUVAT extensions, 2D projectile motion on horizontal and inclined planes, trajectory geometry, relative motion vectors (River-Boat and Wind-Airplane problems), and graph-based calculus transformations.',
+    overview: 'Exhaustive university-level kinematics handbook for Freshman General Physics (Phys 1011). Covers variable acceleration calculus relations, SUVAT extensions, 2D projectile motion on horizontal and inclined planes, trajectory geometry, relative motion vectors (River-Boat and Wind-Airplane problems), and graph-based calculus transformations.',
     estimatedReadTimeMinutes: 35,
     sections: [
       {

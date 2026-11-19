@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { UserStudyNote, Subject } from '../types';
+import {
+  OFFICIAL_17_FRESHMAN_COURSES,
+  getSubjectDisplayName,
+  normalizeSubjectTo19,
+} from '../data/freshmanCourseCatalog';
 import { MathRenderer } from './MathRenderer';
-import { AINoteGeneratorModal } from './AINoteGeneratorModal';
 import { 
-  BookOpen, 
   Plus, 
   Search, 
   Trash2, 
@@ -14,13 +17,11 @@ import {
   Check, 
   Download, 
   Upload, 
-  Sparkles, 
   Calculator, 
   Compass, 
   FlaskConical, 
   Brain, 
   FileText, 
-  Calendar, 
   Clock, 
   Tag, 
   Save, 
@@ -29,11 +30,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Eye,
-  Code,
-  Zap,
-  RefreshCw,
-  Sliders,
-  ChevronDown
+  Code
 } from 'lucide-react';
 import { downloadBackupFile, restoreBackupFromJSON } from '../utils/storage';
 
@@ -41,7 +38,6 @@ interface StudentNotesViewProps {
   userNotes: UserStudyNote[];
   onSaveNote: (note: UserStudyNote) => void;
   onDeleteNote: (id: string) => void;
-  onOpenAITutorWithTopic?: (topic: string, subject: Subject) => void;
   savedQuestionsCount?: number;
   examHistoryCount?: number;
   onDataRestored?: () => void;
@@ -51,7 +47,6 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
   userNotes,
   onSaveNote,
   onDeleteNote,
-  onOpenAITutorWithTopic,
   savedQuestionsCount = 0,
   examHistoryCount = 0,
   onDataRestored,
@@ -69,16 +64,6 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
   const [editTags, setEditTags] = useState<string>('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isPreviewTab, setIsPreviewTab] = useState<boolean>(false);
-  
-  // AI Generator Modal
-  const [isGeneratorModalOpen, setIsGeneratorModalOpen] = useState<boolean>(false);
-
-  // AI Expander State
-  const [isAIExpanding, setIsAIExpanding] = useState<boolean>(false);
-  const [aiExpandAction, setAIExpandAction] = useState<string>('formulas');
-  const [customAIPrompt, setCustomAIPrompt] = useState<string>('');
-  const [showAIExpandMenu, setShowAIExpandMenu] = useState<boolean>(false);
-  const [aiSuccessMessage, setAISuccessMessage] = useState<string | null>(null);
 
   // Backup & Storage Modal
   const [backupModalOpen, setBackupModalOpen] = useState<boolean>(false);
@@ -195,77 +180,44 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
     reader.readAsText(file);
   };
 
-  // AI Edit & Expansion Handlers
-  const handleTriggerAIExpansion = async (action: 'expand_theory' | 'add_examples' | 'add_shortcuts' | 'add_traps' | 'custom', customPrompt?: string) => {
-    const targetNote = isEditing ? { title: editTitle, subject: editSubject, content: editContent } : activeNote;
-    if (!targetNote || !targetNote.content.trim()) {
-      alert('Please enter or select some note content first to expand.');
-      return;
-    }
-
-    setIsAIExpanding(true);
-    setShowAIExpandMenu(false);
-    setAISuccessMessage(null);
-
-    try {
-      const res = await fetch('/api/gemini/expand-edit-note', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          currentNoteContent: targetNote.content,
-          action,
-          subject: targetNote.subject,
-          topic: isEditing ? editTopic : activeNote?.topic,
-          customInstruction: customPrompt,
-        })
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error || 'Failed to expand note with AI');
-      }
-
-      const data = await res.json();
-      if (data.updatedContent) {
-        if (isEditing) {
-          setEditContent(data.updatedContent);
-        } else if (activeNote) {
-          const updatedNote: UserStudyNote = {
-            ...activeNote,
-            content: data.updatedContent,
-            updatedAt: new Date().toLocaleString(),
-            tags: Array.from(new Set([...(activeNote.tags || []), 'ai-enhanced']))
-          };
-          onSaveNote(updatedNote);
-        }
-        setAISuccessMessage('✨ Note successfully expanded and saved!');
-        setTimeout(() => setAISuccessMessage(null), 3000);
-      }
-    } catch (err: any) {
-      alert(`AI Expansion error: ${err.message || 'Could not communicate with AI server.'}`);
-    } finally {
-      setIsAIExpanding(false);
-    }
-  };
-
   const getSubjectIcon = (subj: Subject | 'general') => {
     switch (subj) {
-      case 'mathematics': return <Calculator className="w-4 h-4 text-blue-500" />;
-      case 'physics': return <Compass className="w-4 h-4 text-purple-500" />;
-      case 'chemistry': return <FlaskConical className="w-4 h-4 text-emerald-500" />;
-      case 'aptitude': return <Brain className="w-4 h-4 text-amber-500" />;
-      default: return <FileText className="w-4 h-4 text-slate-500" />;
+      case 'mathematics':
+      case 'math_applied_2':
+        return <Calculator className="w-4 h-4 text-blue-500" />;
+      case 'physics':
+      case 'physics_2':
+        return <Compass className="w-4 h-4 text-purple-500" />;
+      case 'chemistry':
+      case 'chemistry_2':
+        return <FlaskConical className="w-4 h-4 text-emerald-500" />;
+      case 'critical_thinking':
+      case 'psychology':
+      case 'aptitude':
+        return <Brain className="w-4 h-4 text-amber-500" />;
+      default:
+        return <FileText className="w-4 h-4 text-slate-500" />;
     }
   };
 
   const getSubjectBadge = (subj: Subject | 'general') => {
     switch (subj) {
       case 'mathematics':
+      case 'math_applied_2':
         return 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-800';
       case 'physics':
+      case 'physics_2':
         return 'bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-800';
       case 'chemistry':
+      case 'chemistry_2':
         return 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800';
+      case 'biology':
+      case 'biology_2':
+        return 'bg-teal-100 dark:bg-teal-900/40 text-teal-800 dark:text-teal-300 border-teal-300 dark:border-teal-800';
+      case 'english':
+      case 'english_2':
+        return 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800';
+      case 'critical_thinking':
       case 'aptitude':
         return 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800';
       default:
@@ -273,83 +225,90 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
     }
   };
 
+  const formatSubjectName = (subj: Subject | 'general') => {
+    if (subj === 'all') return 'All 19 Subjects';
+    if (subj === 'general') return 'General Notes';
+    return getSubjectDisplayName(subj);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 rounded-2xl p-6 text-white border border-blue-800/40 shadow-xl">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-1.5 max-w-2xl">
-            <div className="flex items-center gap-2">
-              <span className="bg-amber-500/20 text-amber-300 text-xs font-extrabold px-2.5 py-0.5 rounded border border-amber-500/30 flex items-center gap-1.5">
-                <BookOpen className="w-4 h-4" /> Personal Study Notes & AI Vault
+      {/* Student-Friendly Top Header */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 text-white shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-300 flex items-center justify-center shrink-0">
+            <Edit3 className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+              <span>My Personal Study Notes</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 font-mono">
+                {userNotes.length}
               </span>
-              <span className="text-xs text-slate-400">
-                {userNotes.length} Custom Study Notes Saved Permanently
-              </span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              My AASTU Study Notes & AI Notes Generator
             </h2>
-            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-              Create, organize, and edit custom revision sheets. Generate textbook-grade Day 3, 4, 5 master notes or expand existing notes with LaTeX formulas, 30s speed hacks, and worked problems with Gemini AI.
+            <p className="text-slate-400 text-xs hidden xs:block">
+              Saved revision notes, custom formulas, and study summaries
             </p>
           </div>
+        </div>
 
-          {/* Quick Storage Stats & Actions */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <button
-              onClick={() => setIsGeneratorModalOpen(true)}
-              className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center gap-2"
-            >
-              <Sparkles className="w-4 h-4 text-amber-200" />
-              <span>AI Generate Master Notes</span>
-            </button>
+        <div className="flex items-center gap-2">
+          <button
+            id="new-student-note-btn"
+            onClick={handleStartCreate}
+            className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Note</span>
+          </button>
 
-            <button
-              id="new-student-note-btn"
-              onClick={handleStartCreate}
-              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-blue-600/30 transition flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" /> New Study Note
-            </button>
-
-            <button
-              onClick={() => setBackupModalOpen(true)}
-              className="px-3.5 py-2.5 bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white font-semibold text-xs rounded-xl transition flex items-center gap-1.5"
-              title="Backup & Restore Data"
-            >
-              <Download className="w-3.5 h-3.5 text-amber-400" />
-              <span>Backup ({userNotes.length})</span>
-            </button>
-          </div>
+          <button
+            onClick={() => setBackupModalOpen(true)}
+            className="p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white rounded-xl transition cursor-pointer"
+            title="Backup & Restore Data"
+          >
+            <Download className="w-4 h-4 text-slate-300" />
+          </button>
         </div>
       </div>
 
-      {/* AI Expansion Notification */}
-      {aiSuccessMessage && (
-        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs rounded-xl flex items-center gap-2 animate-in fade-in duration-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-          <span>{aiSuccessMessage}</span>
-        </div>
-      )}
-
       {/* Filter and Search Bar */}
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-3 sticky top-16 z-30">
-        {/* Subject Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-          {(['all', 'mathematics', 'physics', 'chemistry', 'aptitude', 'general'] as const).map((subj) => (
+      <div className="bg-slate-900 p-3 sm:p-3.5 rounded-2xl border border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        {/* Subject Pills across all 17 Freshman Courses */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar touch-pan-x">
+          <button
+            onClick={() => setSelectedSubject('all')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
+              selectedSubject === 'all'
+                ? 'bg-blue-600 border-blue-500 text-white shadow-sm'
+                : 'bg-slate-950 border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800'
+            }`}
+          >
+            All Subjects
+          </button>
+          {OFFICIAL_17_FRESHMAN_COURSES.map((course) => (
             <button
-              key={subj}
-              onClick={() => setSelectedSubject(subj)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap capitalize transition ${
-                selectedSubject === subj
-                  ? 'bg-blue-600 text-white shadow'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+              key={course.id}
+              onClick={() => setSelectedSubject(course.subject)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
+                selectedSubject === course.subject
+                  ? 'bg-blue-600 border-blue-500 text-white shadow-sm'
+                  : 'bg-slate-950 border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800'
               }`}
             >
-              {subj}
+              {course.shortTitle}
             </button>
           ))}
+          <button
+            onClick={() => setSelectedSubject('general')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer border ${
+              selectedSubject === 'general'
+                ? 'bg-blue-600 border-blue-500 text-white shadow-sm'
+                : 'bg-slate-950 border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800'
+            }`}
+          >
+            General Notes
+          </button>
         </div>
 
         {/* Search Field */}
@@ -389,16 +348,10 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
                 <p className="text-xs">No notes found.</p>
                 <div className="flex flex-col gap-2">
                   <button
-                    onClick={() => setIsGeneratorModalOpen(true)}
-                    className="text-xs text-indigo-500 font-bold hover:underline"
-                  >
-                    ✨ Generate with Gemini AI
-                  </button>
-                  <button
                     onClick={handleStartCreate}
                     className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline"
                   >
-                    + Create manual note
+                    + Create study note
                   </button>
                 </div>
               </div>
@@ -424,7 +377,7 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
                           <Pin className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
                         )}
                         <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${getSubjectBadge(note.subject)}`}>
-                          {note.subject}
+                          {formatSubjectName(note.subject)}
                         </span>
                         {note.topic && (
                           <span className="text-[10px] text-slate-500 font-medium truncate">
@@ -468,9 +421,7 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (window.confirm(`Delete note "${note.title}"?`)) {
-                            onDeleteNote(note.id);
-                          }
+                          onDeleteNote(note.id);
                         }}
                         className="p-1 text-slate-400 hover:text-rose-500"
                         title="Delete note"
@@ -543,18 +494,19 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
-                      Subject
+                      Select Subject (19 Subjects)
                     </label>
                     <select
                       value={editSubject}
                       onChange={(e) => setEditSubject(e.target.value as Subject | 'general')}
                       className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="mathematics">Mathematics</option>
-                      <option value="physics">Physics</option>
-                      <option value="chemistry">Chemistry</option>
-                      <option value="aptitude">Aptitude & English</option>
-                      <option value="general">General STEM</option>
+                      {OFFICIAL_17_FRESHMAN_COURSES.map(c => (
+                        <option key={c.id} value={c.subject}>
+                          {c.shortTitle}
+                        </option>
+                      ))}
+                      <option value="general">General Freshman Notes</option>
                     </select>
                   </div>
 
@@ -598,50 +550,6 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
                   />
                 </div>
 
-                {/* AI Assistant Toolbar for Note Expansion */}
-                <div className="p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-indigo-950/40 border border-blue-200 dark:border-blue-900/60 flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 text-xs text-blue-900 dark:text-blue-200 font-bold">
-                    <Sparkles className="w-4 h-4 text-amber-500" />
-                    <span>Gemini AI Note Expander:</span>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <button
-                      type="button"
-                      disabled={isAIExpanding || !editContent.trim()}
-                      onClick={() => handleTriggerAIExpansion('expand_theory')}
-                      className="px-2.5 py-1 bg-white dark:bg-slate-700 hover:bg-blue-50 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1 transition disabled:opacity-40"
-                    >
-                      <Calculator className="w-3 h-3 text-blue-500" /> + LaTeX Formulas
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={isAIExpanding || !editContent.trim()}
-                      onClick={() => handleTriggerAIExpansion('add_examples')}
-                      className="px-2.5 py-1 bg-white dark:bg-slate-700 hover:bg-blue-50 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1 transition disabled:opacity-40"
-                    >
-                      <BookOpen className="w-3 h-3 text-emerald-500" /> + Worked Problems
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={isAIExpanding || !editContent.trim()}
-                      onClick={() => handleTriggerAIExpansion('add_shortcuts')}
-                      className="px-2.5 py-1 bg-white dark:bg-slate-700 hover:bg-blue-50 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1 transition disabled:opacity-40"
-                    >
-                      <Zap className="w-3 h-3 text-amber-500" /> + 30s Shortcuts
-                    </button>
-                  </div>
-                </div>
-
-                {isAIExpanding && (
-                  <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-xs text-blue-800 dark:text-blue-200 flex items-center gap-2">
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-600" />
-                    <span>Gemini AI is expanding your note with LaTeX derivations and worked examples...</span>
-                  </div>
-                )}
-
                 {/* Content Textarea or LaTeX Preview */}
                 {isPreviewTab ? (
                   <div className="min-h-[220px] p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-sm leading-relaxed overflow-x-auto">
@@ -667,7 +575,7 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded border flex items-center gap-1.5 ${getSubjectBadge(activeNote.subject)}`}>
                     {getSubjectIcon(activeNote.subject)}
-                    {activeNote.subject}
+                    {formatSubjectName(activeNote.subject)}
                   </span>
                   {activeNote.topic && (
                     <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold px-2.5 py-1 rounded">
@@ -710,9 +618,7 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
 
                   <button
                     onClick={() => {
-                      if (window.confirm(`Delete "${activeNote.title}"?`)) {
-                        onDeleteNote(activeNote.id);
-                      }
+                      onDeleteNote(activeNote.id);
                     }}
                     className="p-2 rounded-lg border border-rose-200 dark:border-rose-900 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
                     title="Delete Note"
@@ -742,75 +648,10 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
                 </div>
               )}
 
-              {/* AI Quick Expansion Toolbar */}
-              <div className="p-3.5 rounded-xl bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-slate-800/80 dark:to-indigo-950/40 border border-blue-200 dark:border-blue-900/60 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    AI Note Enhancements:
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <button
-                    disabled={isAIExpanding}
-                    onClick={() => handleTriggerAIExpansion('expand_theory')}
-                    className="px-2.5 py-1 bg-white dark:bg-slate-700 hover:bg-blue-50 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1 transition shadow-xs"
-                  >
-                    <Calculator className="w-3 h-3 text-blue-500" /> + Derivations
-                  </button>
-
-                  <button
-                    disabled={isAIExpanding}
-                    onClick={() => handleTriggerAIExpansion('add_examples')}
-                    className="px-2.5 py-1 bg-white dark:bg-slate-700 hover:bg-blue-50 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1 transition shadow-xs"
-                  >
-                    <BookOpen className="w-3 h-3 text-emerald-500" /> + Problems
-                  </button>
-
-                  <button
-                    disabled={isAIExpanding}
-                    onClick={() => handleTriggerAIExpansion('add_shortcuts')}
-                    className="px-2.5 py-1 bg-white dark:bg-slate-700 hover:bg-blue-50 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1 transition shadow-xs"
-                  >
-                    <Zap className="w-3 h-3 text-amber-500" /> + 30s Hacks
-                  </button>
-
-                  <button
-                    disabled={isAIExpanding}
-                    onClick={() => handleTriggerAIExpansion('add_traps')}
-                    className="px-2.5 py-1 bg-white dark:bg-slate-700 hover:bg-blue-50 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1 transition shadow-xs"
-                  >
-                    <AlertCircle className="w-3 h-3 text-rose-500" /> + Traps
-                  </button>
-                </div>
-              </div>
-
-              {isAIExpanding && (
-                <div className="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-xs text-blue-800 dark:text-blue-200 flex items-center gap-2">
-                  <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
-                  <span>Gemini 3.7 Flash is updating this study note with university-grade content and saving locally...</span>
-                </div>
-              )}
-
               {/* Main Note Content Rendered with LaTeX */}
               <div className="text-slate-800 dark:text-slate-200 text-sm sm:text-base leading-relaxed bg-slate-50 dark:bg-slate-950/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-800/80 space-y-4">
                 <MathRenderer text={activeNote.content} />
               </div>
-
-              {/* Footer AI Coach Assistance Link */}
-              {onOpenAITutorWithTopic && (
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                  <span className="text-xs text-slate-400">Need AI elaboration on this note?</span>
-                  <button
-                    onClick={() => onOpenAITutorWithTopic(activeNote.title, activeNote.subject)}
-                    className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                    Discuss with AI Coach
-                  </button>
-                </div>
-              )}
             </div>
           ) : (
             <div className="py-24 text-center text-slate-400 space-y-3">
@@ -819,15 +660,9 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
                 No note selected
               </h3>
               <p className="text-xs max-w-sm mx-auto text-slate-500">
-                Select a note from the left drawer, create a fresh revision card, or generate Day 3/4/5 master notes with Gemini.
+                Select a note from the left drawer or create a fresh personal study note.
               </p>
               <div className="flex items-center justify-center gap-3 pt-2">
-                <button
-                  onClick={() => setIsGeneratorModalOpen(true)}
-                  className="px-4 py-2 bg-gradient-to-r from-amber-500 to-indigo-600 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5"
-                >
-                  <Sparkles className="w-3.5 h-3.5" /> AI Generate Notes
-                </button>
                 <button
                   onClick={handleStartCreate}
                   className="px-4 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl shadow transition"
@@ -839,16 +674,6 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
           )}
         </div>
       </div>
-
-      {/* AI Note Generator Modal */}
-      <AINoteGeneratorModal
-        isOpen={isGeneratorModalOpen}
-        onClose={() => setIsGeneratorModalOpen(false)}
-        onSaveAsUserNote={(note) => {
-          onSaveNote(note);
-          setActiveNoteId(note.id);
-        }}
-      />
 
       {/* Backup & Data Manager Modal */}
       {backupModalOpen && (
@@ -873,7 +698,7 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
             </div>
 
             <p className="text-xs text-slate-500 leading-relaxed">
-              Export all your personal study notes, generated AI practice questions, exam history, and task progress into a single permanent JSON backup file.
+              Export all your personal study notes, saved questions, exam history, and task progress into a single permanent JSON backup file.
             </p>
 
             {/* Storage Summary */}
@@ -884,7 +709,7 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
               </div>
               <div className="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                 <div className="text-lg font-bold text-amber-500">{savedQuestionsCount}</div>
-                <div className="text-[10px] text-slate-500 uppercase font-semibold">AI Qs Saved</div>
+                <div className="text-[10px] text-slate-500 uppercase font-semibold">Saved Qs</div>
               </div>
               <div className="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                 <div className="text-lg font-bold text-emerald-500">{examHistoryCount}</div>

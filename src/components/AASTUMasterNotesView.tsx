@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { ALL_AASTU_MASTER_NOTES } from '../data/aastuNotesData';
+import { ALL_FRESHMAN_CHAPTERS } from '../data/freshmanModules';
+import { OFFICIAL_17_FRESHMAN_COURSES } from '../data/freshmanCourseCatalog';
 import { MasterNoteChapter, Subject, UserStudyNote } from '../types';
+
+const COMBINED_MASTER_NOTES: MasterNoteChapter[] = [...ALL_FRESHMAN_CHAPTERS, ...ALL_AASTU_MASTER_NOTES];
 import { MathRenderer } from './MathRenderer';
 import { StudentNotesView } from './StudentNotesView';
-import { AINoteGeneratorModal } from './AINoteGeneratorModal';
 import { 
-  BookOpen, 
   Search, 
   Calculator, 
   Compass, 
   FlaskConical, 
   Brain, 
-  Sparkles, 
   Copy, 
   Check, 
   AlertTriangle, 
@@ -19,23 +20,17 @@ import {
   Clock, 
   Zap, 
   Bookmark, 
-  BookmarkCheck, 
-  Printer, 
   ChevronRight, 
-  ChevronDown, 
   FileText,
   Lightbulb,
   Maximize2,
   Minimize2,
   GraduationCap,
   Edit3,
-  PenTool,
-  Library,
-  Plus
+  Library
 } from 'lucide-react';
 
 interface AASTUMasterNotesViewProps {
-  onOpenAITutorWithTopic?: (topic: string, subject: Subject) => void;
   onJumpToPractice?: (subject: Subject) => void;
   userNotes?: UserStudyNote[];
   onSaveNote?: (note: UserStudyNote) => void;
@@ -46,7 +41,6 @@ interface AASTUMasterNotesViewProps {
 }
 
 export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
-  onOpenAITutorWithTopic,
   onJumpToPractice,
   userNotes = [],
   onSaveNote,
@@ -58,8 +52,7 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
   const [notesSubTab, setNotesSubTab] = useState<'master' | 'personal'>('master');
   const [selectedSubject, setSelectedSubject] = useState<Subject>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedChapterId, setSelectedChapterId] = useState<string>(ALL_AASTU_MASTER_NOTES[0].id);
-  const [isGeneratorModalOpen, setIsGeneratorModalOpen] = useState<boolean>(false);
+  const [selectedChapterId, setSelectedChapterId] = useState<string>(COMBINED_MASTER_NOTES[0].id);
   const [completedChapters, setCompletedChapters] = useState<Record<string, boolean>>(() => {
     try {
       const saved = localStorage.getItem('aastu_completed_chapters');
@@ -72,7 +65,7 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
   const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
 
   // Filter chapters
-  const filteredChapters = ALL_AASTU_MASTER_NOTES.filter((ch) => {
+  const filteredChapters = COMBINED_MASTER_NOTES.filter((ch) => {
     const matchSubject = selectedSubject === 'all' || ch.subject === selectedSubject;
     const q = searchQuery.toLowerCase();
     const matchQuery = 
@@ -86,7 +79,7 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
     return matchSubject && matchQuery;
   });
 
-  const activeChapter = ALL_AASTU_MASTER_NOTES.find((ch) => ch.id === selectedChapterId) || filteredChapters[0] || ALL_AASTU_MASTER_NOTES[0];
+  const activeChapter = COMBINED_MASTER_NOTES.find((ch) => ch.id === selectedChapterId) || filteredChapters[0] || COMBINED_MASTER_NOTES[0];
 
   const toggleChapterCompleted = (id: string) => {
     setCompletedChapters(prev => {
@@ -129,7 +122,7 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
   };
 
   const completedCount = Object.values(completedChapters).filter(Boolean).length;
-  const totalChapters = ALL_AASTU_MASTER_NOTES.length;
+  const totalChapters = COMBINED_MASTER_NOTES.length;
   const progressPercent = Math.round((completedCount / totalChapters) * 100);
 
   return (
@@ -146,7 +139,7 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
           }`}
         >
           <Library className="w-4 h-4 text-emerald-400" />
-          <span>AASTU Master Notes (Official Syllabus)</span>
+          <span>Freshman Master Notes (Official Syllabus)</span>
         </button>
 
         <button
@@ -171,7 +164,6 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
           userNotes={userNotes}
           onSaveNote={onSaveNote || (() => {})}
           onDeleteNote={onDeleteNote || (() => {})}
-          onOpenAITutorWithTopic={onOpenAITutorWithTopic}
           savedQuestionsCount={savedQuestionsCount}
           examHistoryCount={examHistoryCount}
           onDataRestored={onDataRestored}
@@ -185,17 +177,17 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
                 <div className="space-y-1.5 max-w-3xl">
                   <div className="flex items-center gap-2">
                     <span className="bg-blue-500/20 text-blue-300 text-xs font-extrabold px-2.5 py-0.5 rounded border border-blue-500/30 flex items-center gap-1.5">
-                      <GraduationCap className="w-4 h-4" /> AASTU Official Syllabus Vault
+                      <GraduationCap className="w-4 h-4" /> Freshman Official Syllabus Vault
                     </span>
                     <span className="text-xs text-slate-400">
-                      {totalChapters} Comprehensive Chapters • Extensive STEM Notes
+                      {totalChapters} Comprehensive Chapters • All 19 Freshman Subjects
                     </span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                    AASTU Comprehensive Master Notes & High-Yield Vault
+                    Freshman Comprehensive Master Notes & High-Yield Vault
                   </h2>
                   <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                    Textbook-grade comprehensive notes, mathematical proofs, governing equations, 30-second speed hacks, and examiner traps tailored exclusively for the Addis Ababa Science & Technology University entrance standard.
+                    Textbook-grade comprehensive notes, mathematical proofs, governing equations, 30-second speed hacks, and examiner traps tailored for Ethiopian Higher Education Freshman Common Courses (MoSHE/MoGE).
                   </p>
                 </div>
 
@@ -213,14 +205,6 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
                       />
                     </div>
                   </div>
-
-                  <button
-                    onClick={() => setIsGeneratorModalOpen(true)}
-                    className="w-full mt-2 py-2 px-3 bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-bold text-xs rounded-lg shadow transition flex items-center justify-center gap-1.5"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-amber-200" />
-                    <span>AI Generate Day 3, 4, 5 Notes</span>
-                  </button>
                 </div>
               </div>
             </div>
@@ -228,25 +212,39 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
 
       {/* Filter and Search Bar */}
       <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-3 sticky top-16 z-30">
-        {/* Subject Pills */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          {(['all', 'mathematics', 'physics', 'chemistry', 'aptitude'] as Subject[]).map((subj) => (
+        {/* Subject Pills across all 17 Freshman Courses */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none max-w-full">
+          <button
+            id="notes-filter-all"
+            onClick={() => {
+              setSelectedSubject('all');
+              if (COMBINED_MASTER_NOTES[0]) setSelectedChapterId(COMBINED_MASTER_NOTES[0].id);
+            }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition flex items-center gap-1.5 ${
+              selectedSubject === 'all'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+            }`}
+          >
+            All Subjects (19)
+          </button>
+          {OFFICIAL_17_FRESHMAN_COURSES.map((course) => (
             <button
-              key={subj}
-              id={`notes-filter-${subj}`}
+              key={course.id}
+              id={`notes-filter-${course.subject}`}
               onClick={() => {
-                setSelectedSubject(subj);
-                const firstMatching = ALL_AASTU_MASTER_NOTES.find(ch => subj === 'all' || ch.subject === subj);
+                setSelectedSubject(course.subject);
+                const firstMatching = COMBINED_MASTER_NOTES.find(ch => ch.subject === course.subject);
                 if (firstMatching) setSelectedChapterId(firstMatching.id);
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition flex items-center gap-1.5 ${
-                selectedSubject === subj
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition flex items-center gap-1.5 ${
+                selectedSubject === course.subject
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
-              {subj !== 'all' && getSubjectIcon(subj)}
-              {subj === 'aptitude' ? 'Aptitude & English' : subj}
+              {getSubjectIcon(course.subject)}
+              {course.shortTitle}
             </button>
           ))}
         </div>
@@ -372,16 +370,6 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                   {completedChapters[activeChapter.id] ? 'Completed' : 'Mark as Read'}
                 </button>
-
-                {onOpenAITutorWithTopic && (
-                  <button
-                    onClick={() => onOpenAITutorWithTopic(activeChapter.title, activeChapter.subject)}
-                    className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-                    Ask AI Tutor
-                  </button>
-                )}
               </div>
             </div>
 
@@ -500,7 +488,7 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
                   <div className="bg-rose-50 dark:bg-rose-950/30 rounded-xl p-4 border border-rose-200 dark:border-rose-900/50 space-y-2">
                     <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-rose-800 dark:text-rose-300">
                       <AlertTriangle className="w-4 h-4 text-rose-600" />
-                      ⚠️ AASTU Examiner Traps to Avoid:
+                      ⚠️ Freshman Examiner Traps to Avoid:
                     </div>
                     <ul className="space-y-1 text-xs text-rose-950 dark:text-rose-200">
                       {section.examTraps.map((trap, tIdx) => (
@@ -559,18 +547,6 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
       </div>
       </>
       )}
-
-      {/* AI Note Generator Modal */}
-      <AINoteGeneratorModal
-        isOpen={isGeneratorModalOpen}
-        onClose={() => setIsGeneratorModalOpen(false)}
-        onSaveAsUserNote={(note) => {
-          if (onSaveNote) {
-            onSaveNote(note);
-          }
-          setNotesSubTab('personal');
-        }}
-      />
     </div>
   );
 };

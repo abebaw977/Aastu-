@@ -1,0 +1,19 @@
+def resolveNodeModules(String subPath) {
+    def localDir = new File(rootDir, "../node_modules/" + subPath)
+    if (localDir.exists()) {
+        return localDir
+    }
+    return new File(rootDir, "../../node_modules/" + subPath)
+}
+
+include ':capacitor-android'
+project(':capacitor-android').projectDir = resolveNodeModules('@capacitor/android/capacitor')
+
+include ':capacitor-app'
+project(':capacitor-app').projectDir = resolveNodeModules('@capacitor/app/android')
+
+include ':capacitor-keyboard'
+project(':capacitor-keyboard').projectDir = resolveNodeModules('@capacitor/keyboard/android')
+
+include ':capacitor-status-bar'
+project(':capacitor-status-bar').projectDir = resolveNodeModules('@capacitor/status-bar/android')

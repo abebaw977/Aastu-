@@ -1,65 +1,149 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
-/* Custom Mobile & KaTeX Responsiveness for Samsung A04 (360px-384px) */
-@layer base {
-  html {
-    -webkit-tap-highlight-color: transparent;
-    scroll-behavior: smooth;
-  }
-  
-  body {
-    overflow-x: hidden;
-    touch-action: manipulation;
-  }
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
-/* KaTeX equations responsive horizontal scroll styling */
-.katex-display {
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  padding-top: 0.35rem !important;
-  padding-bottom: 0.35rem !important;
-  margin: 0.5rem 0 !important;
-  max-width: 100% !important;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+/* Base Responsive & Zero-Lag Mobile Optimization */
+html {
+  -webkit-tap-highlight-color: transparent;
+  text-size-adjust: 100%;
 }
 
-.katex-display::-webkit-scrollbar {
-  height: 4px;
+body {
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.katex-display::-webkit-scrollbar-thumb {
-  background-color: rgba(148, 163, 184, 0.4);
-  border-radius: 4px;
+/* Instant 0ms Touch/Click Response on All Buttons & Bars */
+button,
+a,
+select,
+input,
+textarea,
+[role="button"] {
+  touch-action: manipulation;
 }
 
-.katex-display > .katex {
-  max-width: 100%;
-  text-align: center;
+button:not(:disabled) {
+  cursor: pointer;
 }
 
-/* Ensure inline math doesn't overflow or push layout */
-.inline-math {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  overflow-x: auto;
-  vertical-align: middle;
-  scrollbar-width: none;
+/* ============================================================================
+   3-Mode Background System: BLUE MODE | BLACK MODE | WHITE MODE
+   ============================================================================ */
+
+/* 1. BLUE MODE (Deep Academic Royal Blue Background & Surfaces) */
+html.theme-blue,
+html.theme-blue body,
+html.theme-blue .app-theme-shell {
+  background-color: #0b1936 !important;
+  color: #f1f5f9 !important;
 }
 
-.inline-math::-webkit-scrollbar {
+html.theme-blue header,
+html.theme-blue nav[aria-label="Mobile Bottom Navigation"] {
+  background-color: #08132b !important;
+  border-color: #1e3a8a !important;
+}
+
+html.theme-blue .bg-white,
+html.theme-blue .dark\:bg-slate-900 {
+  background-color: #102347 !important;
+  border-color: #1e3a8a !important;
+  color: #f8fafc !important;
+}
+
+html.theme-blue .bg-slate-50,
+html.theme-blue .dark\:bg-slate-800,
+html.theme-blue .dark\:bg-slate-800\/60,
+html.theme-blue .dark\:bg-slate-800\/40 {
+  background-color: #162e5c !important;
+  border-color: #254689 !important;
+}
+
+/* 2. BLACK MODE (True Pitch-Black AMOLED Background & High-Contrast Surfaces) */
+html.theme-black,
+html.theme-black body,
+html.theme-black .app-theme-shell {
+  background-color: #000000 !important;
+  color: #f8fafc !important;
+}
+
+html.theme-black header,
+html.theme-black nav[aria-label="Mobile Bottom Navigation"] {
+  background-color: #050507 !important;
+  border-color: #1f1f26 !important;
+}
+
+html.theme-black .bg-white,
+html.theme-black .dark\:bg-slate-900 {
+  background-color: #0a0a0e !important;
+  border-color: #1f1f29 !important;
+  color: #ffffff !important;
+}
+
+html.theme-black .bg-slate-50,
+html.theme-black .dark\:bg-slate-800,
+html.theme-black .dark\:bg-slate-800\/60,
+html.theme-black .dark\:bg-slate-800\/40 {
+  background-color: #121218 !important;
+  border-color: #272733 !important;
+}
+
+/* 3. WHITE MODE (Clean Daylight Alabaster & Crisp White Cards) */
+html.theme-white,
+html.theme-white body,
+html.theme-white .app-theme-shell {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Hide scrollbars on horizontal filter pills while keeping scroll functionality */
+.no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
-/* Custom minimal scrollbars for horizontal chip rows on mobile */
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-none {
+.no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Ensure KaTeX formulas never overflow small mobile screens */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.35rem 0;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.katex {
+  font-size: 1.05em;
+  max-width: 100%;
+}
+
+@media (max-width: 640px) {
+  .katex {
+    font-size: 0.92em;
+  }
+}
+
+/* Specific optimizations for small phones (<= 380px e.g. iPhone SE, Galaxy A-series, Tecno, Infinix) */
+@media (max-width: 380px) {
+  html {
+    font-size: 14.5px;
+  }
+  .katex {
+    font-size: 0.85em;
+  }
+  .katex-display {
+    padding: 0.2rem 0;
+    margin: 0.4rem 0 !important;
+  }
 }
 
 /* Touch targets helper */
@@ -68,7 +152,34 @@
   min-width: 44px;
 }
 
-/* Mobile Safe Area Padding */
+/* Android & Mobile Safe Area Padding (Status Bar, Cutout & Gesture Navigation Bar) */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 .pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 16px);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+}
+
+.pl-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+.pr-safe {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+.safe-area-shell {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Android & iOS Soft Keyboard Behavior: hide sticky bottom navigation when keyboard is open */
+body.keyboard-open #freshman-bottom-nav,
+body.keyboard-open nav[aria-label="Mobile Bottom Navigation"] {
+  display: none !important;
+}
+
+body.keyboard-open main {
+  padding-bottom: 0.5rem !important;
 }

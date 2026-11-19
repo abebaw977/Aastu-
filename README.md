@@ -1,185 +1,186 @@
-# AASTU Entrance Exam Prep & 5-Day Fast Track Portal
+# Freshman Academy Hub (Semester 1 & 2)
 
-An intensive, structured preparation platform designed specifically for the **Addis Ababa Science and Technology University (AASTU)** and **ASTU** entrance examinations. Built with high-yield textbook-grade master notes, realistic timed mock exams, formula cheat sheets, a personalized question vault, and an AI Socratic Tutor powered by Google Gemini.
+> **Comprehensive University Freshman Course Mastery Hub for all 17 Ethiopian Higher Education (MoSHE/MoGE Curriculum) Common Courses.**
 
 ---
 
-## 🌟 Key Features
+## 📖 Overview
 
-- 📅 **5-Day Fast Track Study Plan**: Structured day-by-day roadmap covering High-Yield Math (Calculus & Vectors), Physics (Mechanics & Electromagnetism), Chemistry (Physical, Inorganic & Organic), and Quantitative Aptitude.
-- 📖 **Textbook-Grade Master Notes**: In-depth theoretical summaries, full KaTeX mathematical equations, step-by-step solved entrance exam problems, 30-second speed shortcuts, and examiner trap alerts.
-- 🎯 **Full Mock Exam Simulator**: Timed multi-subject practice tests with realistic exam interfaces, instant grading, categorized score breakdowns, and detailed step-by-step solutions.
-- 🤖 **AI Socratic Tutor & Coach**: Interactive exam assistant powered by Google Gemini with customizable personas (Strict University Professor, Speed-Solving Strategist, Patient Mentor) to explain complex physics/math derivations.
-- ✨ **AI Note Generator & Expander**: Automatically generate comprehensive notes for any chapter or custom topic with KaTeX equations, worked examples, and speed hacks.
-- 💾 **Personal Study Notes & Question Vault**: Bookmark tricky entrance questions, write formatted revision notes, and perform one-click JSON backup & restore.
-- ⚡ **Formula Reference Cheat Sheets**: Quick lookup reference cards for all essential physics, chemistry, and calculus formulas.
+**Freshman Academy Hub** is a full-stack, mobile-first academic platform built for Ethiopian university freshman students transitioning into higher education. It covers all **17 Official Ethiopian Higher Education Freshman Common Courses** across **Semester 1** and **Semester 2**, providing textbook-grade module notes, LaTeX equations, timed midterm/final exam simulations, 350+ formula bank, AI Tutor, and dynamic syllabus & personal lecture notes customization.
+
+### 🎓 All 17 Official Ethiopian University Freshman Common Courses (Semester 1 & 2)
+
+| # | Course Code | Official Course Name | Semester | ECTS Credits |
+| :-: | :--- | :--- | :-: | :-: |
+| 1 | **Math 1011** | Mathematics for Natural Sciences / Applied Math I | Semester 1 | 3-4 Cr |
+| 2 | **Phys 1011** | General Physics I (Mechanics, Waves, Thermodynamics) | Semester 1 | 3-4 Cr |
+| 3 | **Chem 1011** | General Chemistry I (Atoms, Bonding, Equilibrium) | Semester 1 | 3 Cr |
+| 4 | **Biol 1011** | General Biology I (Cell Biology, Bioenergetics, Genetics) | Semester 1 | 3 Cr |
+| 5 | **EnLa 1011** | Communicative English Skills I | Semester 1 | 3 Cr |
+| 6 | **LoCT 1011** | Critical Thinking & Logic | Semester 1 | 3 Cr |
+| 7 | **CESt 1011** | Civics & Ethical Education / Moral & Citizenship | Semester 1 | 3 Cr |
+| 8 | **SpSc 1011** | Physical Fitness & Health (Sports Science) | Semester 1 | 2 Cr |
+| 9 | **Math 1012** | Applied Mathematics II (Multivariable Calculus & Matrices) | Semester 2 | 3-4 Cr |
+| 10 | **Phys 1012** | General Physics II / Modern Physics (E&M and Optics) | Semester 2 | 3-4 Cr |
+| 11 | **Chem 1012** | General Chemistry II (Organic & Analytical Chemistry) | Semester 2 | 3 Cr |
+| 12 | **Biol 1012** | General Biology II / Applied Biology (Ecology & Physiology) | Semester 2 | 3 Cr |
+| 13 | **EnLa 1012** | Communicative English Skills II (Academic Writing) | Semester 2 | 3 Cr |
+| 14 | **Psyc 1011** | General Psychology & Life Skills | Semester 2 | 3 Cr |
+| 15 | **GeES 1011** | Geography of Ethiopia and the Horn | Semester 2 | 3 Cr |
+| 16 | **Hist 1012** | History of Ethiopia and the Horn | Semester 2 | 3 Cr |
+| 17 | **EmTe 1012** | Introduction to Emerging Technologies / Computer & ICT | Semester 2 | 3 Cr |
+
+---
+
+## 🚀 Key Features
+
+1. **Dynamic Custom Course Outlines & Personal Syllabus Feature**:
+   - Students can create, edit, customize, and delete custom outlines for all 17 freshman common courses.
+   - Edit course codes, instructor names, office hours, grading weight distributions (Quizzes, Midterms, Lab/Assignments, Final Exam), textbook references, chapter breakdowns, and personal lecture notes.
+   - Built-in "Load Official MoSHE Defaults" pre-fills accredited syllabi for instant customization.
+   - Persistent `localStorage` backup with complete JSON Export / Import for zero data loss.
+
+2. **Official Freshman Course Modules Hub**:
+   - Textbook-grade module notes, mathematical proofs, and KaTeX-rendered equations for every common course.
+   - Worked university exam problems with step-by-step solutions and 30-second examiner shortcuts.
+   - Interactive formula copying and distraction-free "Focus Mode".
+
+3. **12-Week Semester Mastery Plan & Block-by-Block Scheduling**:
+   - Morning, Afternoon, and Evening study blocks tailored to Ethiopian university semesters.
+   - Actionable target checklists with persistent progress tracking saved to `localStorage`.
+   - High-yield exam topics, examiner traps, and governing formulas highlighted per week.
+
+4. **Multi-Course Practice Drills & Midterm/Final Benchmark Simulator**:
+   - Practice questions covering all 17 freshman courses with comprehensive rationales.
+   - Timed benchmark mock exams (Semester 1 Benchmark, Semester 2 Benchmark, or Combined 25-Question Diagnostic).
+   - Mistakes Notebook automatically saves missed questions for targeted review.
+
+5. **350+ Formulas & Theorems Vault**:
+   - Compendium of governing equations, equivalence laws, and unit breakdowns across all 17 courses.
+   - One-click LaTeX formula copy button and semester/subject filters.
+
+6. **AI Academic Tutor & Note Generator**:
+   - 24/7 AI tutor specialized in Ethiopian university common courses.
+   - AI Study Note Generator that generates comprehensive summaries, key theorems, and worked problems for any day, week, or module.
+
+7. **Samsung Galaxy A04 (360px) Companion & Mobile-First Touch Navigation**:
+   - Custom floating canvas scratchpad for quick rough derivations.
+   - Toggleable 360px viewport simulation mode matching student devices in Ethiopian universities.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React 19, TypeScript, Vite, Tailwind CSS v4, Motion (Framer Motion), KaTeX (LaTeX math rendering), Lucide React Icons, Canvas Confetti
-- **Backend**: Express.js (Node.js), `@google/genai` (Google Gen AI SDK)
-- **Deployment**: Production-ready containerized setup bundled with `esbuild`
+- **Frontend**: React 18, TypeScript, Tailwind CSS, Lucide React icons
+- **Math & Typography**: KaTeX for LaTeX formula rendering, Tailwind Typography
+- **Backend & Server**: Express.js with Vite middleware (`server.ts` running via `tsx`)
+- **AI Integration**: Google Gemini API (`@google/genai`) for AI Tutor, question generation, and intelligent study note synthesis
+- **Storage**: Client-side resilient `localStorage` sync with exportable JSON data backups (Study notes, custom syllabi, exam records, bookmarks, mistakes)
 
 ---
 
-## 📋 Prerequisites
+## 📥 Installation & Setup Guide
 
-Before running this application locally, ensure you have the following installed:
+### 1. Prerequisites
+Ensure you have the following installed on your machine:
+- **Node.js**: v18.0.0 or higher
+- **npm**: v9.0.0 or higher (or `pnpm` / `yarn`)
 
-- **Node.js**: `v18.0.0` or higher (Node.js 20+ recommended)
-- **npm**: `v9.0.0` or higher (or `pnpm` / `yarn`)
-- **Google Gemini API Key**: Obtain a free API key from [Google AI Studio](https://aistudio.google.com/).
-
----
-
-## 🚀 Installation & Getting Started
-
-### 1. Clone or Extract the Project
-
+Verify versions:
 ```bash
-git clone <repository-url>
-cd aastu-exam-prep
+node -v
+npm -v
 ```
 
-*(Or navigate into the extracted project folder)*
+### 2. Clone or Extract the Repository
+```bash
+git clone <repository-url>
+cd freshman-academy-hub
+```
 
-### 2. Install Dependencies
-
-Install all required npm packages:
-
+### 3. Install Dependencies
+Install all required packages from `package.json`:
 ```bash
 npm install
 ```
 
-### 3. Configure Environment Variables
-
-Create a `.env` file in the root directory by copying from `.env.example`:
-
+### 4. Configure Environment Variables
+Create a `.env` file in the root directory:
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` and add your Google Gemini API key:
-
+Add your Google Gemini API Key into `.env`:
 ```env
-# Required for AI Tutor and Note Generator capabilities
 GEMINI_API_KEY="your_actual_gemini_api_key_here"
-
-# (Optional) Application URL
-APP_URL="http://localhost:3000"
+PORT=3000
 ```
+> *Note: The application includes rich offline fallback question sets, course syllabi, module notes, and formula vaults if an API key is not present.*
 
-> **Security Note**: Never commit your `.env` file containing real API keys to version control. The Express server safely proxies all Gemini API requests so your key is never exposed to the client browser.
-
-### 4. Run the Development Server
-
-Start the full-stack development server (Express + Vite):
-
+### 5. Run Development Server
+Start the full-stack server (Express + Vite on port 3000):
 ```bash
 npm run dev
 ```
 
-The application will be live at:
+Open your browser and navigate to:
 ```
 http://localhost:3000
 ```
 
----
-
-## 📦 Production Build & Deployment
-
-### Build the Application
-
-To build the optimized client bundle and bundle the Express backend with `esbuild`:
-
+### 6. Build for Production
+To build the optimized client bundle:
 ```bash
 npm run build
 ```
 
-This compiles static assets into `dist/` and creates the backend server bundle at `dist/server.cjs`.
-
-### Start in Production
-
-Run the compiled server:
-
+To start the production server:
 ```bash
-npm run start
-```
-
-### Clean Build Artifacts
-
-```bash
-npm run clean
-```
-
-### TypeScript Validation / Linting
-
-```bash
-npm run lint
+npm start
 ```
 
 ---
 
-## 📁 Project Directory Structure
+## 📁 Directory Structure
 
 ```
-├── .env.example                 # Template for environment variables
-├── index.html                   # Main HTML entry point (KaTeX & SEO tags)
-├── metadata.json                # Application metadata & capabilities
-├── package.json                 # Project dependencies & build scripts
-├── server.ts                    # Express backend (Gemini API proxy & Vite middleware)
-├── tsconfig.json                # TypeScript configuration
-├── vite.config.ts               # Vite configuration (Tailwind CSS plugin)
-└── src/
-    ├── main.tsx                 # React application bootstrap entry
-    ├── App.tsx                  # Core application container & tab routing
-    ├── index.css                # Global stylesheet & Tailwind CSS import
-    ├── types.ts                 # TypeScript type definitions & interfaces
-    ├── data/
-    │   ├── masterNotes.ts       # Comprehensive AASTU Master study notes
-    │   ├── questions.ts         # High-yield entrance exam question bank
-    │   └── formulaSheets.ts     # Formula cheat sheet definitions
-    ├── components/
-    │   ├── AASTUMasterNotesView.tsx  # Master textbook notes & search
-    │   ├── AINoteGeneratorModal.tsx  # AI note generator & custom topic creator
-    │   ├── AITutorView.tsx           # Socratic AI tutor with persistent chat history
-    │   ├── ExamSimulator.tsx         # Full-featured timed mock examination engine
-    │   ├── FormulaCheatSheet.tsx     # Quick-access formula reference sheets
-    │   ├── MathRenderer.tsx          # LaTeX & KaTeX formula parsing component
-    │   ├── StudyRoadmap.tsx          # 5-Day Fast Track study roadmap view
-    │   └── StudentNotesView.tsx      # Personal notes, question vault & backup system
-    └── utils/
-        ├── gemini.ts            # Client-side AI service dispatcher
-        └── storage.ts           # Local storage managers, JSON export & backup utilities
+freshman-academy-hub/
+├── src/
+│   ├── components/
+│   │   ├── Navbar.tsx                      # Top desktop navigation & branding
+│   │   ├── MobileBottomNav.tsx             # Mobile sticky bottom nav bar
+│   │   ├── CourseModulesView.tsx           # 17 Courses Modules & Student Notes
+│   │   ├── AddEditCourseSyllabusModal.tsx  # Dynamic course syllabus & notes editor
+│   │   ├── DailyPlanView.tsx               # 12-Week Semester Mastery Plan & Checklists
+│   │   ├── PracticeView.tsx                # Practice drills across 17 courses
+│   │   ├── MockExamView.tsx                # Midterm/Final timed benchmark simulator
+│   │   ├── StudyGuidesView.tsx             # 350+ Formulas, Theorems & Laws compendium
+│   │   ├── FlashcardsView.tsx              # Rapid recall flashcard decks
+│   │   ├── AITutorView.tsx                 # 24/7 AI Academic Tutor & Chat History
+│   │   ├── AINoteGeneratorModal.tsx        # AI Note Generation & Local Save modal
+│   │   ├── StudentNotesView.tsx            # Personal Notes Manager & Backup/Restore
+│   │   ├── MistakesNotebookView.tsx        # Review missed exam questions
+│   │   ├── MathRenderer.tsx                # KaTeX LaTeX renderer
+│   │   └── SamsungA04Companion.tsx         # Scratchpad & 360px device frame
+│   ├── data/
+│   │   ├── freshmanCourseCatalog.ts        # Official 17 courses catalog & defaults
+│   │   ├── freshmanModules.ts              # Full curriculum chapters & notes (Sem 1 & 2)
+│   │   ├── freshmanStudyPlan.ts            # 12-Week semester study roadmap & targets
+│   │   ├── freshmanQuestions.ts            # Midterm & Final questions bank (17 courses)
+│   │   ├── freshmanFormulas.ts             # Governing formulas and theorem laws (17 courses)
+│   │   └── freshmanFlashcards.ts           # Speed recall flashcards
+│   ├── types.ts                            # TypeScript data interfaces & 17 subjects
+│   ├── utils/
+│   │   └── storage.ts                      # LocalStorage persistence & JSON backup
+│   ├── App.tsx                             # Main app controller
+│   └── main.tsx                            # React root mount
+├── server.ts                               # Express API server & Gemini proxy
+├── package.json                            # Project manifest and scripts
+├── vite.config.ts                          # Vite configuration
+└── README.md                               # Documentation & setup manual
 ```
 
 ---
 
-## ⚙️ Available Scripts
-
-| Command | Description |
-|---|---|
-| `npm run dev` | Runs the full-stack app in development mode on port 3000 |
-| `npm run build` | Compiles the Vite frontend and bundles the Express server |
-| `npm run start` | Launches the production server from `dist/server.cjs` |
-| `npm run lint` | Runs `tsc --noEmit` to verify TypeScript types across the codebase |
-| `npm run clean` | Removes compiled distribution directories |
-
----
-
-## 💡 Troubleshooting & FAQs
-
-- **Gemini API Error / "API key not configured"**:
-  Ensure your `GEMINI_API_KEY` is correctly set in `.env` and restart the development server (`npm run dev`).
-- **LaTeX Math Formulas Not Rendering**:
-  KaTeX stylesheets are imported automatically in `index.html`. Ensure an active internet connection on initial load or verify local stylesheet loading.
-- **Port Conflict (Port 3000 in use)**:
-  Ensure no other instance or service is occupying port `3000` before running `npm run dev`.
-
----
-
-## 🎓 Target Audience
-
-Crafted for Ethiopian Grade 12 STEM students preparing for the **AASTU** (Addis Ababa Science and Technology University) and **ASTU** (Adama Science and Technology University) Freshman Entrance Examinations.
+## 📄 License
+MIT License. Built for Ethiopian university students to excel in their freshman common courses.
