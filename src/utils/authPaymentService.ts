@@ -251,13 +251,40 @@ export function getAuthenticatedAssetUrl(rawUrl: string, download = false): stri
   return finalUrl;
 }
 
+function normalizeScreenshotMime(rawMime?: string, fileName?: string): string {
+  const cleaned = String(rawMime || '').trim().toLowerCase();
+  if (cleaned.startsWith('image/') && cleaned.length >= 7 && cleaned.length <= 64) {
+    return cleaned;
+  }
+  const lowerName = String(fileName || '').toLowerCase();
+  if (lowerName.endsWith('.png')) return 'image/png';
+  if (lowerName.endsWith('.webp')) return 'image/webp';
+  if (lowerName.endsWith('.gif')) return 'image/gif';
+  return 'image/jpeg';
+}
+
 export function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ''));
-    reader.onerror = () => reject(new Error('Failed to read selected file.'));
-    reader.readAsDataURL(file);
-  });
+  return withTimeout(
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const res = String(reader.result || '');
+        if (!res || !res.startsWith('data:')) {
+          reject(new Error('Selected file could not be read as an image.'));
+          return;
+        }
+        resolve(res);
+      };
+      reader.onerror = () => reject(new Error('Failed to read selected file.'));
+      reader.onabort = () => reject(new Error('Reading selected file was cancelled.'));
+      try {
+        reader.readAsDataURL(file);
+      } catch {
+        reject(new Error('Failed to open selected screenshot file.'));
+      }
+    }),
+    7000
+  );
 }
 
 /**
@@ -270,64 +297,150 @@ export async function compressScreenshotDataUrl(file: File): Promise<{
   byteSize: number;
 }> {
   const rawDataUrl = await readFileAsDataUrl(file);
-  if (typeof document === 'undefined' || rawDataUrl.length <= 400000) {
+  const safeMime = normalizeScreenshotMime(file.type, file.name);
+  const maxAllowedChars = 650000;
+
+  if (
+    typeof document === 'undefined' ||
+    (rawDataUrl.length <= 320000 &&
+      ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(safeMime))
+  ) {
     return {
       dataUrl: rawDataUrl,
-      mime: file.type || 'image/jpeg',
-      byteSize: Math.round(rawDataUrl.length * 0.75),
+      mime: safeMime,
+      byteSize: Math.max(10, Math.round(rawDataUrl.length * 0.75)),
     };
   }
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timeoutId = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      if (rawDataUrl.length <= 850000) {
+        resolve({
+          dataUrl: rawDataUrl,
+          mime: safeMime,
+          byteSize: Math.max(10, Math.round(rawDataUrl.length * 0.75)),
+        });
+      } else {
+        reject(
+          new Error(
+            'Screenshot image is too large or took too long to process. Please select a clearer JPG or PNG screenshot.'
+          )
+        );
+      }
+    }, 8000);
+
+    const finishResolve = (result: { dataUrl: string; mime: string; byteSize: number }) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      resolve(result);
+    };
+
+    const finishReject = (err: Error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      reject(err);
+    };
+
     const img = new Image();
     img.onload = () => {
       try {
-        const maxDim = 1080;
-        let width = img.width || 800;
-        let height = img.height || 1200;
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
+        const steps = [
+          { maxDim: 1080, quality: 0.72 },
+          { maxDim: 900, quality: 0.54 },
+          { maxDim: 720, quality: 0.4 },
+          { maxDim: 560, quality: 0.3 },
+        ];
+
+        let bestDataUrl = '';
+        for (const step of steps) {
+          let width = img.naturalWidth || img.width || 800;
+          let height = img.naturalHeight || img.height || 1200;
+          if (width > step.maxDim || height > step.maxDim) {
+            if (width > height) {
+              height = Math.max(1, Math.round((height * step.maxDim) / width));
+              width = step.maxDim;
+            } else {
+              width = Math.max(1, Math.round((width * step.maxDim) / height));
+              height = step.maxDim;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) break;
+
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const compressed = canvas.toDataURL('image/jpeg', step.quality);
+          bestDataUrl = compressed;
+          if (compressed.length <= maxAllowedChars) {
+            finishResolve({
+              dataUrl: compressed,
+              mime: 'image/jpeg',
+              byteSize: Math.max(10, Math.round(compressed.length * 0.75)),
+            });
+            return;
           }
         }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve({
-            dataUrl: rawDataUrl.slice(0, 750000),
-            mime: file.type || 'image/jpeg',
-            byteSize: Math.min(750000, Math.round(rawDataUrl.length * 0.75)),
+
+        if (bestDataUrl && bestDataUrl.length <= 880000) {
+          finishResolve({
+            dataUrl: bestDataUrl,
+            mime: 'image/jpeg',
+            byteSize: Math.max(10, Math.round(bestDataUrl.length * 0.75)),
           });
           return;
         }
-        ctx.drawImage(img, 0, 0, width, height);
-        // Single pass high-legibility compression: 0.72 quality produces ~100-200KB images with ultra-sharp text
-        const compressed = canvas.toDataURL('image/jpeg', 0.72);
-        resolve({
-          dataUrl: compressed,
-          mime: 'image/jpeg',
-          byteSize: Math.round(compressed.length * 0.75),
-        });
+
+        if (rawDataUrl.length <= 850000) {
+          finishResolve({
+            dataUrl: rawDataUrl,
+            mime: safeMime,
+            byteSize: Math.max(10, Math.round(rawDataUrl.length * 0.75)),
+          });
+          return;
+        }
+
+        finishReject(
+          new Error(
+            'Screenshot file is too large to upload. Please crop or take a regular phone screenshot under 1 MB.'
+          )
+        );
       } catch {
-        resolve({
-          dataUrl: rawDataUrl.slice(0, 750000),
-          mime: file.type || 'image/jpeg',
-          byteSize: Math.min(750000, Math.round(rawDataUrl.length * 0.75)),
-        });
+        if (rawDataUrl.length <= 850000) {
+          finishResolve({
+            dataUrl: rawDataUrl,
+            mime: safeMime,
+            byteSize: Math.max(10, Math.round(rawDataUrl.length * 0.75)),
+          });
+        } else {
+          finishReject(
+            new Error('Could not process this image format. Please choose a JPG or PNG screenshot.')
+          );
+        }
       }
     };
     img.onerror = () => {
-      resolve({
-        dataUrl: rawDataUrl.slice(0, 750000),
-        mime: file.type || 'image/jpeg',
-        byteSize: Math.min(750000, Math.round(rawDataUrl.length * 0.75)),
-      });
+      if (rawDataUrl.length <= 850000) {
+        finishResolve({
+          dataUrl: rawDataUrl,
+          mime: safeMime,
+          byteSize: Math.max(10, Math.round(rawDataUrl.length * 0.75)),
+        });
+      } else {
+        finishReject(
+          new Error('Unsupported or unreadable image file. Please select a JPG or PNG screenshot.')
+        );
+      }
     };
     img.src = rawDataUrl;
   });
@@ -1039,37 +1152,110 @@ export async function submitPaymentScreenshot(params: {
     throw new Error('Please log in first.');
   }
 
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    throw new Error(
+      'No internet connection. Please turn on mobile data or Wi-Fi and tap Submit Payment again.'
+    );
+  }
+
+  const normalizedInputPhone = normalizeEthiopianPhone(params.phoneNumber || '');
+  if (normalizedInputPhone.length > 0 && normalizedInputPhone.length < 4) {
+    throw new Error('Please enter a valid phone number (e.g. 09XXXXXXXX).');
+  }
+
+  // Compress the screenshot first so any file read/format issue fails cleanly before hitting Firestore
+  const { dataUrl, mime, byteSize } = await compressScreenshotDataUrl(params.file);
+  if (!dataUrl || dataUrl.length < 20 || dataUrl.length > 940000) {
+    throw new Error(
+      'Payment screenshot is invalid or too large. Please select a standard JPG or PNG screenshot.'
+    );
+  }
+
   const userRef = doc(db, 'users', userId);
-  let userDoc: FirestoreUserDoc;
+  let userDoc: FirestoreUserDoc | null = null;
+  let userExistsInCloud = false;
+  let userLookupError: unknown = null;
+
   try {
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) {
-      throw new Error('User account not found. Please log in again.');
+    const userSnap = await withTimeout(getDoc(userRef), 8000);
+    if (userSnap.exists()) {
+      userDoc = userSnap.data() as FirestoreUserDoc;
+      userExistsInCloud = true;
     }
-    userDoc = userSnap.data() as FirestoreUserDoc;
   } catch (error) {
     if (isPermissionDeniedError(error)) {
       handleFirestoreError(error, OperationType.GET, `users/${userId}`);
     }
-    throw error;
+    userLookupError = error;
+    // Check local cache/fallback below before failing
   }
 
-  const { dataUrl, mime, byteSize } = await compressScreenshotDataUrl(params.file);
+  const localState = await loadLocalApkDb();
+  const localUser = localState.users.find((u) => u.id === userId);
+
+  if (!userDoc) {
+    if (localUser && !userLookupError) {
+      const nowFallback = new Date().toISOString();
+      const fallbackPhone = normalizeEthiopianPhone(
+        normalizedInputPhone || localUser.phoneNumber || ''
+      ).slice(0, 32);
+      const safeUsername = String(localUser.username || '').trim().slice(0, 64);
+      const recreatedDoc: FirestoreUserDoc = {
+        id: localUser.id,
+        username: safeUsername.length >= 3 ? safeUsername : `student_${localUser.id.slice(-6)}`,
+        usernameLower: (safeUsername.length >= 3 ? safeUsername : `student_${localUser.id.slice(-6)}`).toLowerCase(),
+        phoneNumber: fallbackPhone.length >= 4 ? fallbackPhone : '0900000000',
+        passwordHash: localUser.passwordHash,
+        role: 'student',
+        accountStatus: 'PENDING_PAYMENT',
+        rejectionReason: '',
+        createdAt: localUser.createdAt || nowFallback,
+        updatedAt: nowFallback,
+        boundDeviceId: getOrCreateDeviceId(),
+      };
+      try {
+        await withTimeout(setDoc(userRef, recreatedDoc), 10000);
+        userDoc = recreatedDoc;
+        userExistsInCloud = true;
+      } catch (createErr) {
+        if (isPermissionDeniedError(createErr)) {
+          handleFirestoreError(createErr, OperationType.CREATE, `users/${userId}`);
+        }
+        throw new Error(
+          'Could not reach the server to verify your account. Please check your internet connection and try again.'
+        );
+      }
+    } else if (userLookupError) {
+      throw new Error(
+        'Slow or unstable internet connection. Could not reach the server to send your payment. Please try again.'
+      );
+    } else {
+      throw new Error('User account not found. Please log in again.');
+    }
+  }
+
+  const cleanPhone = normalizeEthiopianPhone(
+    normalizedInputPhone || userDoc.phoneNumber || ''
+  ).slice(0, 32);
+  if (cleanPhone.length < 4) {
+    throw new Error('Please enter a valid Ethiopian phone number (e.g. 09XXXXXXXX).');
+  }
+
   const now = new Date().toISOString();
   const payId = `pay_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-  const cleanPhone = String(params.phoneNumber || userDoc.phoneNumber).trim().slice(0, 32);
   const cleanRef = String(params.transactionRef || '').trim().slice(0, 128);
+  const safeUsername = String(userDoc.username || '').trim().slice(0, 64);
 
   const paymentDoc: FirestorePaymentDoc = {
     id: payId,
     userId: userDoc.id,
-    username: userDoc.username,
+    username: safeUsername.length >= 3 ? safeUsername : `student_${userDoc.id.slice(-6)}`,
     phoneNumber: cleanPhone,
     amount: 40,
     currency: 'ETB',
     paymentMethod: 'Telebirr',
     transactionRef: cleanRef,
-    screenshotMime: mime.slice(0, 64),
+    screenshotMime: normalizeScreenshotMime(mime, params.file.name).slice(0, 64),
     screenshotSize: Math.max(10, Math.min(1000000, byteSize)),
     screenshotDataUrl: dataUrl,
     status: 'PENDING',
@@ -1079,24 +1265,40 @@ export async function submitPaymentScreenshot(params: {
     reviewedBy: '',
   };
 
+  // Step 1: Write payment document first with a generous 22s timeout for mobile connections
   try {
-    await withTimeout(
-      Promise.all([
-        setDoc(doc(db, 'payments', payId), paymentDoc),
+    await withTimeout(setDoc(doc(db, 'payments', payId), paymentDoc), 22000);
+  } catch (error) {
+    if (isPermissionDeniedError(error)) {
+      handleFirestoreError(error, OperationType.CREATE, `payments/${payId}`);
+    }
+    throw new Error(
+      error instanceof Error && error.message.includes('timed out')
+        ? 'Upload timed out. Your internet connection may be slow — please try again.'
+        : error instanceof Error
+        ? error.message
+        : 'Failed to send payment to Admin. Please try again.'
+    );
+  }
+
+  // Step 2: Update the student's accountStatus to PENDING_VERIFICATION
+  if (userExistsInCloud) {
+    try {
+      await withTimeout(
         updateDoc(userRef, {
           accountStatus: 'PENDING_VERIFICATION',
           rejectionReason: '',
           phoneNumber: cleanPhone,
           updatedAt: now,
         }),
-      ]),
-      7000
-    );
-  } catch (error) {
-    if (isPermissionDeniedError(error)) {
-      handleFirestoreError(error, OperationType.CREATE, `payments/${payId}`);
+        10000
+      );
+    } catch (error) {
+      if (isPermissionDeniedError(error)) {
+        handleFirestoreError(error, OperationType.UPDATE, `users/${userId}`);
+      }
+      // If payment document was already saved to Firestore, don't fail the student and cause duplicate submissions
     }
-    throw error;
   }
 
   const updatedUser: FirestoreUserDoc = {
@@ -1110,6 +1312,23 @@ export async function submitPaymentScreenshot(params: {
   const authUser = toAuthUser(updatedUser);
   const payRec = toPaymentRecord(paymentDoc);
   saveCachedSession(authUser, payRec);
+
+  // Keep offline local mirror in sync
+  const localIdx = localState.users.findIndex((u) => u.id === userId);
+  if (localIdx >= 0) {
+    localState.users[localIdx] = {
+      ...localState.users[localIdx],
+      accountStatus: 'PENDING_VERIFICATION',
+      rejectionReason: null,
+      phoneNumber: cleanPhone,
+      updatedAt: now,
+    };
+  }
+  localState.payments = [
+    { ...payRec, screenshotDataUrl: dataUrl },
+    ...localState.payments.filter((p) => p.id !== payId),
+  ];
+  saveLocalApkDb(localState);
 
   return {
     message: 'Payment submitted successfully. Your payment is waiting for admin verification.',

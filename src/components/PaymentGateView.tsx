@@ -6,6 +6,7 @@ import {
   submitPaymentScreenshot,
   fetchCurrentSession,
   getAuthenticatedAssetUrl,
+  normalizeEthiopianPhone,
 } from '../utils/authPaymentService';
 import {
   Copy,
@@ -52,12 +53,25 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [justSubmittedMessage, setJustSubmittedMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const submittingRef = useRef(false);
 
   const isWaitingVerification =
     user.accountStatus === 'PENDING_VERIFICATION' || latestPayment?.status === 'PENDING';
   const isRejected =
     user.accountStatus === 'REJECTED' ||
     (latestPayment?.status === 'REJECTED' && !isWaitingVerification);
+
+  useEffect(() => {
+    submittingRef.current = submitting;
+  }, [submitting]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   // Real-time Firestore snapshot listener + rapid 2.5s poll so student unlocks within milliseconds of Admin approval/rejection
   useEffect(() => {
@@ -69,12 +83,14 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
     const unsubUser = onSnapshot(
       doc(db, 'users', user.id),
       (snap) => {
-        if (!isMounted || !snap.exists()) return;
+        if (!isMounted || submittingRef.current || !snap.exists()) return;
         const data = snap.data() as any;
         if (data.accountStatus !== user.accountStatus || data.rejectionReason !== user.rejectionReason) {
           fetchCurrentSession()
             .then((res) => {
-              if (isMounted) onUserAndPaymentUpdated(res.user, res.latestPayment);
+              if (isMounted && !submittingRef.current) {
+                onUserAndPaymentUpdated(res.user, res.latestPayment);
+              }
             })
             .catch(() => {});
         }
@@ -90,12 +106,14 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
       unsubPay = onSnapshot(
         doc(db, 'payments', latestPayment.id),
         (snap) => {
-          if (!isMounted || !snap.exists()) return;
+          if (!isMounted || submittingRef.current || !snap.exists()) return;
           const payData = snap.data() as any;
           if (payData.status !== latestPayment.status || payData.adminNote !== latestPayment.adminNote) {
             fetchCurrentSession()
               .then((res) => {
-                if (isMounted) onUserAndPaymentUpdated(res.user, res.latestPayment);
+                if (isMounted && !submittingRef.current) {
+                  onUserAndPaymentUpdated(res.user, res.latestPayment);
+                }
               })
               .catch(() => {});
           }
@@ -106,9 +124,12 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
 
     // 3. Fast 2.5s fallback poll
     const interval = setInterval(async () => {
+      if (submittingRef.current) return;
       try {
         const res = await fetchCurrentSession();
-        if (isMounted) onUserAndPaymentUpdated(res.user, res.latestPayment);
+        if (isMounted && !submittingRef.current) {
+          onUserAndPaymentUpdated(res.user, res.latestPayment);
+        }
       } catch {
         // ignore background poll errors
       }
@@ -131,12 +152,18 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setError(null);
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
     if (!file) {
       setSelectedFile(null);
       setPreviewUrl(null);
       return;
     }
-    if (!file.type.startsWith('image/')) {
+    const isImageFile =
+      file.type.startsWith('image/') ||
+      (!file.type && /\.(png|jpe?g|webp|gif|bmp|heic|heif)$/i.test(file.name));
+    if (!isImageFile) {
       setError('Please select a valid image screenshot (PNG, JPG, or WEBP).');
       return;
     }
@@ -145,12 +172,31 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
     setPreviewUrl(objectUrl);
   };
 
+  const formatSubmitError = (err: unknown): string => {
+    const raw = err instanceof Error ? err.message : String(err || '');
+    if (!raw) return 'Failed to submit payment screenshot. Please try again.';
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && typeof parsed.error === 'string') {
+        if (parsed.error.toLowerCase().includes('permission')) {
+          return 'Unable to verify payment format with server. Please check your phone number and screenshot, then try again.';
+        }
+        return parsed.error;
+      }
+    } catch {
+      // plain string error
+    }
+    return raw;
+  };
+
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     setError(null);
 
-    if (!phoneNumber.trim()) {
-      setError('Please enter your phone number.');
+    const normalizedPhone = normalizeEthiopianPhone(phoneNumber.trim());
+    if (!normalizedPhone || normalizedPhone.length < 4) {
+      setError('Please enter a valid Ethiopian phone number (e.g. 09XXXXXXXX).');
       return;
     }
     if (!selectedFile) {
@@ -159,17 +205,32 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
     }
 
     setSubmitting(true);
+    submittingRef.current = true;
+    let safetyTimer: ReturnType<typeof setTimeout> | null = null;
     try {
-      const res = await submitPaymentScreenshot({
-        phoneNumber: phoneNumber.trim(),
-        transactionRef: transactionRef.trim(),
-        file: selectedFile,
-      });
+      const res = await Promise.race([
+        submitPaymentScreenshot({
+          phoneNumber: normalizedPhone,
+          transactionRef: transactionRef.trim(),
+          file: selectedFile,
+        }),
+        new Promise<never>((_, reject) => {
+          safetyTimer = setTimeout(() => {
+            reject(
+              new Error(
+                'Submission took too long. Please check your internet connection and tap Submit Payment again.'
+              )
+            );
+          }, 35000);
+        }),
+      ]);
       setJustSubmittedMessage(res.message);
       onUserAndPaymentUpdated(res.user, res.payment);
     } catch (err: any) {
-      setError(err.message || 'Failed to submit payment screenshot.');
+      setError(formatSubmitError(err));
     } finally {
+      if (safetyTimer) clearTimeout(safetyTimer);
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
@@ -603,6 +664,13 @@ export const PaymentGateView: React.FC<PaymentGateViewProps> = ({
                       )}
                     </div>
                   </div>
+
+                  {error && (
+                    <div className="p-3.5 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs flex items-start gap-2.5">
+                      <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                      <span>{error}</span>
+                    </div>
+                  )}
 
                   <button
                     id="payment-submit-btn"
