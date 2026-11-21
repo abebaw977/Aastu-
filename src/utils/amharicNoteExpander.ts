@@ -245,7 +245,7 @@ const SUBJECT_SHORT_LABEL_AM: Partial<Record<Subject, string>> = {
 interface KeyTermSlot {
   amOnly: string;
   withEnglish: string;
-  priority: 1 | 2 | 3;
+  priority: 1 | 2 | 3 | 4;
   preferKeepEnglish: boolean;
 }
 
@@ -269,11 +269,254 @@ function cleanupAmharicFormatting(text: string): string {
     .trimEnd();
 }
 
+const BOILERPLATE_BOLD_LABELS = new Set([
+  'note',
+  'important',
+  'tip',
+  'exam tip',
+  'shortcut',
+  'shortcut tip',
+  'example',
+  'examples',
+  'definition',
+  'definitions',
+  'summary',
+  'warning',
+  'caution',
+  'solution',
+  'answer',
+  'why',
+  'formula',
+  'overview',
+  'introduction',
+  'objectives',
+  'chapter introduction',
+  'chapter objectives',
+  'learning objectives',
+  'key takeaways',
+  'exam trap',
+  'exam traps',
+  'key idea',
+  'meaning',
+  'etymology',
+  'question',
+  'recall',
+  'proof',
+  'given',
+  'step',
+  'therefore',
+  'hence',
+  'conclusion',
+]);
+
+const FINITE_ENGLISH_CLAUSE_WORDS =
+  /\b(?:is|are|was|were|have|has|had|can|could|may|might|will|would|should|must|that|which|who|whom|whose|when|where|why|how|because|since|although|if|unless|they|we|you|he|she|it|does|did|do|makes|made|shows|gives|means|refers|occurs|allows|causes|enables)\b/i;
+
+const GENERAL_NON_NOUN_WORDS = new Set([
+  'about', 'above', 'across', 'after', 'again', 'against', 'almost', 'alone', 'along', 'already',
+  'although', 'always', 'among', 'another', 'answer', 'anyone', 'anything', 'around', 'became',
+  'because', 'become', 'becomes', 'becoming', 'before', 'behind', 'being', 'below', 'beside',
+  'between', 'beyond', 'both', 'cannot', 'chapter', 'clearly', 'common', 'commonly', 'complete',
+  'completely', 'consider', 'considered', 'considering', 'contains', 'could', 'create', 'created',
+  'creates', 'creating', 'current', 'currently', 'describe', 'described', 'describes', 'describing',
+  'detail', 'details', 'determine', 'determined', 'determines', 'develop', 'developed', 'developing',
+  'different', 'differently', 'direct', 'directly', 'discuss', 'discussed', 'discusses', 'during',
+  'earlier', 'easily', 'either', 'enable', 'enables', 'enough', 'entire', 'especially', 'essential',
+  'essentially', 'every', 'everyone', 'everything', 'example', 'examples', 'except', 'explain',
+  'explained', 'explaining', 'explains', 'express', 'expressed', 'first', 'follow', 'following',
+  'follows', 'former', 'found', 'frequently', 'further', 'furthermore', 'general', 'generally',
+  'given', 'gives', 'giving', 'great', 'greater', 'greatest', 'having', 'hence', 'hereby',
+  'higher', 'highest', 'however', 'identify', 'identified', 'identifies', 'important', 'importantly',
+  'include', 'included', 'includes', 'including', 'increase', 'increased', 'increases', 'increasing',
+  'indeed', 'indicate', 'indicated', 'indicates', 'instead', 'into', 'involve', 'involved',
+  'involves', 'involving', 'known', 'large', 'larger', 'largest', 'later', 'latter', 'learn',
+  'learning', 'least', 'less', 'likewise', 'little', 'local', 'lower', 'mainly', 'major',
+  'making', 'many', 'meaning', 'means', 'meant', 'might', 'moreover', 'mostly', 'multiple',
+  'must', 'namely', 'necessary', 'needed', 'needs', 'neither', 'never', 'nonetheless', 'nothing',
+  'number', 'occur', 'occurred', 'occurring', 'occurs', 'often', 'other', 'others', 'otherwise',
+  'overall', 'particular', 'particularly', 'people', 'perhaps', 'place', 'possible', 'possibly',
+  'present', 'presented', 'presents', 'primary', 'primarily', 'produce', 'produced', 'produces',
+  'provide', 'provided', 'provides', 'providing', 'rather', 'really', 'recent', 'recently',
+  'refer', 'referred', 'referring', 'refers', 'regard', 'regarding', 'regardless', 'related',
+  'remain', 'remains', 'require', 'required', 'requires', 'requiring', 'result', 'resulting',
+  'results', 'second', 'section', 'several', 'should', 'shown', 'shows', 'similar', 'similarly',
+  'simple', 'simply', 'since', 'single', 'small', 'smaller', 'smallest', 'some', 'someone',
+  'something', 'sometimes', 'somewhat', 'specific', 'specifically', 'state', 'stated', 'states',
+  'still', 'study', 'studying', 'subject', 'subjects', 'such', 'summarize', 'summary', 'support',
+  'taken', 'takes', 'taking', 'their', 'theirs', 'themselves', 'there', 'therefore', 'these',
+  'they', 'thing', 'things', 'third', 'those', 'though', 'three', 'through', 'throughout', 'today',
+  'together', 'toward', 'towards', 'under', 'understand', 'understanding', 'unless', 'until',
+  'usually', 'using', 'various', 'versus', 'where', 'whereas', 'whether', 'which', 'while',
+  'within', 'without', 'would', 'written',
+]);
+
+const ACADEMIC_NOUN_SUFFIX_REGEX =
+  /(?:tion|sion|ment|ism|ist|logy|graphy|metry|nomy|osis|sis|ity|ance|ence|ure|ide|ate|ine|gen|ium|ics|ory|ary|age|dom|ship|gram|sphere|graph|scope|meter|type|form|rate|law|rule|scale|stage|phase|level|factor|system|model|theory|method|process|concept|principle|effect|force|energy|value|ratio|index|class|group|order|cycle|zone|layer|field|wave|bond|acid|base|cell|gene|trait|organ|tissue)$/i;
+
+function translateSimplePhraseToAmharic(phrase: string): string {
+  if (!phrase || !phrase.trim()) return phrase;
+  let working = phrase.trim();
+  for (let i = 0; i < COMPILED_PURE_PHRASE_RULES.length; i++) {
+    working = working.replace(COMPILED_PURE_PHRASE_RULES[i].regex, `\uE002R${i}\uE003`);
+  }
+  working = working.replace(/(\uE002R\d+\uE003)|([A-Za-z]+(?:[-'’][A-Za-z]+)*)/g, (full, tok, word) => {
+    if (tok) return tok;
+    if (!word) return full;
+    const translated = translateEnglishWordToAmharic(word);
+    return translated === null ? word : translated;
+  });
+  working = working.replace(/\uE002R(\d+)\uE003/g, (_, idxStr) => {
+    const rule = COMPILED_PURE_PHRASE_RULES[Number(idxStr)];
+    return rule ? rule.replacement : '';
+  });
+  return cleanupAmharicFormatting(working);
+}
+
+function isBoldMajorTermCandidate(rawInner: string): boolean {
+  if (!rawInner || /\uE000T|\uE008B/.test(rawInner)) return false;
+  const cleaned = rawInner
+    .replace(/^(\d+(?:\.\d+)*[.)]\s*|[A-Za-z]\)\s*)/, '')
+    .replace(/[:;,.!?]+$/, '')
+    .trim();
+  if (!cleaned || cleaned.length < 2 || cleaned.length > 56) return false;
+  if (!/[A-Za-z]{2,}/.test(cleaned)) return false;
+  const words = cleaned.split(/\s+/);
+  if (words.length > 6) return false;
+  if (/^(?:step|part|chapter)\s+\d+$/i.test(cleaned)) return false;
+  if (BOILERPLATE_BOLD_LABELS.has(cleaned.toLowerCase())) return false;
+  if (FINITE_ENGLISH_CLAUSE_WORDS.test(cleaned)) return false;
+  return true;
+}
+
+function buildBoldTermSlot(
+  rawInner: string,
+  slots: KeyTermSlot[],
+  ctx: ChapterTerminologyContext
+): string | null {
+  if (!isBoldMajorTermCandidate(rawInner)) return null;
+
+  const prefixMatch = rawInner.match(/^(\d+(?:\.\d+)*[.)]\s*|[A-Za-z]\)\s*)(.+)$/);
+  const prefix = prefixMatch ? prefixMatch[1] : '';
+  const body = (prefixMatch ? prefixMatch[2] : rawInner).trim();
+  const trailingPunctMatch = body.match(/([:;,.!?]+)$/);
+  const trailingPunct = trailingPunctMatch ? trailingPunctMatch[1] : '';
+  const coreTerm = body.slice(0, body.length - trailingPunct.length).trim();
+  if (!coreTerm) return null;
+
+  const lowerCore = coreTerm.toLowerCase();
+  const amCore = translateSimplePhraseToAmharic(coreTerm);
+  const amOnly = `**${prefix}${amCore}${trailingPunct}**`;
+
+  // Check if coreTerm matches a multi-word KEY_EXAM_PHRASES entry or single KEY_EXAM_TERMS
+  const matchedPhrase = COMPILED_KEY_PHRASE_RULES.find(
+    (r) => r.enCanonical.toLowerCase() === lowerCore
+  );
+  if (matchedPhrase) {
+    const already = ctx.introducedConcepts.has(matchedPhrase.conceptKey);
+    if (!already) ctx.introducedConcepts.add(matchedPhrase.conceptKey);
+    const display = !already && matchedPhrase.amMeaning !== matchedPhrase.enCanonical
+      ? `${matchedPhrase.amMeaning} (${matchedPhrase.enCanonical})`
+      : matchedPhrase.enCanonical;
+    const slotIdx = slots.length;
+    slots.push({
+      amOnly: `**${prefix}${matchedPhrase.amMeaning}${trailingPunct}**`,
+      withEnglish: `**${prefix}${display}${trailingPunct}**`,
+      priority: 1,
+      preferKeepEnglish: true,
+    });
+    return `\uE008B${slotIdx}\uE009`;
+  }
+
+  const singleKeyEn = KEY_EXAM_TERMS[lowerCore];
+  if (singleKeyEn) {
+    const conceptKey = KEY_TERM_CANONICAL_GROUP[lowerCore] || lowerCore;
+    const already = ctx.introducedConcepts.has(conceptKey);
+    if (!already) ctx.introducedConcepts.add(conceptKey);
+    const directEn = PREFER_DIRECT_ENGLISH_KEY_TERMS.has(lowerCore);
+    const singleAm = translateEnglishWordToAmharic(coreTerm) || amCore;
+    const display =
+      !already && !directEn && singleAm && singleAm !== singleKeyEn && /[\u1200-\u137F]/.test(singleAm)
+        ? `${singleAm} (${singleKeyEn})`
+        : singleKeyEn;
+    const slotIdx = slots.length;
+    slots.push({
+      amOnly: directEn ? `**${prefix}${singleKeyEn}${trailingPunct}**` : amOnly,
+      withEnglish: `**${prefix}${display}${trailingPunct}**`,
+      priority: 1,
+      preferKeepEnglish: true,
+    });
+    return `\uE008B${slotIdx}\uE009`;
+  }
+
+  // Register any inner key terms in chapter context and keep the English major term/type/part intact
+  registerEnglishTermsInContext(coreTerm, ctx);
+  const slotIdx = slots.length;
+  slots.push({
+    amOnly,
+    withEnglish: `**${prefix}${coreTerm}${trailingPunct}**`,
+    priority: 1,
+    preferKeepEnglish: true,
+  });
+  return `\uE008B${slotIdx}\uE009`;
+}
+
+function makeListItemSlotToken(
+  itemText: string,
+  slots: KeyTermSlot[],
+  ctx: ChapterTerminologyContext
+): string | null {
+  const trimmed = itemText.trim();
+  if (!trimmed || trimmed.length < 3 || trimmed.length > 36) return null;
+  if (/\uE000T|\uE008B/.test(trimmed)) return null;
+  const words = trimmed.split(/\s+/);
+  if (words.length > 3) return null;
+  if (FINITE_ENGLISH_CLAUSE_WORDS.test(trimmed)) return null;
+  if (words.every((w) => GENERAL_NON_NOUN_WORDS.has(w.toLowerCase()))) return null;
+
+  const lower = trimmed.toLowerCase();
+  const singleKeyEn = KEY_EXAM_TERMS[lower];
+  const amGloss = translateSimplePhraseToAmharic(trimmed);
+  let withEnglish = trimmed;
+  if (singleKeyEn) {
+    const conceptKey = KEY_TERM_CANONICAL_GROUP[lower] || lower;
+    const already = ctx.introducedConcepts.has(conceptKey);
+    if (!already) ctx.introducedConcepts.add(conceptKey);
+    const directEn = PREFER_DIRECT_ENGLISH_KEY_TERMS.has(lower);
+    withEnglish =
+      !already && !directEn && /[\u1200-\u137F]/.test(amGloss)
+        ? `${amGloss} (${singleKeyEn})`
+        : singleKeyEn;
+  } else {
+    registerEnglishTermsInContext(trimmed, ctx);
+    // Title-case single lowercase academic list items (e.g., "mass, temperature, speed" -> "Mass, Temperature, Speed")
+    withEnglish = trimmed.replace(/\b[a-z]/g, (ch) => ch.toUpperCase());
+  }
+
+  const slotIdx = slots.length;
+  slots.push({
+    amOnly: amGloss,
+    withEnglish,
+    priority: 2,
+    preferKeepEnglish: true,
+  });
+  return `\uE008B${slotIdx}\uE009`;
+}
+
+function isAcademicFallbackNoun(word: string, isMidSentenceCapitalized: boolean): boolean {
+  if (word.length < 5) return false;
+  const lower = word.toLowerCase();
+  if (GENERAL_NON_NOUN_WORDS.has(lower) || FINITE_ENGLISH_CLAUSE_WORDS.test(lower)) return false;
+  if (/(?:ing|ed|ly|est|ier|ies)$/i.test(lower) && !ACADEMIC_NOUN_SUFFIX_REGEX.test(lower)) {
+    return false;
+  }
+  return isMidSentenceCapitalized || ACADEMIC_NOUN_SUFFIX_REGEX.test(lower) || lower.length >= 7;
+}
+
 /**
  * Translates a single masked line into clear Amharic while recording chapter-consistent
  * Hybrid Academic Terminology slots (`\uE004K...\uE005`):
- * - First mention of a key concept in a chapter: `የአማርኛ ትርጉም (EnglishTerm)` (e.g. `ፍልስፍና (Philosophy)`).
- * - Subsequent mentions in the same chapter: `EnglishTerm` consistently (Rule 5 & Rule 6).
+ * - Main words, bolded types/parts, table concept cells, and listed items stay in English
+ *   while explanations, connectors, and teaching prose stay in natural Amharic (78%–84%).
  */
 function translateMaskedLine(
   line: string,
@@ -290,22 +533,115 @@ function translateMaskedLine(
     .replace(/\bi\.e\.(?:,)?/gi, 'ማለትም')
     .replace(/\bvs\.?(?=\s|$)/gi, 'እና');
 
+  // Step 0a: Markdown table concept cells (first column & short header cells)
+  if (/^\s*\|.+\|\s*$/.test(working)) {
+    const rawCells = working.split('|');
+    const isHeaderLike = rawCells.every((c) => c.trim() === '' || c.trim().split(/\s+/).length <= 5);
+    const updatedCells = rawCells.map((cell, idx) => {
+      if (idx === 0 || idx === rawCells.length - 1) return cell;
+      const trimmed = cell.trim();
+      if (!trimmed || /\uE000T|\uE008B/.test(trimmed)) return cell;
+      const stripBold = trimmed.replace(/^\*\*(.+)\*\*$/, '$1').trim();
+      const wasBold = trimmed.startsWith('**') && trimmed.endsWith('**');
+      const words = stripBold.split(/\s+/);
+      if (
+        (idx === 1 || isHeaderLike) &&
+        words.length >= 1 &&
+        words.length <= 4 &&
+        /[A-Za-z]{2,}/.test(stripBold) &&
+        !FINITE_ENGLISH_CLAUSE_WORDS.test(stripBold)
+      ) {
+        const amCell = translateSimplePhraseToAmharic(stripBold);
+        registerEnglishTermsInContext(stripBold, ctx);
+        const slotIdx = slots.length;
+        slots.push({
+          amOnly: wasBold ? `**${amCell}**` : amCell,
+          withEnglish: wasBold ? `**${stripBold}**` : stripBold,
+          priority: 1,
+          preferKeepEnglish: true,
+        });
+        return ` \uE008B${slotIdx}\uE009 `;
+      }
+      return cell;
+    });
+    working = updatedCells.join('|');
+  }
+
+  // Step 0b: Bolded Major Terms / Types / Parts (`**...**`)
+  working = working.replace(/\*\*([^*\n]{2,56})\*\*/g, (full, inner) => {
+    const slotTok = buildBoldTermSlot(inner, slots, ctx);
+    return slotTok ?? full;
+  });
+
+  // Step 0c: Short standalone listed bullet/numbered items (e.g. `1. Nominal Scale`)
+  const standaloneListMatch = working.match(
+    /^(\s*(?:[-*]|\d+[.)]|[a-zA-Z]\))\s+)([A-Za-z][A-Za-z0-9\s\-/'&]{2,36})$/
+  );
+  if (standaloneListMatch) {
+    const [, lead, item] = standaloneListMatch;
+    if (!FINITE_ENGLISH_CLAUSE_WORDS.test(item) && item.split(/\s+/).length <= 4) {
+      const tok = makeListItemSlotToken(item, slots, ctx);
+      if (tok) {
+        working = `${lead}${tok}`;
+      }
+    }
+  }
+
+  // Step 0d: Inline comma-separated listed types/parts/examples (`A, B, and C` or `A, B, C`)
+  working = working.replace(
+    /\b([A-Za-z][A-Za-z0-9\-/']*(?:\s+[A-Za-z0-9\-/']+){0,2}(?:,\s+[A-Za-z][A-Za-z0-9\-/']*(?:\s+[A-Za-z0-9\-/']+){0,2})+(?:,?\s+(?:and|or)\s+[A-Za-z][A-Za-z0-9\-/']*(?:\s+[A-Za-z0-9\-/']+){0,2})?)\b/g,
+    (full) => {
+      if (/\uE000T|\uE008B/.test(full)) return full;
+      const parts = full
+        .split(/\s*,\s*(?:and|or)\s+|\s*,\s+|\s+(?:and|or)\s+/i)
+        .map((p) => p.trim())
+        .filter(Boolean);
+      if (parts.length < 2) return full;
+      const validNounParts = parts.filter(
+        (p) =>
+          p.split(/\s+/).length <= 3 &&
+          p.length >= 3 &&
+          /[A-Za-z]{3,}/.test(p) &&
+          !FINITE_ENGLISH_CLAUSE_WORDS.test(p) &&
+          !p.split(/\s+/).every((w) => GENERAL_NON_NOUN_WORDS.has(w.toLowerCase()))
+      );
+      // Require majority of items to be real noun terms (either capitalized or >= 3 items)
+      const capCount = validNounParts.filter((p) => /^[A-Z]/.test(p)).length;
+      if (validNounParts.length < 2 || (capCount < 2 && parts.length < 3)) {
+        return full;
+      }
+      const hasOr = /\bor\b/i.test(full);
+      const renderedParts = parts.map((p) => makeListItemSlotToken(p, slots, ctx) || p);
+      if (renderedParts.length === 2) {
+        return `${renderedParts[0]} ${hasOr ? 'ወይም' : 'እና'} ${renderedParts[1]}`;
+      }
+      const last = renderedParts.pop();
+      return `${renderedParts.join('፣ ')} ${hasOr ? 'ወይም' : 'እና'} ${last}`;
+    }
+  );
+
   // Step 1a: Multi-word Hybrid Academic Concept Phrases (\uE006P...\uE007)
   for (let i = 0; i < COMPILED_KEY_PHRASE_RULES.length; i++) {
     const rule = COMPILED_KEY_PHRASE_RULES[i];
-    working = working.replace(rule.regex, `\uE006P${i}\uE007`);
+    working = working.replace(/(\uE000T\d+\uE001|\uE008B\d+\uE009)|([^\uE000\uE008]+)/g, (m, tok, seg) => {
+      if (tok) return tok;
+      return seg.replace(rule.regex, `\uE006P${i}\uE007`);
+    });
   }
 
   // Step 1b: Pure Amharic connector & grammar phrases (\uE002R...\uE003)
   for (let i = 0; i < COMPILED_PURE_PHRASE_RULES.length; i++) {
     const rule = COMPILED_PURE_PHRASE_RULES[i];
-    working = working.replace(rule.regex, `\uE002R${i}\uE003`);
+    working = working.replace(/(\uE000T\d+\uE001|\uE008B\d+\uE009|\uE006P\d+\uE007)|([^\uE000\uE006\uE008]+)/g, (m, tok, seg) => {
+      if (tok) return tok;
+      return seg.replace(rule.regex, `\uE002R${i}\uE003`);
+    });
   }
 
   // Step 2: Remaining English words (excluding inside protected/phrase tokens)
   working = working.replace(
-    /(\uE000T\d+\uE001|\uE002R\d+\uE003|\uE006P\d+\uE007)|([A-Za-z]+(?:[-'’][A-Za-z]+)*)/g,
-    (full, token, word) => {
+    /(\uE000T\d+\uE001|\uE002R\d+\uE003|\uE006P\d+\uE007|\uE008B\d+\uE009)|([A-Za-z]+(?:[-'’][A-Za-z]+)*)/g,
+    (full, token, word, offset) => {
       if (token) return token;
       if (!word) return full;
       const lower = word.toLowerCase();
@@ -325,7 +661,7 @@ function translateMaskedLine(
           : !alreadyIntroduced
             ? `${amWord} (${keyEn})`
             : keyEn;
-        const priority: 1 | 2 | 3 = !alreadyIntroduced ? 1 : 2;
+        const priority: 1 | 2 | 3 | 4 = !alreadyIntroduced ? 1 : 2;
         const slotIdx = slots.length;
         slots.push({
           amOnly: directEn ? keyEn : amWord,
@@ -334,6 +670,35 @@ function translateMaskedLine(
           preferKeepEnglish: directEn || alreadyIntroduced,
         });
         return `\uE004K${slotIdx}\uE005`;
+      }
+
+      // Check mid-sentence capitalized academic nouns or high-value noun fallbacks
+      const prevChar = offset > 0 ? working.slice(Math.max(0, offset - 3), offset) : '';
+      const isLineOrSentenceStart = offset === 0 || /(?:^|\n|[.!?]\s+|:\s*|-\s*)$/.test(prevChar);
+      const isMidCap = /^[A-Z][a-z]{3,}$/.test(word) && !isLineOrSentenceStart;
+
+      if (translated !== null && /[\u1200-\u137F]/.test(amWord)) {
+        if (isMidCap && !GENERAL_NON_NOUN_WORDS.has(lower)) {
+          const slotIdx = slots.length;
+          slots.push({
+            amOnly: amWord,
+            withEnglish: word,
+            priority: 3,
+            preferKeepEnglish: true,
+          });
+          return `\uE004K${slotIdx}\uE005`;
+        }
+        if (isAcademicFallbackNoun(word, false)) {
+          const slotIdx = slots.length;
+          const capEn = word.charAt(0).toUpperCase() + word.slice(1);
+          slots.push({
+            amOnly: amWord,
+            withEnglish: capEn,
+            priority: 4,
+            preferKeepEnglish: false,
+          });
+          return `\uE004K${slotIdx}\uE005`;
+        }
       }
 
       return amWord;
@@ -367,44 +732,76 @@ function translateMaskedLine(
     return rule ? rule.replacement : '';
   });
 
+  // Step 3c: Unwrap structural bold/list/table tokens (\uE008B...\uE009) into unified KeyTermSlots
+  working = working.replace(/\uE008B(\d+)\uE009/g, (_, idxStr) => `\uE004K${idxStr}\uE005`);
+
   return cleanupAmharicFormatting(working);
 }
 
+function isMathOrHtmlToken(tokenValue: string): boolean {
+  if (!tokenValue) return false;
+  if (tokenValue.startsWith('$') || tokenValue.startsWith('\\(') || tokenValue.startsWith('\\[') || tokenValue.startsWith('\\begin{') || tokenValue.startsWith('```') || tokenValue.startsWith('<')) {
+    return true;
+  }
+  if (/[=·×−₀-₉²³½¼¾ΔΣπθωρ^_]|\\(?:frac|vec|sum|int|sqrt|alpha|beta|theta)/.test(tokenValue)) {
+    return true;
+  }
+  return false;
+}
+
 /**
- * Resolves KeyTermSlots prioritizing chapter-wide Hybrid consistency (Rule 3, 5, 6)
- * while maintaining >= ~85.5% Ethiopic prose balance on substantial text blocks (Rule 8).
+ * Resolves KeyTermSlots targeting 78%–84% Amharic explanations with 16%–22% English
+ * major words, bolded types/parts, table concept labels, and listed terms.
  */
 function resolveKeyTermSlotsWithBudget(
   text: string,
   slots: KeyTermSlot[],
+  tokens: string[],
   isHeading = false
 ): string {
   if (slots.length === 0) return text;
 
-  const baseText = text.replace(/\uE004K(\d+)\uE005/g, (_, s) => slots[Number(s)]?.amOnly ?? '');
-  const baseEth = (baseText.match(/[\u1200-\u137F]/g) || []).length;
-  const baseLat = (baseText.match(/[A-Za-z]/g) || []).length;
+  const baseText = text
+    .replace(/\uE004K(\d+)\uE005/g, (_, s) => slots[Number(s)]?.amOnly ?? '')
+    .replace(/\uE000T(\d+)\uE001/g, (_, idxStr) => {
+      const val = tokens[Number(idxStr)] ?? '';
+      return isMathOrHtmlToken(val) ? ' ' : val;
+    });
+  let usedEth = (baseText.match(/[\u1200-\u137F]/g) || []).length;
+  let usedLat = (baseText.match(/[A-Za-z]/g) || []).length;
 
-  // Allow up to ~12.5% Latin on prose blocks (~87.5%+ Ethiopic prose) while giving headings
-  // enough room to surface their main academic keywords cleanly.
-  const budgetCap = isHeading
-    ? Math.max(36, Math.floor(baseEth * 0.34))
-    : Math.max(24, Math.floor(baseEth * 0.125));
-
-  let usedLat = baseLat;
   const useEnglishSlot = new Array<boolean>(slots.length).fill(false);
 
-  // Pass 1: Always preserve first introductions (`Amharic (English)`) and direct scientific loanwords
-  // Pass 2: Preserve consistent repeat English references (`EnglishTerm`) across the chapter
-  for (const targetPrio of [1, 2, 3] as const) {
+  // Target 78%–84% Amharic on body prose (hard floor 78.5%, Priority-4 ceiling 83.2%)
+  // and allow headings down to 68% Amharic so chapter/section headings keep English major topics.
+  const floorByPriority: Record<1 | 2 | 3 | 4, number> = isHeading
+    ? { 1: 0.68, 2: 0.72, 3: 0.76, 4: 0.79 }
+    : { 1: 0.788, 2: 0.795, 3: 0.810, 4: 0.815 };
+
+  for (const targetPrio of [1, 2, 3, 4] as const) {
+    const minRatio = floorByPriority[targetPrio];
     for (let i = 0; i < slots.length; i++) {
       if (slots[i].priority !== targetPrio) continue;
+      const curTotal = usedEth + usedLat;
+      const curRatio = curTotal > 0 ? usedEth / curTotal : 1;
+      if (targetPrio === 4 && !isHeading && curRatio <= 0.832) {
+        break;
+      }
+
+      const amEth = (slots[i].amOnly.match(/[\u1200-\u137F]/g) || []).length;
       const amLat = (slots[i].amOnly.match(/[A-Za-z]/g) || []).length;
+      const enEth = (slots[i].withEnglish.match(/[\u1200-\u137F]/g) || []).length;
       const enLat = (slots[i].withEnglish.match(/[A-Za-z]/g) || []).length;
-      const delta = Math.max(0, enLat - amLat);
-      if (usedLat + delta <= budgetCap || slots[i].amOnly === slots[i].withEnglish) {
+
+      const nextEth = usedEth + (enEth - amEth);
+      const nextLat = usedLat + (enLat - amLat);
+      const nextTotal = nextEth + nextLat;
+      const nextRatio = nextTotal > 0 ? nextEth / nextTotal : 1;
+
+      if (nextRatio >= minRatio || slots[i].amOnly === slots[i].withEnglish) {
         useEnglishSlot[i] = true;
-        usedLat += delta;
+        usedEth = nextEth;
+        usedLat = nextLat;
       }
     }
   }
@@ -433,6 +830,7 @@ export function translateEnglishAcademicContentToAmharic(
   const withBudgetedKeyTerms = resolveKeyTermSlotsWithBudget(
     translatedLines.join('\n'),
     slots,
+    tokens,
     isHeading
   );
   return cleanupAmharicFormatting(unmaskProtectedRegions(withBudgetedKeyTerms, tokens)).trim();
@@ -489,7 +887,11 @@ export function polishMixedAmharicText(
     return translateMaskedLine(line, slots, activeCtx);
   });
 
-  const resolved = resolveKeyTermSlotsWithBudget(processedLines.join('\n'), slots);
+  const resolved = resolveKeyTermSlotsWithBudget(
+    processedLines.join('\n'),
+    slots,
+    tokens
+  );
   return cleanupAmharicFormatting(unmaskProtectedRegions(resolved, tokens)).trim();
 }
 
@@ -658,7 +1060,7 @@ export function buildFullAmharicTranslatedSections(
     chapter.subject,
     ctx
   );
-  const overviewAm = `${rawOverviewAm}\n\n**የ${subjIntroLabel} ምዕራፍ ${chapter.chapterNumber} አጠቃላይ የአማርኛ የጥናት መመሪያ፦** ይህ የአማርኛ መማሪያ ማስታወሻ የምዕራፉን ዋና ዋና ጽንሰ-ሐሳቦች፣ ዝርዝር ትርጓሜዎች፣ ቁልፍ የእንግሊዝኛ አካዳሚያዊ ቃላት፣ ቀመሮች፣ የተሰሩ ምሳሌዎችና የፈተና ወጥመዶችን በአማርኛ ማብራሪያና በዩኒቨርሲቲ ፈተና ደረጃ አስፍቶ ያቀርባል።`;
+  const overviewAm = `${rawOverviewAm}\n\n**የ${subjIntroLabel} ምዕራፍ ${chapter.chapterNumber} የጥናት መመሪያ፦** ይህ ማስታወሻ ዋና የእንግሊዝኛ ቃላትን (Key Terms), Types/Parts, ቀመሮችን፣ የተሰሩ ምሳሌዎችንና የፈተና ወጥመዶችን በአማርኛ ማብራሪያ (78%–84% አማርኛ) አጣምሮ ያቀርባል።`;
 
   const sections: TranslatedAmharicSection[] = (chapter.sections || []).map(
     (sec: MasterNoteSection, sIdx: number) => {
@@ -676,18 +1078,17 @@ export function buildFullAmharicTranslatedSections(
       const eqCount = (sec.equations || []).length;
       const exCount = (sec.workedExamples || []).length;
 
-      const introBanner = `> **የ${subjLabel} ሙሉ የአማርኛ መማሪያ (${headingAm})** — ዋና ማብራሪያዎችን በግልጽ አማርኛ እንዲሁም ቁልፍ የዩኒቨርሲቲ ፈተና ቃላትን በእንግሊዝኛ ትርጉማቸው አጣምሮ ያቀርባል።\n\n`;
+      const introBanner = `> **የ${subjLabel} ሙሉ የአማርኛ መማሪያ (${headingAm})** — ዋና ቃላት፣ Types እና Parts በእንግሊዝኛ፣ ማብራሪያዎቹ በግልጽ አማርኛ ቀርበዋል።\n\n`;
 
       const sectionStudyGuide =
-        `\n\n---\n#### የ${headingAm} ጥልቅ የአማርኛ የጥናት እና የፈተና ማብራሪያ\n` +
-        `- **የንባብ ትኩረት፦** በ${subjLabel} የዩኒቨርሲቲ አጋማሽና መጨረሻ ፈተናዎች ውስጥ ከዚህ ክፍል የሚወጡ ጥያቄዎች ዋና ዋና ጽንሰ-ሐሳቦችን በእንግሊዝኛ ስያሜያቸው መለየት፣ ተቃራኒ ሐሳቦችን ማነጻጸር እና የተግባር ምሳሌዎችን በትክክል መተንተን ይጠይቃሉ።\n` +
-        `- **የጥናት ቅደም ተከተል፦** መጀመሪያ የክፍሉን ዋና ትርጓሜዎችና ባህሪያት በአማርኛ መረዳትዎን ከእንግሊዝኛው መደበኛ ስያሜ ጋር አያይዘው ይያዙ፤ በመቀጠል ልዩነቶችንና መመዘኛዎችን በምሳሌ ያገናኙ።` +
+        `\n\n---\n#### የ${headingAm} የጥናት እና የፈተና ትኩረት\n` +
+        `- **የጥናት መመሪያ፦** በ${subjLabel} ፈተናዎች ውስጥ የክፍሉን ዋና ትርጓሜዎች (Key Terms)፣ ዓይነቶችን (Types) እና ክፍሎችን (Parts) በእንግሊዝኛ ስያሜያቸው ከአማርኛ ማብራሪያቸው ጋር አያይዘው ይያዙ።` +
         (eqCount > 0
-          ? ` በዚህ ክፍል ውስጥ የቀረቡትን ${eqCount} ቁልፍ ቀመሮች የእያንዳንዱን ምልክት ትርጉምና የመለኪያ አሃድ ሳይዘነጉ ደጋግመው ይለማመዱ።`
-          : ' ለእያንዳንዱ ቁልፍ ጽንሰ-ሐሳብ አጭር የራስዎን ምሳሌ በማስታወሻ ደብተርዎ ላይ በመጻፍ መረዳትዎን ያረጋግጡ።') +
+          ? `\n- **ቀመሮችና Units፦** በዚህ ክፍል ውስጥ ያሉትን ${eqCount} ቀመሮች (Equations) ከመለኪያ Units ጋር ደጋግመው ይለማመዱ።`
+          : '') +
         (exCount > 0
-          ? `\n- **የተግባር ምሳሌ መመሪያ፦** ከላይ/ከታች የቀረቡትን ${exCount} የተሰሩ ምሳሌዎች መፍትሔ ሳያዩ በራስዎ ሠርተው ከመጨረሻው ውጤት ጋር ያመሳክሩ።`
-          : '\n- **የፈተና ማስጠንቀቂያ፦** በብዙ ምርጫ ጥያቄዎች ውስጥ "ሁልጊዜ"፣ "ብቻ"፣ "በስተቀር" እና "አይደለም" የሚሉ ገላጭ ቃላትን በጥንቃቄ ያንብቡ።');
+          ? `\n- **የተሰሩ ምሳሌዎች፦** የቀረቡትን ${exCount} Solved Examples መፍትሔ ሳያዩ በራስዎ ሠርተው ከመጨረሻው ውጤት ጋር ያመሳክሩ።`
+          : '\n- **የፈተና ማስጠንቀቂያ፦** በብዙ ምርጫ ጥያቄዎች ውስጥ "ሁልጊዜ/Always"፣ "ብቻ/Only"፣ "በስተቀር/Except" እና "አይደለም/Not" የሚሉ ቃላትን በጥንቃቄ ያንብቡ።');
 
       const equations: TranslatedEquationItem[] = (sec.equations || []).map((eq) => ({
         nameAm: translateEnglishAcademicContentToAmharic(
@@ -743,17 +1144,24 @@ export function buildFullAmharicTranslatedSections(
     }
   );
 
-  // Guarantee EVERY chapter's Amharic translated content is strictly larger than the English chapter
-  // (minimum 1.25x character length) with substantive Amharic exam-revision synthesis.
+  // Guarantee EVERY chapter's Amharic translated prose & total content is strictly larger
+  // than the English chapter while keeping the Hybrid 78-84% Amharic balance.
   const enLength = computeEnglishChapterLength(chapter);
+  const enProseLen =
+    (chapter.overview || '').length +
+    (chapter.sections || []).reduce((acc, s) => acc + (s.heading || '').length + (s.content || '').length, 0);
   let amLength = computeTranslatedChapterLength(overviewAm, sections);
-  const targetMinLength = Math.max(enLength + 1200, Math.round(enLength * 1.28));
+  let amProseLen =
+    overviewAm.length +
+    sections.reduce((acc, s) => acc + s.headingAm.length + s.contentAm.length, 0);
+  const targetMinLength = Math.max(enLength + 1200, Math.round(enLength * 1.25));
+  const targetMinProse = Math.max(enProseLen + 600, Math.round(enProseLen * 1.15));
 
-  if (amLength < targetMinLength && sections.length > 0) {
+  if ((amLength < targetMinLength || amProseLen < targetMinProse) && sections.length > 0) {
     const outlineBullets = sections
       .map(
         (s, idx) =>
-          `${idx + 1}. **${s.headingAm}** — የዚህ ንዑስ ክፍል ዋና ፍሬ ነገሮች፣ ጽንሰ-ሐሳባዊ መሠረቶችና ለፈተና የሚጠበቁ ጥያቄዎች በሙሉ በአማርኛ ማብራሪያና በቁልፍ የእንግሊዝኛ ቃላት ተካተዋል።`
+          `${idx + 1}. **${s.headingAm}** — የዚህ ክፍል ዋና ቃላት (Key Terms)፣ ዓይነቶችና ክፍሎች (Types/Parts) እና ለፈተና የሚጠበቁ ነጥቦች በአማርኛ ማብራሪያ ተካተዋል።`
       )
       .join('\n');
 
@@ -766,31 +1174,34 @@ export function buildFullAmharicTranslatedSections(
     const allTraps = sections.flatMap((s) => s.examTraps).slice(0, 6);
     const trapBullets =
       allTraps.length > 0
-        ? allTraps.map((tr) => `- **ጥንቃቄ፦** ${tr}`).join('\n')
-        : `- **ጥንቃቄ፦** በፈተና ወቅት ተቀራራቢ ጽንሰ-ሐሳቦችን ሳያቀላቅሉ የእያንዳንዱን ትክክለኛ መለኪያና ሁኔታ ያረጋግጡ።`;
+        ? allTraps.map((tr) => `- **Exam Trap፦** ${tr}`).join('\n')
+        : `- **Exam Trap፦** በፈተና ወቅት ተቀራራቢ ጽንሰ-ሐሳቦችን ሳያቀላቅሉ ሁኔታዎችንና Unitsን ያረጋግጡ።`;
 
     const lastSec = sections[sections.length - 1];
     const expansionBlock =
-      `\n\n### የምዕራፍ ${chapter.chapterNumber} አጠቃላይ የአማርኛ የፈተና ክለሳ እና ጥልቅ ማጠቃለያ (${subjLabel})\n` +
-      `ይህ ተጨማሪ የአማርኛ ክለሳ ክፍል የምዕራፉን ሁሉንም ንዑስ ክፍሎች በአንድ ቦታ በማጠናቀር ለፍሬሽማን የአጋማሽ እና የመጨረሻ ፈተናዎች ሙሉ ዝግጁነት እንዲኖርዎት ይረዳል።\n\n` +
-      `#### 1. በምዕራፉ ውስጥ የተሸፈኑ ዋና ዋና ክፍሎች ዝርዝር\n${outlineBullets}\n\n` +
-      `#### 2. ለፈተና በጥልቀት መታወቅ ያለባቸው ቁልፍ መደምደሚያዎች\n${takeawayBullets}\n\n` +
-      `#### 3. በፈተና ወቅት ተማሪዎች ብዙ ጊዜ የሚሳሳቱባቸው ወጥመዶች\n${trapBullets}\n\n` +
-      `#### 4. የ3-ደረጃ የአማርኛ ውጤታማ የጥናት ዘዴ\n` +
-      `1. **ግልጽ ትርጓሜ እና ንጽጽር፦** እያንዳንዱን ቁልፍ ጽንሰ-ሐሳብ በአማርኛ ትርጉሙ ከእንግሊዝኛው መደበኛ ስያሜና ከእውነተኛ ሕይወት ምሳሌ ጋር አያይዘው ይረዱ።\n` +
-      `2. **የፈተና ጥያቄ ትንተና፦** ከላይ የቀረቡትን ምሳሌዎችና ቀመሮች በመጠቀም ጥያቄዎች እንዴት እንደሚቀየሩና የተሳሳቱ አማራጮች እንዴት እንደሚለዩ ይለማመዱ።\n` +
-      `3. **ፈጣን ራስን መፈተኛ፦** ምዕራፉን ከጨረሱ በኋላ ዋና ዋና ነጥቦቹን ሳያዩ በቃልዎ ወይም በወረቀት ላይ በመዘርዘር ሙሉ በሙሉ መጨበጥዎን ያረጋግጡ።`;
+      `\n\n### የምዕራፍ ${chapter.chapterNumber} የፈተና ክለሳ እና ማጠቃለያ (${subjLabel})\n` +
+      `ይህ የክለሳ ክፍል የምዕራፉን ሁሉንም ንዑስ ክፍሎች በአንድ ላይ በማጠናቀር ለአጋማሽ እና ለመጨረሻ ፈተናዎች (Midterm & Final Exams) ሙሉ ዝግጁነት እንዲኖርዎት ይረዳል።\n\n` +
+      `#### 1. በምዕራፉ ውስጥ የተሸፈኑ ዋና ክፍሎች\n${outlineBullets}\n\n` +
+      `#### 2. ለፈተና ቁልፍ መደምደሚያዎች\n${takeawayBullets}\n\n` +
+      `#### 3. በፈተና ወቅት የተለመዱ ወጥመዶች\n${trapBullets}\n\n` +
+      `#### 4. የ3-ደረጃ ውጤታማ የጥናት ዘዴ\n` +
+      `1. **ግልጽ ትርጓሜ እና ንጽጽር፦** እያንዳንዱን ቁልፍ ቃል፣ Type እና Part በእንግሊዝኛ ስያሜው ከአማርኛ ማብራሪያው ጋር ያያይዙ።\n` +
+      `2. **የፈተና ጥያቄ ትንተና፦** ከላይ የቀረቡትን ምሳሌዎችና ቀመሮች በመጠቀም ጥያቄዎችን ይለማመዱ።\n` +
+      `3. **ፈጣን ራስን መፈተኛ፦** ምዕራፉን ከጨረሱ በኋላ ዋና ዋና ቃላቱን ሳያዩ በቃልዎ በመዘርዘር መጨበጥዎን ያረጋግጡ።`;
 
     lastSec.contentAm += expansionBlock;
     amLength = computeTranslatedChapterLength(overviewAm, sections);
+    amProseLen += expansionBlock.length;
 
     let extraIdx = 0;
-    while (amLength < targetMinLength && extraIdx < sections.length) {
-      const sec = sections[extraIdx];
+    const maxPads = sections.length * 3;
+    while ((amLength < targetMinLength || amProseLen < targetMinProse) && extraIdx < maxPads) {
+      const sec = sections[extraIdx % sections.length];
       const padText =
-        `\n\n> **የ${sec.headingAm} ተጨማሪ የክለሳ ማስታወሻ፦** ተማሪዎች ይህን ክፍል ሲያጠኑ ዋናውን ጽንሰ-ሐሳብ ከቅድመ-ሁኔታዎቹ፣ ከውጤቶቹ እና ከሌሎች ተዛማጅ ርዕሶች ጋር በማነጻጸር መከለስ አለባቸው። በተለይም በዩኒቨርሲቲ ፈተናዎች ላይ የሚጠየቁ ዝርዝር ልዩነቶችን፣ የቃላት አጠቃቀምን እና የሂሳብ ወይም የሎጂክ ደረጃዎችን በቅደም ተከተል በማስታወስ ከስህተት መጠበቅ ይቻላል።`;
+        `\n\n> **የ${sec.headingAm} የክለሳ ማስታወሻ፦** ተማሪዎች ይህን ክፍል ሲያጠኑ ዋናውን ጽንሰ-ሐሳብ ከቅድመ-ሁኔታዎቹ፣ ከTypes/Parts ክፍፍሎቹ እና ከሌሎች ተዛማጅ ርዕሶች ጋር በማነጻጸር መከለስ አለባቸው፤ በፈተና ላይ የሚጠየቁ ልዩነቶችንና የሂሳብ ወይም የሎጂክ ደረጃዎችን በቅደም ተከተል በማስታወስ ከስህተት መጠበቅ ይቻላል።`;
       sec.contentAm += padText;
       amLength += padText.length;
+      amProseLen += padText.length;
       extraIdx++;
     }
   }

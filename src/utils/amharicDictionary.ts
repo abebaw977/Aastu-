@@ -2016,6 +2016,7 @@ export const PRESERVED_ACADEMIC_PROPER_AND_UNIT_TERMS = new Set<string>([
   'mclaughlin', 'aggarwal', 'patrick', 'almond', 'verba', 'gandhi', 'mahatma',
   'pierre', 'antoine', 'monet', 'gottfried', 'reinhold', 'treviranus', 'lamarck',
   'ezana', 'lalibela', 'fasilides', 'tewodros', 'yohannes', 'menelik', 'taytu',
+  'alfred', 'wegener',
   // Latin / Greek / Classical Root Terms
   'civis', 'civitas', 'logos', 'logia', 'psyche', 'anthropos', 'bios',
   'oikonomos', 'oikos', 'nomos',
@@ -2068,7 +2069,7 @@ export function translateEnglishWordToAmharic(rawWord: string): string | null {
   // Keep Roman numerals & standard short all-caps acronyms (DNA, ATP, GDP, AI, IoT, UN, AU, pH, SI)
   if (
     ROMAN_NUMERALS.has(lower) ||
-    /^[A-Z0-9]{2,7}$/.test(rawWord) ||
+    /^[A-Z0-9]{2,7}s?$/.test(rawWord) ||
     rawWord === 'IoT' ||
     rawWord === 'pH' ||
     rawWord === 'mRNA' ||
@@ -2183,8 +2184,8 @@ export function translateEnglishWordToAmharic(rawWord: string): string | null {
 
 /**
  * Core "main main point" technical/exam terms across all 19 Freshman courses.
- * Kept visible in English (inline or paired with Amharic) up to a strict ~10% character budget
- * so students immediately recognize English university exam terminology inside 86-93% Amharic notes.
+ * Kept visible in English (introduced with Amharic meaning on first mention, reused in English)
+ * targeting 78-84% Amharic explanations + 16-22% English major words, types, parts & listed concepts.
  */
 export const KEY_EXAM_TERMS: Record<string, string> = {
   // Logic, Philosophy & Critical Thinking
@@ -2448,6 +2449,83 @@ export const KEY_EXAM_TERMS: Record<string, string> = {
   scanning: 'Scanning',
   coherence: 'Coherence',
   cohesion: 'Cohesion',
+  morpheme: 'Morpheme',
+  phoneme: 'Phoneme',
+  syntax: 'Syntax',
+  semantics: 'Semantics',
+  pragmatics: 'Pragmatics',
+  declarative: 'Declarative',
+  imperative: 'Imperative',
+  interrogative: 'Interrogative',
+
+  // Expanded Types, Parts & Classifications Across Geography, History, Entr, Tech, Fitness, Sciences
+  geology: 'Geology',
+  biodiversity: 'Biodiversity',
+  topography: 'Topography',
+  tectonics: 'Tectonics',
+  weathering: 'Weathering',
+  erosion: 'Erosion',
+  deposition: 'Deposition',
+  sedimentation: 'Sedimentation',
+  plateaus: 'Plateaus',
+  lowlands: 'Lowlands',
+  highlands: 'Highlands',
+  monarchy: 'Monarchy',
+  republic: 'Republic',
+  chronology: 'Chronology',
+  archaeology: 'Archaeology',
+  multilateralism: 'Multilateralism',
+  bilateralism: 'Bilateralism',
+  hegemony: 'Hegemony',
+  anarchy: 'Anarchy',
+  partnership: 'Partnership',
+  corporation: 'Corporation',
+  cooperative: 'Cooperative',
+  franchise: 'Franchise',
+  feasibility: 'Feasibility',
+  collateral: 'Collateral',
+  liquidity: 'Liquidity',
+  depreciation: 'Depreciation',
+  robotics: 'Robotics',
+  biometrics: 'Biometrics',
+  hardware: 'Hardware',
+  software: 'Software',
+  braille: 'Braille',
+  aerobic: 'Aerobic',
+  anaerobic: 'Anaerobic',
+  flexibility: 'Flexibility',
+  agility: 'Agility',
+  endurance: 'Endurance',
+  biomechanics: 'Biomechanics',
+  microeconomics: 'Microeconomics',
+  macroeconomics: 'Macroeconomics',
+  capitalism: 'Capitalism',
+  socialism: 'Socialism',
+  tariff: 'Tariff',
+  quota: 'Quota',
+  subsidy: 'Subsidy',
+  genotype: 'Genotype',
+  phenotype: 'Phenotype',
+  chromosome: 'Chromosome',
+  allele: 'Allele',
+  nucleus: 'Nucleus',
+  ribosome: 'Ribosome',
+  cytoplasm: 'Cytoplasm',
+  proton: 'Proton',
+  neutron: 'Neutron',
+  electron: 'Electron',
+  valence: 'Valence',
+  cation: 'Cation',
+  anion: 'Anion',
+  hydrocarbon: 'Hydrocarbon',
+  alkane: 'Alkane',
+  alkene: 'Alkene',
+  alkyne: 'Alkyne',
+  magnitude: 'Magnitude',
+  direction: 'Direction',
+  thermodynamics: 'Thermodynamics',
+  optics: 'Optics',
+  electromagnetism: 'Electromagnetism',
 };
 
 /**

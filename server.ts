@@ -1049,9 +1049,9 @@ const NOTE_RESPONSE_SCHEMA = {
 };
 
 const AMHARIC_HYBRID_TERMINOLOGY_RULES = `HYBRID AMHARIC + ENGLISH ACADEMIC TERMINOLOGY SYSTEM (STRICT MANDATORY RULES FOR AMHARIC STUDY NOTES):
-1. Main Explanations in Natural Amharic (~85%–90%+ Amharic prose): Write all primary explanations, descriptions, examples, connectors, and study guidance in clear, natural, university-grade Amharic. Do NOT write English prose paragraphs.
-2. Preserve Important English Academic Terminology: Do NOT over-translate scientific, philosophical, mathematical, legal, economic, or technical terms into pure Amharic or awkward Fidel phonetic spellings.
-3. Mandatory Bilingual First-Introduction Format: On the first occurrence of each important concept in a chapter, introduce it clearly in this exact format: \`የአማርኛ ትርጉም (EnglishTerm)\` with a simple Amharic explanation where unfamiliar:
+1. Language Ratio (78%–84% Amharic Explanations + 16%–22% English Major Words/Types/Parts): Write all explanations, descriptions, transitions, examples, and teaching commentary in clear, natural, university-grade Amharic (~78%–84% Amharic). Do NOT write English prose paragraphs.
+2. Major Words, Types, Parts & Listed Terms MUST Stay in English: Keep all primary academic keywords, classification types, component parts, branches, stages, list headings, and listed concept names in English (only their explanation is written in Amharic). Example: "- **Formal Fallacies**: ..." or "**Types of Memory**: **Sensory Memory**, **Short-Term Memory**, **Long-Term Memory** — ..." with the explanation in Amharic.
+3. Mandatory Bilingual First-Introduction Format: On the first occurrence of each core concept in a chapter, introduce it clearly in this format: \`የአማርኛ ትርጉም (EnglishTerm)\` with a simple Amharic explanation where unfamiliar:
    - ፍልስፍና (Philosophy)
    - ክርክር (Argument)
    - ግምታዊ አስተሳሰብ (Inductive Reasoning)
@@ -1098,7 +1098,7 @@ async function generatePureAIMasterNote(params: {
   );
   const hybridLanguageBlock = useAmharicHybrid
     ? `\n${AMHARIC_HYBRID_TERMINOLOGY_RULES}\n`
-    : `\nBILINGUAL / AMHARIC NOTE RULE: Whenever generating Amharic or bilingual Ethiopian freshman notes, strictly follow the Hybrid Amharic + English Academic Terminology System (natural Amharic explanations at ~85-90%+, introduce key terms as \`Amharic (EnglishTerm)\` such as ፍልስፍና (Philosophy), ክርክር (Argument), ግምታዊ አስተሳሰብ (Inductive Reasoning), ጥገኛ ተለዋዋጭ (Dependent Variable), ኃይል (Force), የእንቅስቃሴ መጠን (Momentum), and keep technical/scientific terms consistently in English throughout the chapter).\n`;
+    : `\nBILINGUAL / AMHARIC NOTE RULE: Whenever generating Amharic or bilingual Ethiopian freshman notes, strictly follow the Hybrid Amharic + English Academic Terminology System (78–84% Amharic explanations with English major words, types, parts, and listed items; introduce key terms as \`Amharic (EnglishTerm)\` such as ፍልስፍና (Philosophy), ክርክር (Argument), ግምታዊ አስተሳሰብ (Inductive Reasoning), ጥገኛ ተለዋዋጭ (Dependent Variable), ኃይል (Force), የእንቅስቃሴ መጠን (Momentum), and keep technical/scientific terms consistently in English throughout the chapter).\n`;
 
   const focusInstruction = effectiveFocus
     ? `Specific Subtopics to Cover Within "${noteTopic}": ${effectiveFocus}`
@@ -1424,7 +1424,7 @@ app.post("/api/gemini/expand-edit-note", async (req, res) => {
     const useAmharicExpand = isAmharicLanguageRequested(language, noteBody, userInstruction, currentTitle);
     const expandLanguageRule = useAmharicExpand
       ? `\n${AMHARIC_HYBRID_TERMINOLOGY_RULES}\n`
-      : `\nIf this note is in Amharic or bilingual mode, strictly follow the Hybrid Amharic + English Academic Terminology System (natural Amharic prose, introduce key concepts as \`Amharic (EnglishTerm)\` like ፍልስፍና (Philosophy), ክርክር (Argument), ግምታዊ አስተሳሰብ (Inductive Reasoning), ጥገኛ ተለዋዋጭ (Dependent Variable), ኃይል (Force), የእንቅስቃሴ መጠን (Momentum), and retain English technical terminology consistently).\n`;
+      : `\nIf this note is in Amharic or bilingual mode, strictly follow the Hybrid Amharic + English Academic Terminology System (78–84% Amharic explanations with English major words, types, parts, and listed terms; introduce key concepts as \`Amharic (EnglishTerm)\` like ፍልስፍና (Philosophy), ክርክር (Argument), ግምታዊ አስተሳሰብ (Inductive Reasoning), ጥገኛ ተለዋዋጭ (Dependent Variable), ኃይል (Force), የእንቅስቃሴ መጠን (Momentum), and retain English technical terminology consistently).\n`;
 
     const prompt = `You are the Lead Master Textbook Author for Ethiopian Higher Education Freshman Common Courses (${courseLabel}).
 You are tasked with expanding, enriching, and editing the following study note into a much larger, deeper university textbook note:
@@ -1450,7 +1450,7 @@ Instructions:
         prompt,
         {
           systemInstruction: useAmharicExpand
-            ? `You are an elite Ethiopian university professor. Return the full, extensively expanded textbook markdown note using the Hybrid Amharic + English Academic Terminology System (Amharic explanations ~85-90%+, key terms introduced as Amharic (EnglishTerm) and reused consistently in English), with clean LaTeX formulas and headings.`
+            ? `You are an elite Ethiopian university professor. Return the full, extensively expanded textbook markdown note using the Hybrid Amharic + English Academic Terminology System (78–84% Amharic explanations, English major words/types/parts/listed concepts, key terms introduced as Amharic (EnglishTerm) and reused consistently in English), with clean LaTeX formulas and headings.`
             : "You are an elite university professor. Return the full, extensively expanded textbook markdown note content with clean LaTeX formulas and clear headings.",
           maxOutputTokens: 8192,
         },
