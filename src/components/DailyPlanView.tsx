@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { FRESHMAN_SEMESTER_PLAN } from '../data/freshmanStudyPlan';
 import { OFFICIAL_17_FRESHMAN_COURSES, CourseCatalogEntry } from '../data/freshmanCourseCatalog';
 import { getAmharicChapterNote, getAmharicSubjectMeta } from '../data/amharicNotes';
+import { polishAmharicChapterNote, polishMixedAmharicText } from '../utils/amharicNoteExpander';
 import { Subject, CustomCourseOutline } from '../types';
 import { NavTab } from './Navbar';
 import {
@@ -355,13 +356,13 @@ export const DailyPlanView: React.FC<DailyPlanViewProps> = ({
                   </span>
                   <span>
                     {isHeroAmharic && heroAmMeta
-                      ? heroAmMeta.nameAm
+                      ? polishMixedAmharicText(heroAmMeta.nameAm)
                       : activeSubjectEntry.shortTitle}
                   </span>
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-300 line-clamp-2">
                   {isHeroAmharic && heroAmMeta
-                    ? heroAmMeta.overviewAm
+                    ? polishMixedAmharicText(heroAmMeta.overviewAm)
                     : activeSubjectEntry.overview}
                 </p>
               </div>
@@ -487,7 +488,7 @@ export const DailyPlanView: React.FC<DailyPlanViewProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {activeSubjectEntry.chapters.map((ch) => {
               const isHeroAmharic = Boolean(amharicSubjects[activeSubjectEntry.subject]);
-              const amNote = isHeroAmharic
+              const rawAmNote = isHeroAmharic
                 ? getAmharicChapterNote(
                     undefined,
                     activeSubjectEntry.subject,
@@ -495,6 +496,7 @@ export const DailyPlanView: React.FC<DailyPlanViewProps> = ({
                     ch.title
                   )
                 : null;
+              const amNote = rawAmNote ? polishAmharicChapterNote(rawAmNote) : null;
 
               return (
                 <div

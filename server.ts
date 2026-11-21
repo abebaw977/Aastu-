@@ -222,7 +222,11 @@ PRECISE CHAT BEHAVIOR RULES:
       ? `\nOFFICIAL COURSE OUTLINE REFERENCE:\n${courseOutlineContext}\n`
       : "";
 
-    const prompt = `${historyInstruction}${outlineInstruction}
+    const amharicTutorBlock = isAmharicLanguageRequested(req.body?.language, cleanQuery, question)
+      ? `\n${AMHARIC_HYBRID_TERMINOLOGY_RULES}\n`
+      : "";
+
+    const prompt = `${historyInstruction}${outlineInstruction}${amharicTutorBlock}
 ${question ? `Problem / Question Context:\n${question}\n` : ""}
 Student's Query:
 "${cleanQuery}"
@@ -682,10 +686,14 @@ app.post("/api/gemini/explain-concept", async (req, res) => {
       ? `\nSTUDENT'S SAVED COURSE OUTLINE & CONTENTS (FOLLOW THIS EXACT COURSE PATH):\n${courseOutlineContext}\n`
       : "";
 
+    const amharicConceptBlock = isAmharicLanguageRequested(req.body?.language, concept)
+      ? `\n${AMHARIC_HYBRID_TERMINOLOGY_RULES}\n`
+      : "";
+
     const prompt = `You are a premier university professor for Ethiopian Higher Education Freshman Common Courses (MoSHE/MoGE Curriculum).
 Provide an ultra-clear, high-yield conceptual breakdown for: "${concept}".
 Subject: ${subject || "Freshman Common Course"}
-${outlineInstruction}
+${outlineInstruction}${amharicConceptBlock}
 Structure the response with:
 1. **Core Definition & Intuitive Meaning** (Clear & intuitive, aligned with the course outline)
 2. **Key Governing Principles, Mechanisms, or Equations**
@@ -1040,6 +1048,29 @@ const NOTE_RESPONSE_SCHEMA = {
   required: ["title", "overview", "sections"],
 };
 
+const AMHARIC_HYBRID_TERMINOLOGY_RULES = `HYBRID AMHARIC + ENGLISH ACADEMIC TERMINOLOGY SYSTEM (STRICT MANDATORY RULES FOR AMHARIC STUDY NOTES):
+1. Main Explanations in Natural Amharic (~85%–90%+ Amharic prose): Write all primary explanations, descriptions, examples, connectors, and study guidance in clear, natural, university-grade Amharic. Do NOT write English prose paragraphs.
+2. Preserve Important English Academic Terminology: Do NOT over-translate scientific, philosophical, mathematical, legal, economic, or technical terms into pure Amharic or awkward Fidel phonetic spellings.
+3. Mandatory Bilingual First-Introduction Format: On the first occurrence of each important concept in a chapter, introduce it clearly in this exact format: \`የአማርኛ ትርጉም (EnglishTerm)\` with a simple Amharic explanation where unfamiliar:
+   - ፍልስፍና (Philosophy)
+   - ክርክር (Argument)
+   - ግምታዊ አስተሳሰብ (Inductive Reasoning)
+   - ጥገኛ ተለዋዋጭ (Dependent Variable)
+   - ኃይል (Force)
+   - የእንቅስቃሴ መጠን (Momentum)
+4. Keep Discipline Vocabulary in English: Retain formulas (LaTeX), theories, scientific laws, classifications, theorist/scientist names (e.g., Aristotle, Kant, Newton, Darwin, Pasteur, Wundt), SI units, and discipline-specific terms (e.g., Deductive, Inductive, Valid, Sound, Strong, Cogent, Homeostasis, Osmosis, Stoichiometry, Eigenvalue) in their original English form.
+5. Consistent Terminology Throughout the Chapter: Once an English academic term is introduced in a chapter, reuse that EXACT English term consistently throughout the rest of the chapter without flipping back to a different translation or phonetic spelling.
+6. Preserve Depth & Exam Quality: Never shorten explanations or drop syllabus concepts, equations, worked examples, or examiner traps; write material at real Ethiopian university freshman exam preparation quality.`;
+
+function isAmharicLanguageRequested(language?: string, ...texts: Array<string | undefined>): boolean {
+  const lang = String(language || "").toLowerCase().trim();
+  if (lang === "am" || lang === "amharic" || lang === "hybrid_amharic" || lang === "bilingual") {
+    return true;
+  }
+  const combined = texts.filter(Boolean).join(" ");
+  return /[\u1200-\u137F]/.test(combined) || /\b(?:in\s+amharic|amharic\s+mode|amharic\s+notes?)\b/i.test(combined);
+}
+
 // Helper to generate a 100% AI-generated MasterNoteChapter (uses 2 parallel AI calls when Full Textbook is selected for massive 8-chapter depth!)
 async function generatePureAIMasterNote(params: {
   ai: GoogleGenAI;
@@ -1049,6 +1080,7 @@ async function generatePureAIMasterNote(params: {
   focusAreas?: string;
   detailLevel?: string;
   courseOutlineContext?: string;
+  language?: string;
 }) {
   const cleanedTopic = cleanStudentTopicInput(params.topic);
   const normSubj = inferSubjectFromTopic(cleanedTopic, params.subject || "mathematics");
@@ -1059,6 +1091,14 @@ async function generatePureAIMasterNote(params: {
   const isFullTextbook =
     String(params.detailLevel || "comprehensive").toLowerCase() === "comprehensive" ||
     String(params.detailLevel || "").toLowerCase().includes("full");
+  const useAmharicHybrid = isAmharicLanguageRequested(
+    params.language,
+    params.topic,
+    params.focusAreas
+  );
+  const hybridLanguageBlock = useAmharicHybrid
+    ? `\n${AMHARIC_HYBRID_TERMINOLOGY_RULES}\n`
+    : `\nBILINGUAL / AMHARIC NOTE RULE: Whenever generating Amharic or bilingual Ethiopian freshman notes, strictly follow the Hybrid Amharic + English Academic Terminology System (natural Amharic explanations at ~85-90%+, introduce key terms as \`Amharic (EnglishTerm)\` such as ፍልስፍና (Philosophy), ክርክር (Argument), ግምታዊ አስተሳሰብ (Inductive Reasoning), ጥገኛ ተለዋዋጭ (Dependent Variable), ኃይል (Force), የእንቅስቃሴ መጠን (Momentum), and keep technical/scientific terms consistently in English throughout the chapter).\n`;
 
   const focusInstruction = effectiveFocus
     ? `Specific Subtopics to Cover Within "${noteTopic}": ${effectiveFocus}`
@@ -1074,7 +1114,7 @@ async function generatePureAIMasterNote(params: {
 Topic: "${noteTopic}"
 Course Context: ${courseLabel}
 ${focusInstruction}
-${outlineBlueprintBlock}
+${outlineBlueprintBlock}${hybridLanguageBlock}
 CRITICAL TOPIC LOCK RULE:
 - 100% of your content MUST be strictly and exclusively about "${noteTopic}" (and its subtopics in the student's course outline if provided).
 - Do NOT write about unrelated chapters or other topics outside "${noteTopic}"!
@@ -1094,7 +1134,7 @@ Formatting & Depth Requirements for Each Chapter:
 Topic: "${noteTopic}"
 Course Context: ${courseLabel}
 ${focusInstruction}
-${outlineBlueprintBlock}
+${outlineBlueprintBlock}${hybridLanguageBlock}
 CRITICAL TOPIC LOCK RULE:
 - 100% of your content MUST be strictly and exclusively about "${noteTopic}" (and its subtopics in the student's course outline if provided).
 - Do NOT write about unrelated chapters or other topics outside "${noteTopic}"!
@@ -1182,7 +1222,7 @@ Formatting & Depth Requirements for Each Chapter:
 Topic: "${noteTopic}"
 Course Context: ${courseLabel} (Subject ID: "${normSubj}")
 ${focusInstruction}
-${outlineBlueprintBlock}
+${outlineBlueprintBlock}${hybridLanguageBlock}
 Detail Level: ${params.detailLevel}
 
 CRITICAL TOPIC LOCK RULE:
@@ -1217,7 +1257,7 @@ CRITICAL TOPIC LOCK RULE:
 // AI Master Study Notes Generator
 app.post("/api/gemini/generate-notes", async (req, res) => {
   try {
-    const { day, subject = "mathematics", topic, focusAreas, detailLevel = "comprehensive", courseOutlineContext } = req.body;
+    const { day, subject = "mathematics", topic, focusAreas, detailLevel = "comprehensive", courseOutlineContext, language } = req.body;
     const cleanedTopic = cleanStudentTopicInput(topic);
     const normSubj = inferSubjectFromTopic(cleanedTopic, subject);
     const course = getCourseBySubject(normSubj);
@@ -1246,6 +1286,7 @@ app.post("/api/gemini/generate-notes", async (req, res) => {
         focusAreas: effectiveFocus,
         detailLevel,
         courseOutlineContext,
+        language,
       });
       return res.json({ note: finalNote });
     } catch (apiErr: any) {
@@ -1268,7 +1309,7 @@ app.post("/api/gemini/generate-notes", async (req, res) => {
 // AI Note Expander & Editor
 app.post("/api/gemini/expand-edit-note", async (req, res) => {
   try {
-    const { currentTitle, currentContent, currentNoteContent, action, customPrompt, customInstruction, subject, topic, courseOutlineContext } = req.body;
+    const { currentTitle, currentContent, currentNoteContent, action, customPrompt, customInstruction, subject, topic, courseOutlineContext, language } = req.body;
     const noteBody = currentContent || currentNoteContent || "";
     const userInstruction = customPrompt || customInstruction || "";
     const rawTargetTopic = currentTitle || topic || "Core Syllabus";
@@ -1344,6 +1385,9 @@ app.post("/api/gemini/expand-edit-note", async (req, res) => {
           topic: cleanTargetTopic || `${courseLabel} Master Guide`,
           detailLevel: "comprehensive",
           courseOutlineContext,
+          language: isAmharicLanguageRequested(language, noteBody, userInstruction, currentTitle)
+            ? "amharic"
+            : undefined,
         });
         return res.json({ updatedContent: convertMasterNoteToMarkdown(aiTb) });
       } catch {
@@ -1377,13 +1421,18 @@ app.post("/api/gemini/expand-edit-note", async (req, res) => {
         instructionDetails = "Expand this note substantially into an exhaustive university textbook chapter by adding multi-paragraph theoretical explanations, formal definitions, step-by-step derivations, LaTeX formulas, and worked exam examples.";
     }
 
+    const useAmharicExpand = isAmharicLanguageRequested(language, noteBody, userInstruction, currentTitle);
+    const expandLanguageRule = useAmharicExpand
+      ? `\n${AMHARIC_HYBRID_TERMINOLOGY_RULES}\n`
+      : `\nIf this note is in Amharic or bilingual mode, strictly follow the Hybrid Amharic + English Academic Terminology System (natural Amharic prose, introduce key concepts as \`Amharic (EnglishTerm)\` like ፍልስፍና (Philosophy), ክርክር (Argument), ግምታዊ አስተሳሰብ (Inductive Reasoning), ጥገኛ ተለዋዋጭ (Dependent Variable), ኃይል (Force), የእንቅስቃሴ መጠን (Momentum), and retain English technical terminology consistently).\n`;
+
     const prompt = `You are the Lead Master Textbook Author for Ethiopian Higher Education Freshman Common Courses (${courseLabel}).
 You are tasked with expanding, enriching, and editing the following study note into a much larger, deeper university textbook note:
 
 Note Title: "${currentTitle || topic || "Study Note"}"
 Course: ${courseLabel}
 Action Requested: ${instructionDetails}
-${courseOutlineContext ? `\nSTUDENT'S SAVED COURSE OUTLINE & CONTENTS:\n${courseOutlineContext}\n` : ""}
+${courseOutlineContext ? `\nSTUDENT'S SAVED COURSE OUTLINE & CONTENTS:\n${courseOutlineContext}\n` : ""}${expandLanguageRule}
 Current Note Content:
 \`\`\`markdown
 ${noteBody}
@@ -1400,8 +1449,9 @@ Instructions:
         ai,
         prompt,
         {
-          systemInstruction:
-            "You are an elite university professor. Return the full, extensively expanded textbook markdown note content with clean LaTeX formulas and clear headings.",
+          systemInstruction: useAmharicExpand
+            ? `You are an elite Ethiopian university professor. Return the full, extensively expanded textbook markdown note using the Hybrid Amharic + English Academic Terminology System (Amharic explanations ~85-90%+, key terms introduced as Amharic (EnglishTerm) and reused consistently in English), with clean LaTeX formulas and headings.`
+            : "You are an elite university professor. Return the full, extensively expanded textbook markdown note content with clean LaTeX formulas and clear headings.",
           maxOutputTokens: 8192,
         },
         22000

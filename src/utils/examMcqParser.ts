@@ -12,7 +12,7 @@ export interface ParsedMcqBatchResult {
   formatDetected: 'json' | 'markdown' | 'empty';
 }
 
-export const SAMPLE_README_MCQ_TEMPLATE = `# Calculus I — Midterm Practice Exam
+export const SAMPLE_README_MCQ_TEMPLATE = `# Calculus & Linear Algebra — Midterm Practice Exam
 
 1. Evaluate $\\lim_{x \\to 0} \\frac{\\sin(5x)}{x}$.
 A) $0$
@@ -20,17 +20,18 @@ B) $1$
 C) $5$
 D) Does not exist
 Answer: C
-Explanation: Using the standard trigonometric limit $\\lim_{u \\to 0} \\frac{\\sin u}{u} = 1$, rewrite as $5 \\cdot \\lim_{x \\to 0} \\frac{\\sin(5x)}{5x} = 5(1) = 5$.
+Explanation: Using the standard trigonometric limit $\\lim_{u \\to 0} \\frac{\\sin u}{u} = 1$, rewrite as:
+$$5 \\cdot \\lim_{x \\to 0} \\frac{\\sin(5x)}{5x} = 5(1) = 5$$
 
 ---
 
-2. Find the derivative of $f(x) = x^3 + 4x - 7$ at $x = 2$.
-A) $12$
-B) $16$
-C) $8$
-D) $19$
+2. Evaluate the definite integral $\\int_0^1 (3x^2 + 2x)\\,dx$.
+A) $1$
+B) $2$
+C) $3$
+D) $5$
 Answer: B
-Explanation: $f'(x) = 3x^2 + 4$, so $f'(2) = 3(4) + 4 = 16$.
+Explanation: The antiderivative is $F(x) = x^3 + x^2$, so $F(1) - F(0) = (1 + 1) - 0 = 2$.
 
 ---
 
@@ -39,7 +40,7 @@ Explanation: $f'(x) = 3x^2 + 4$, so $f'(2) = 3(4) + 4 = 16$.
 - [x] $\\begin{pmatrix} 2 & 4 \\\\ 1 & 2 \\end{pmatrix}$
 - [ ] $\\begin{pmatrix} 3 & 1 \\\\ 0 & 2 \\end{pmatrix}$
 - [ ] $\\begin{pmatrix} 0 & 1 \\\\ 1 & 0 \\end{pmatrix}$
-Explanation: A $2\\times 2$ matrix is singular when its determinant equals $0$: $(2)(2) - (4)(1) = 0$.
+Explanation: A $2\\times 2$ matrix is singular when its determinant equals $0$: $\\det = (2)(2) - (4)(1) = 0$.
 `;
 
 function letterToIndex(letter: string): number {
@@ -55,6 +56,17 @@ function cleanMarkdownInline(text: string): string {
     .trim();
 }
 
+function stripOuterMathAndBold(text: string): string {
+  return String(text || '')
+    .trim()
+    .replace(/^\*{1,2}|\*{1,2}$/g, '')
+    .replace(/^\$\$|\$\$$/g, '')
+    .replace(/^\$|\$$/g, '')
+    .replace(/^\\\(|\\\)$/g, '')
+    .replace(/^\\\[|\\\]$/g, '')
+    .trim();
+}
+
 function resolveCorrectAnswerIndex(
   rawValue: unknown,
   options: string[]
@@ -66,33 +78,33 @@ function resolveCorrectAnswerIndex(
     return 0;
   }
 
-  const str = String(rawValue ?? '').trim();
+  const str = String(rawValue ?? '').trim().replace(/^\*{1,2}|\*{1,2}$/g, '').trim();
   if (!str) return 0;
 
-  // Match explicit option letter: "B", "B)", "(B)", "Option B", "B. text"
-  const letterMatch = str.match(/^(?:option\s*)?\(?([A-Fa-f])\)?(?:[.):\s]|$)/);
+  // Match explicit option letter: "B", "B)", "(B)", "$B$", "Option B", "B. text"
+  const unWrapped = stripOuterMathAndBold(str);
+  const letterMatch = unWrapped.match(/^(?:option\s*)?\(?([A-Fa-f])\)?(?:[.):\s]|$)/);
   if (letterMatch) {
     const idx = letterToIndex(letterMatch[1]);
     if (idx >= 0 && idx < options.length) return idx;
   }
 
-  // Exact numeric string
-  if (/^\d+$/.test(str)) {
-    const num = Number(str);
-    // Check if an option literally equals the number first
-    const literalIdx = options.findIndex((o) => o.trim() === str);
+  // Exact numeric string (also handles "$5$" matching option "$5$")
+  if (/^\d+$/.test(unWrapped)) {
+    const num = Number(unWrapped);
+    const literalIdx = options.findIndex((o) => stripOuterMathAndBold(o) === unWrapped);
     if (literalIdx >= 0) return literalIdx;
     if (num >= 1 && num <= options.length) return num - 1;
     if (num >= 0 && num < options.length) return num;
   }
 
-  // Match option text directly (case-insensitive)
-  const lower = str.toLowerCase();
-  const exactIdx = options.findIndex((o) => o.trim().toLowerCase() === lower);
+  // Match option text directly (case-insensitive, ignoring outer $ delimiters)
+  const lower = unWrapped.toLowerCase();
+  const exactIdx = options.findIndex((o) => stripOuterMathAndBold(o).toLowerCase() === lower);
   if (exactIdx >= 0) return exactIdx;
 
   const partialIdx = options.findIndex(
-    (o) => lower.length >= 3 && o.toLowerCase().includes(lower)
+    (o) => lower.length >= 2 && stripOuterMathAndBold(o).toLowerCase().includes(lower)
   );
   if (partialIdx >= 0) return partialIdx;
 
@@ -158,6 +170,54 @@ function normalizeJsonItem(raw: any): ParsedMcqItem | null {
   };
 }
 
+function repairUnescapedLatexInJsonCandidate(rawJson: string): string {
+  let out = '';
+  let inString = false;
+  for (let i = 0; i < rawJson.length; i++) {
+    const ch = rawJson[i];
+    if (ch === '"' && (i === 0 || rawJson[i - 1] !== '\\')) {
+      inString = !inString;
+      out += ch;
+      continue;
+    }
+    if (inString && ch === '\\') {
+      const next = rawJson[i + 1] || '';
+      const rest = rawJson.slice(i + 1);
+      // Keep already-escaped backslashes, quotes, slashes, unicode escapes, and genuine \n newlines
+      if (next === '\\' || next === '"' || next === '/') {
+        out += ch + next;
+        i++;
+        continue;
+      }
+      if (next === 'u' && /^u[0-9a-fA-F]{4}/.test(rest)) {
+        out += ch;
+        continue;
+      }
+      // If \f, \b, \t, \r, \n starts a LaTeX macro (\frac, \theta, \begin, \right, \neq, \nabla, etc.), double-escape it!
+      if (
+        (next === 'f' && /^f(?:rac|orall|lat)/.test(rest)) ||
+        (next === 'b' && /^b(?:ar|eta|egin|inom|oxed|ullet|ig|ackslash|ecause|mod)/.test(rest)) ||
+        (next === 't' && /^t(?:heta|au|an|anh|imes|ext|ilde|o\b|op\b|riangle|frac|herefore|r\b)/.test(rest)) ||
+        (next === 'r' && /^r(?:ight|ho|angle|ceil|floor|brace|brack|vert|oot|ank|e\b)/.test(rest)) ||
+        (next === 'n' && /^n(?:eq|abla|u\b|ot|in|exists|mid|ewline|olimits)/.test(rest))
+      ) {
+        out += '\\\\';
+        continue;
+      }
+      if (next === 'n' || next === 'r' || next === 't' || next === 'b' || next === 'f') {
+        out += ch + next;
+        i++;
+        continue;
+      }
+      // Any other single backslash in JSON string (e.g. \int, \sum, \lim, \sin, \cos, \sqrt, \pi, \alpha) -> escape it
+      out += '\\\\';
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
 function tryParseJsonPayload(input: string): ParsedMcqBatchResult | null {
   const trimmed = input.trim();
   if (!trimmed) return null;
@@ -182,37 +242,44 @@ function tryParseJsonPayload(input: string): ParsedMcqBatchResult | null {
   let detectedTitle: string | undefined;
 
   for (const candidate of jsonCandidates) {
+    let parsed: any = null;
     try {
-      const parsed = JSON.parse(candidate);
-      let list: any[] = [];
-      if (Array.isArray(parsed)) {
-        list = parsed;
-      } else if (parsed && typeof parsed === 'object') {
-        if (typeof parsed.title === 'string' && parsed.title.trim()) {
-          detectedTitle = parsed.title.trim();
-        }
-        if (Array.isArray(parsed.questions)) {
-          list = parsed.questions;
-        } else if (Array.isArray(parsed.mcqs)) {
-          list = parsed.mcqs;
-        } else if (Array.isArray(parsed.items)) {
-          list = parsed.items;
-        } else if (parsed.question || parsed.prompt || parsed.stem) {
-          list = [parsed];
-        }
-      }
-
-      list.forEach((item, idx) => {
-        const normalized = normalizeJsonItem(item);
-        if (normalized) {
-          allQuestions.push(normalized);
-        } else {
-          warnings.push(`Skipped JSON item #${idx + 1} (missing question or at least 2 options).`);
-        }
-      });
+      parsed = JSON.parse(candidate);
     } catch {
-      // Not valid JSON, fall back to Markdown/README parser
+      try {
+        parsed = JSON.parse(repairUnescapedLatexInJsonCandidate(candidate));
+      } catch {
+        parsed = null;
+      }
     }
+    if (!parsed) continue;
+
+    let list: any[] = [];
+    if (Array.isArray(parsed)) {
+      list = parsed;
+    } else if (parsed && typeof parsed === 'object') {
+      if (typeof parsed.title === 'string' && parsed.title.trim()) {
+        detectedTitle = parsed.title.trim();
+      }
+      if (Array.isArray(parsed.questions)) {
+        list = parsed.questions;
+      } else if (Array.isArray(parsed.mcqs)) {
+        list = parsed.mcqs;
+      } else if (Array.isArray(parsed.items)) {
+        list = parsed.items;
+      } else if (parsed.question || parsed.prompt || parsed.stem) {
+        list = [parsed];
+      }
+    }
+
+    list.forEach((item, idx) => {
+      const normalized = normalizeJsonItem(item);
+      if (normalized) {
+        allQuestions.push(normalized);
+      } else {
+        warnings.push(`Skipped JSON item #${idx + 1} (missing question or at least 2 options).`);
+      }
+    });
   }
 
   if (allQuestions.length > 0) {
@@ -230,14 +297,36 @@ function tryParseJsonPayload(input: string): ParsedMcqBatchResult | null {
 /**
  * Splits a single line if options were pasted inline like:
  * "A) Force  B) Mass  C) Velocity  D) Acceleration"
+ * Carefully avoids splitting inside LaTeX math ($...$, $$...$$, \begin{...}).
  */
 function expandInlineOptions(line: string): string[] {
-  const inlineMatches = line.match(/(?:^|\s)\(?[A-Da-d][).]\s+/g);
-  if (inlineMatches && inlineMatches.length >= 2) {
-    const parts = line
-      .split(/(?=(?:^|\s)\(?[A-Fa-f][).]\s+)/g)
-      .map((p) => p.trim())
-      .filter(Boolean);
+  if (line.includes('\\begin{') || line.includes('$$') || line.includes('\\[')) {
+    return [line];
+  }
+  // Mask $...$ and \(...\) before checking inline option delimiters
+  const masked = line
+    .replace(/(?<!\\)\$[^$\n]+\$/g, (m) => ' '.repeat(m.length))
+    .replace(/\\\((?:\\.|[^)\n])*?\\\)/g, (m) => ' '.repeat(m.length));
+
+  const optionBoundaryRegex = /(?:^|(?<=\s))(\(?[A-Fa-f][).])(?=\s|$|[$\\])/g;
+  const splitPoints: number[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = optionBoundaryRegex.exec(masked)) !== null) {
+    splitPoints.push(m.index);
+  }
+
+  if (splitPoints.length >= 2) {
+    const parts: string[] = [];
+    if (splitPoints[0] > 0) {
+      const prefix = line.slice(0, splitPoints[0]).trim();
+      if (prefix) parts.push(prefix);
+    }
+    for (let i = 0; i < splitPoints.length; i++) {
+      const start = splitPoints[i];
+      const end = i + 1 < splitPoints.length ? splitPoints[i + 1] : line.length;
+      const piece = line.slice(start, end).trim();
+      if (piece) parts.push(piece);
+    }
     if (parts.length >= 2) return parts;
   }
   return [line];
@@ -258,9 +347,20 @@ export function parseMcqsFromReadmeOrCode(rawInput: string): ParsedMcqBatchResul
   // 2. Markdown / README / Structured MCQ Text Parser
   const rawLines = raw.split('\n');
   const lines: string[] = [];
+  let preScanningMath = false;
   for (const l of rawLines) {
-    const expanded = expandInlineOptions(l);
-    lines.push(...expanded);
+    const t = l.trim();
+    if (/^\$\$/.test(t) && !/^\$\$[\s\S]+\$\$$/.test(t)) {
+      preScanningMath = !preScanningMath;
+      lines.push(l);
+      continue;
+    }
+    if (preScanningMath) {
+      lines.push(l);
+    } else {
+      const expanded = expandInlineOptions(l);
+      lines.push(...expanded);
+    }
   }
 
   let detectedTitle: string | undefined;
@@ -278,6 +378,8 @@ export function parseMcqsFromReadmeOrCode(rawInput: string): ParsedMcqBatchResul
 
   let current: DraftQuestion | null = null;
   let insideFence = false;
+  let insideDisplayMath = false;
+  let mathEnvDepth = 0;
 
   const finalizeCurrent = () => {
     if (!current) return;
@@ -329,16 +431,27 @@ export function parseMcqsFromReadmeOrCode(rawInput: string): ParsedMcqBatchResul
 
   // Patterns
   const questionStartPattern =
-    /^(?:#{1,4}\s*)?(?:\*{1,2})?(?:(?:Question|Q)\s*#?\s*\d+|\d+)(?:\*{1,2})?\s*[.):\-]\s*(.*)$/i;
+    /^(?:#{1,4}\s*)?(?:\*{1,2})?(?:(?:Question|Problem|Q)\s*#?\s*\d+|\(\d+\)|\d+)(?:\*{1,2})?\s*[.):\-]\s*(.*)$/i;
   const questionHeaderOnlyPattern =
-    /^(?:#{1,4}\s*)?(?:\*{1,2})?(?:Question|Q)\s*#?\s*(\d+)\s*(?:\*{1,2})?$/i;
+    /^(?:#{1,4}\s*)?(?:\*{1,2})?(?:Question|Problem|Q)\s*#?\s*(\d+)\s*(?:\*{1,2})?$/i;
   const checkboxOptionPattern = /^\s*[-*]\s*\[([xX ])\]\s+(.+)$/;
   const labeledOptionPattern =
-    /^\s*(?:[-*•]\s*)?(\*?)\s*(?:\*{1,2})?\(?([A-Fa-f])(?:\*{1,2})?[).:\]]\s*(?:\*{1,2})?\s*(.+)$/;
+    /^\s*(?:[-*•]\s*)?(\*?)\s*(?:\*{1,2})?\(?([A-Fa-f])(?:\*{1,2})?(?:[.):\]]\s+|\)(?=\s*[$\\]))(?:\*{1,2})?\s*(.+)$/;
   const answerLinePattern =
-    /^\s*(?:[-*•]\s*)?(?:\*{1,2})?(?:Correct\s*Answer|Correct\s*Option|Answer|Ans|Key|Correct)(?:\*{1,2})?\s*[:=\-]\s*(?:\*{1,2})?(.+?)(?:\*{1,2})?\s*$/i;
+    /^\s*(?:[-*•✅✔✓]\s*)?(?:\*{1,2})?(?:Correct\s*Answer|Correct\s*Option|Answer|Ans|Key|Correct)(?:\*{1,2})?\s*[:=\-]\s*(?:\*{1,2})?(.+?)(?:\*{1,2})?\s*$/i;
   const explanationLinePattern =
     /^\s*(?:[-*•]\s*)?(?:\*{1,2})?(?:Explanation|Solution|Rationale|Reason|Hint|Note)(?:\*{1,2})?\s*[:=\-]\s*(?:\*{1,2})?(.*)$/i;
+
+  const appendRawMathLine = (targetLine: string) => {
+    if (!current) return;
+    if (current.stage === 'explanation') {
+      current.explanationLines.push(targetLine);
+    } else if (current.stage === 'options' && current.options.length > 0) {
+      current.options[current.options.length - 1] += `\n${targetLine}`;
+    } else {
+      current.questionLines.push(targetLine);
+    }
+  };
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -347,25 +460,38 @@ export function parseMcqsFromReadmeOrCode(rawInput: string): ParsedMcqBatchResul
     if (/^```/.test(trimmed)) {
       insideFence = !insideFence;
       if (current) {
-        if (current.stage === 'explanation') {
-          current.explanationLines.push(line);
-        } else if (current.stage === 'stem') {
-          current.questionLines.push(line);
-        }
+        appendRawMathLine(line);
       }
       continue;
     }
 
     if (insideFence) {
-      if (current) {
-        if (current.stage === 'explanation') {
-          current.explanationLines.push(line);
-        } else if (current.stage === 'options' && current.options.length > 0) {
-          current.options[current.options.length - 1] += `\n${line}`;
-        } else {
-          current.questionLines.push(line);
-        }
+      appendRawMathLine(line);
+      continue;
+    }
+
+    // Track multi-line display math blocks ($$...$$, \[...\], \begin{...}...\end{...}) so math lines don't split questions
+    const beginMatches = (trimmed.match(/\\begin\{/g) || []).length;
+    const endMatches = (trimmed.match(/\\end\{/g) || []).length;
+    if (insideDisplayMath || mathEnvDepth > 0) {
+      appendRawMathLine(line);
+      if (trimmed.includes('$$')) insideDisplayMath = false;
+      if (trimmed.includes('\\]')) insideDisplayMath = false;
+      mathEnvDepth = Math.max(0, mathEnvDepth + beginMatches - endMatches);
+      continue;
+    }
+
+    if (
+      (/^(\$\$|\\\[)/.test(trimmed) && !/^\$\$[\s\S]+\$\$$/.test(trimmed) && !/^\\\[[\s\S]+\\\]$/.test(trimmed)) ||
+      beginMatches > endMatches
+    ) {
+      if (trimmed.startsWith('$$') && !/\$\$.*\$\$/.test(trimmed)) {
+        insideDisplayMath = true;
+      } else if (trimmed.startsWith('\\[') && !trimmed.includes('\\]')) {
+        insideDisplayMath = true;
       }
+      mathEnvDepth = Math.max(0, mathEnvDepth + beginMatches - endMatches);
+      appendRawMathLine(line);
       continue;
     }
 
@@ -389,6 +515,18 @@ export function parseMcqsFromReadmeOrCode(rawInput: string): ParsedMcqBatchResul
         if (!detectedTitle) detectedTitle = titleFieldMatch[1].trim();
         continue;
       }
+    }
+
+    // Ignore mid-document section headers (e.g., "## Part II") between questions after previous question has options
+    if (
+      current &&
+      current.options.length >= 2 &&
+      /^#{1,3}\s+/.test(trimmed) &&
+      !questionStartPattern.test(trimmed) &&
+      !questionHeaderOnlyPattern.test(trimmed)
+    ) {
+      finalizeCurrent();
+      continue;
     }
 
     // 1. Check Explanation line

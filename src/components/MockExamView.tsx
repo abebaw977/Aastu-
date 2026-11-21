@@ -599,9 +599,10 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
                             </h3>
 
                             {firstQuestion && (
-                              <p className="text-xs text-slate-400 line-clamp-2">
-                                Q1: {firstQuestion}
-                              </p>
+                              <div className="text-xs text-slate-400 line-clamp-2 overflow-hidden">
+                                <span className="font-semibold text-slate-300 mr-1">Q1:</span>
+                                <MathRenderer text={firstQuestion} />
+                              </div>
                             )}
                           </div>
 
@@ -677,8 +678,8 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
                             )}
 
                             {sheet.explanation && showKey && !isLocked && (
-                              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 whitespace-pre-wrap">
-                                {sheet.explanation}
+                              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 overflow-x-auto">
+                                <MathRenderer text={sheet.explanation} />
                               </div>
                             )}
 
@@ -915,9 +916,9 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
                   className="max-h-[70vh] w-auto object-contain rounded-lg"
                 />
                 {inspectedSheet.explanation && (
-                  <div className="w-full p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 whitespace-pre-wrap">
+                  <div className="w-full p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 overflow-x-auto">
                     <strong className="block text-emerald-400 mb-1">Instructions / Answer Key:</strong>
-                    {inspectedSheet.explanation}
+                    <MathRenderer text={inspectedSheet.explanation} />
                   </div>
                 )}
               </div>
@@ -1035,7 +1036,7 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
                         : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-200'
                     }`}
                   >
-                    <span className="overflow-x-auto">
+                    <span className="flex-1 min-w-0 overflow-x-auto">
                       <MathRenderer text={opt} />
                     </span>
                     <span
@@ -1353,9 +1354,9 @@ export const MockExamView: React.FC<MockExamViewProps> = ({
                       return (
                         <div
                           key={oIdx}
-                          className={`p-2.5 rounded-lg border flex items-center justify-between ${badgeClass}`}
+                          className={`p-2.5 rounded-lg border flex items-center justify-between gap-2 ${badgeClass}`}
                         >
-                          <span className="overflow-x-auto">
+                          <span className="flex-1 min-w-0 overflow-x-auto">
                             <MathRenderer text={opt} />
                           </span>
                           {isAnswer && (

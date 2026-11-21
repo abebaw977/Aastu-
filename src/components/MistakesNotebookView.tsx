@@ -141,9 +141,9 @@ export const MistakesNotebookView: React.FC<MistakesNotebookViewProps> = ({
                     <button
                       key={oIdx}
                       onClick={() => handleSelectOption(q.id, oIdx)}
-                      className={`w-full text-left p-3.5 rounded-xl border text-xs sm:text-sm transition flex items-center justify-between ${optClass}`}
+                      className={`w-full text-left p-3.5 rounded-xl border text-xs sm:text-sm transition flex items-center justify-between gap-3 ${optClass}`}
                     >
-                      <span><MathRenderer text={opt} /></span>
+                      <span className="flex-1 min-w-0 overflow-x-auto"><MathRenderer text={opt} /></span>
                       {isAnswered && (
                         <div>
                           {isTrueAnswer && <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />}

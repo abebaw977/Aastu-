@@ -38,6 +38,7 @@ import {
   getSubjectDisplayName,
 } from '../../../src/data/freshmanCourseCatalog';
 import { FreshmanPdfReaderModal } from '../../../src/components/FreshmanPdfReaderModal';
+import { MathRenderer } from '../../../src/components/MathRenderer';
 import {
   ShieldCheck,
   CheckCircle2,
@@ -1352,9 +1353,28 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                         if (res.detectedTitle) setExamTestTitle(res.detectedTitle);
                       }
                     }}
-                    placeholder={`Paste MCQs from README.md, Markdown, or JSON here:\n\n1. What is the SI unit of force?\nA) Joule\nB) Newton\nC) Watt\nD) Pascal\nAnswer: B\nExplanation: Force = mass × acceleration (kg·m/s² = Newton).`}
+                    placeholder={`Paste MCQs from README.md, Markdown, or JSON here:\n\n1. Evaluate $\\lim_{x \\to 0} \\frac{\\sin x}{x}$:\nA) $0$\nB) $1$\nC) $\\infty$\nD) Does not exist\nAnswer: B\nExplanation: Standard trigonometric limit $\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1$.`}
                     className="w-full p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-slate-100 placeholder-slate-600 focus:outline-none focus:border-purple-500 leading-relaxed"
                   />
+
+                  <div className="px-3 py-2 rounded-xl bg-indigo-950/35 border border-indigo-800/40 text-[11px] text-indigo-200/90 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="font-bold text-indigo-300">LaTeX / Maths Supported:</span>
+                    <span>
+                      Inline <code className="text-cyan-300">$x^2 + 1$</code> or{' '}
+                      <code className="text-cyan-300">{`\\(\\frac{a}{b}\\)`}</code>
+                    </span>
+                    <span>·</span>
+                    <span>
+                      Display <code className="text-cyan-300">{`$$\\int_0^1 x^2\\,dx$$`}</code> or{' '}
+                      <code className="text-cyan-300">{`\\[...\\]`}</code>
+                    </span>
+                    <span>·</span>
+                    <span>
+                      Matrices &amp; Cases{' '}
+                      <code className="text-cyan-300">{`\\begin{pmatrix}...\\end{pmatrix}`}</code>,{' '}
+                      <code className="text-cyan-300">{`\\begin{cases}...\\end{cases}`}</code>
+                    </span>
+                  </div>
 
                   {/* Live Parsed Preview */}
                   {readmeMcqCode.trim() && (
@@ -1381,15 +1401,17 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                       )}
 
                       {parsedBatch.questions.length > 0 && (
-                        <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                        <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
                           {parsedBatch.questions.map((item, idx) => (
                             <div
                               key={idx}
-                              className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-1.5 text-xs"
+                              className="p-3 rounded-lg bg-slate-900 border border-slate-800 space-y-2 text-xs"
                             >
-                              <div className="font-bold text-white">
-                                <span className="text-purple-400 mr-1.5">Q{idx + 1}.</span>
-                                {item.question}
+                              <div className="font-bold text-white flex items-start gap-1.5 overflow-x-auto">
+                                <span className="text-purple-400 shrink-0">Q{idx + 1}.</span>
+                                <div className="flex-1 min-w-0">
+                                  <MathRenderer text={item.question} />
+                                </div>
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                                 {item.options.map((opt, oIdx) => {
@@ -1397,15 +1419,20 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                                   return (
                                     <div
                                       key={oIdx}
-                                      className={`px-2 py-1 rounded border text-[11px] flex items-center justify-between gap-1.5 ${
+                                      className={`px-2.5 py-1.5 rounded border text-[11px] flex items-center justify-between gap-2 ${
                                         isCorrect
                                           ? 'bg-emerald-950/60 border-emerald-600/60 text-emerald-200 font-semibold'
                                           : 'bg-slate-950 border-slate-800 text-slate-300'
                                       }`}
                                     >
-                                      <span className="truncate">
-                                        {String.fromCharCode(65 + oIdx)}) {opt}
-                                      </span>
+                                      <div className="flex-1 min-w-0 overflow-x-auto flex items-start gap-1.5">
+                                        <span className="font-bold shrink-0">
+                                          {String.fromCharCode(65 + oIdx)})
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                          <MathRenderer text={opt} />
+                                        </div>
+                                      </div>
                                       {isCorrect && (
                                         <span className="text-emerald-400 font-bold shrink-0">✓</span>
                                       )}
@@ -1414,8 +1441,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                                 })}
                               </div>
                               {item.explanation && (
-                                <div className="text-[11px] text-slate-400">
-                                  <strong className="text-slate-300">Explanation:</strong> {item.explanation}
+                                <div className="text-[11px] text-slate-300 bg-slate-950/70 p-2 rounded border border-slate-800/80 overflow-x-auto">
+                                  <strong className="text-slate-200 mr-1">Explanation:</strong>
+                                  <MathRenderer text={item.explanation} />
                                 </div>
                               )}
                             </div>
@@ -1451,7 +1479,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                       rows={3}
                       value={singleQuestion}
                       onChange={(e) => setSingleQuestion(e.target.value)}
-                      placeholder="Enter MCQ question (supports LaTeX like $x^2 + 1$)..."
+                      placeholder="Enter MCQ question (supports LaTeX: $x^2 + 1$, $$\\int_0^1 x\\,dx$$, matrices)..."
                       className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
                     />
                   </div>
@@ -1482,7 +1510,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                             next[idx] = e.target.value;
                             setSingleOptions(next);
                           }}
-                          placeholder={`Option ${String.fromCharCode(65 + idx)}`}
+                          placeholder={`Option ${String.fromCharCode(65 + idx)} (supports LaTeX like $\\frac{1}{2}$)`}
                           className="flex-1 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-purple-500"
                         />
                       </div>
@@ -1491,13 +1519,13 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
                   <div>
                     <label className="block text-xs font-medium text-slate-300 mb-1">
-                      Explanation / Solution (Optional)
+                      Explanation / Solution (Optional, supports LaTeX)
                     </label>
                     <textarea
                       rows={2}
                       value={singleExplanation}
                       onChange={(e) => setSingleExplanation(e.target.value)}
-                      placeholder="Explain why the selected answer is correct..."
+                      placeholder="Explain why the selected answer is correct (supports $...$ and $$...$$)..."
                       className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
                     />
                   </div>
@@ -1514,6 +1542,50 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                       className="w-full text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-slate-700"
                     />
                   </div>
+
+                  {(singleQuestion.trim() ||
+                    singleOptions.some((o) => o.trim()) ||
+                    singleExplanation.trim()) && (
+                    <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+                      <div className="text-[11px] font-bold text-purple-300 uppercase tracking-wider">
+                        Live LaTeX &amp; Math Preview
+                      </div>
+                      {singleQuestion.trim() && (
+                        <div className="font-semibold text-white overflow-x-auto">
+                          <MathRenderer text={singleQuestion} />
+                        </div>
+                      )}
+                      {singleOptions.some((o) => o.trim()) && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                          {singleOptions.map((optVal, idx) =>
+                            optVal.trim() ? (
+                              <div
+                                key={idx}
+                                className={`px-2.5 py-1.5 rounded border text-[11px] flex items-center gap-1.5 overflow-x-auto ${
+                                  singleCorrectIndex === idx
+                                    ? 'bg-emerald-950/60 border-emerald-600/60 text-emerald-200 font-semibold'
+                                    : 'bg-slate-900 border-slate-800 text-slate-300'
+                                }`}
+                              >
+                                <span className="font-bold shrink-0">
+                                  {String.fromCharCode(65 + idx)})
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  <MathRenderer text={optVal} />
+                                </div>
+                              </div>
+                            ) : null
+                          )}
+                        </div>
+                      )}
+                      {singleExplanation.trim() && (
+                        <div className="text-[11px] text-slate-300 bg-slate-900 p-2 rounded border border-slate-800 overflow-x-auto">
+                          <strong className="text-slate-200 mr-1">Explanation:</strong>
+                          <MathRenderer text={singleExplanation} />
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <button
                     type="submit"
@@ -1717,21 +1789,54 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                         </div>
 
                         {isExpanded && (
-                          <div className="space-y-2 pt-2 border-t border-slate-800">
+                          <div className="space-y-2.5 pt-2 border-t border-slate-800">
                             {group.posts.map((post, qIdx) => (
                               <div
                                 key={post.id}
                                 className="p-3 rounded-lg bg-slate-900 border border-slate-800 flex items-start justify-between gap-2 text-xs"
                               >
-                                <div className="space-y-1 min-w-0 flex-1">
-                                  <div className="font-semibold text-white">
-                                    <span className="text-purple-400 mr-1.5">Q{qIdx + 1}.</span>
-                                    {post.question}
+                                <div className="space-y-2 min-w-0 flex-1">
+                                  <div className="font-semibold text-white flex items-start gap-1.5 overflow-x-auto">
+                                    <span className="text-purple-400 shrink-0">Q{qIdx + 1}.</span>
+                                    <div className="flex-1 min-w-0">
+                                      <MathRenderer text={post.question} />
+                                    </div>
                                   </div>
-                                  <div className="text-[11px] text-emerald-400">
-                                    Correct: {String.fromCharCode(65 + (post.correctAnswer || 0))}){' '}
-                                    {post.options[post.correctAnswer || 0] || ''}
-                                  </div>
+                                  {Array.isArray(post.options) && post.options.length > 0 && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                      {post.options.map((opt, oIdx) => {
+                                        const isCorrect = oIdx === (post.correctAnswer || 0);
+                                        return (
+                                          <div
+                                            key={oIdx}
+                                            className={`px-2 py-1 rounded border text-[11px] flex items-center justify-between gap-1.5 ${
+                                              isCorrect
+                                                ? 'bg-emerald-950/60 border-emerald-600/60 text-emerald-200 font-semibold'
+                                                : 'bg-slate-950 border-slate-800 text-slate-300'
+                                            }`}
+                                          >
+                                            <div className="flex-1 min-w-0 overflow-x-auto flex items-start gap-1">
+                                              <span className="font-bold shrink-0">
+                                                {String.fromCharCode(65 + oIdx)})
+                                              </span>
+                                              <div className="flex-1 min-w-0">
+                                                <MathRenderer text={opt} />
+                                              </div>
+                                            </div>
+                                            {isCorrect && (
+                                              <span className="text-emerald-400 font-bold shrink-0">✓</span>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                  {post.explanation && (
+                                    <div className="text-[11px] text-slate-300 bg-slate-950/70 p-2 rounded border border-slate-800/80 overflow-x-auto">
+                                      <strong className="text-slate-200 mr-1">Explanation:</strong>
+                                      <MathRenderer text={post.explanation} />
+                                    </div>
+                                  )}
                                 </div>
                                 <button
                                   type="button"
@@ -2037,8 +2142,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 className="max-h-[65vh] w-auto object-contain rounded-lg"
               />
               {inspectedExamImage.explanation && (
-                <div className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 whitespace-pre-wrap">
-                  {inspectedExamImage.explanation}
+                <div className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 overflow-x-auto">
+                  <MathRenderer text={inspectedExamImage.explanation} />
                 </div>
               )}
             </div>

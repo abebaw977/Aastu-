@@ -3,6 +3,11 @@ import { FRESHMAN_COURSES, ALL_FRESHMAN_CHAPTERS } from '../data/freshmanModules
 import { OFFICIAL_17_FRESHMAN_COURSES } from '../data/freshmanCourseCatalog';
 import { getAmharicChapterNote, getAmharicSubjectMeta } from '../data/amharicNotes';
 import {
+  buildFullAmharicTranslatedSections,
+  polishAmharicChapterNote,
+  polishMixedAmharicText,
+} from '../utils/amharicNoteExpander';
+import {
   MasterNoteChapter,
   Subject,
   UserStudyNote,
@@ -581,7 +586,8 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                       : null;
                     return (
                       <option key={ch.id} value={ch.id}>
-                        {idx + 1}. {ch.courseCode}: {isChAm && chAm ? chAm.titleAm : ch.title}
+                        {idx + 1}. {ch.courseCode}:{' '}
+                        {isChAm && chAm ? polishMixedAmharicText(chAm.titleAm) : ch.title}
                       </option>
                     );
                   })}
@@ -660,6 +666,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                     const chAm = isChAm
                       ? getAmharicChapterNote(chapter.id, chapter.subject, chapter.chapterNumber, chapter.title)
                       : null;
+                    const chAmTitle = chAm ? polishMixedAmharicText(chAm.titleAm) : '';
 
                     return (
                       <div
@@ -683,7 +690,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                             </span>
                           </div>
                           <div className="text-xs font-bold text-white truncate">
-                            {isChAm && chAm ? chAm.titleAm : chapter.title}
+                            {isChAm && chAmTitle ? chAmTitle : chapter.title}
                           </div>
                         </div>
 
@@ -715,7 +722,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
             <div className={`${isFocusMode ? 'lg:col-span-12' : 'lg:col-span-8'} space-y-5`}>
               {activeChapter ? (() => {
                 const isActiveAmharic = Boolean(amharicSubjects[activeChapter.subject]);
-                const activeAmNote = isActiveAmharic
+                const rawActiveAmNote = isActiveAmharic
                   ? getAmharicChapterNote(
                       activeChapter.id,
                       activeChapter.subject,
@@ -724,8 +731,16 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                       activeChapter.overview
                     )
                   : null;
+                const activeAmNote = rawActiveAmNote
+                  ? polishAmharicChapterNote(rawActiveAmNote)
+                  : null;
                 const activeAmSubjMeta = getAmharicSubjectMeta(activeChapter.subject);
-                const chapterEquations = activeChapter.sections.flatMap((sec) => sec.equations || []);
+                const translatedChapter = isActiveAmharic
+                  ? buildFullAmharicTranslatedSections(activeChapter)
+                  : null;
+                const chapterEquationsAm = translatedChapter
+                  ? translatedChapter.sections.flatMap((sec) => sec.equations)
+                  : [];
 
                 return (
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-sm space-y-6">
@@ -824,7 +839,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                         <h2 className="text-lg sm:text-2xl font-bold text-white tracking-tight">
                           {activeAmNote.titleAm}
                         </h2>
-                        <div className="bg-slate-950/80 border border-emerald-900/50 rounded-xl p-4 sm:p-5 text-xs sm:text-sm text-slate-200 leading-relaxed space-y-2">
+                        <div className="bg-slate-950/80 border border-emerald-900/50 rounded-xl p-4 sm:p-5 text-xs sm:text-sm text-slate-200 leading-relaxed space-y-3">
                           <div className="text-xs font-bold text-emerald-400">
                             የምዕራፉ ሙሉ መግቢያ እና ትኩረት
                           </div>
@@ -833,6 +848,14 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                               text={activeAmNote.expandedOverviewAm || activeAmNote.briefOverviewAm}
                             />
                           </div>
+                          {translatedChapter?.overviewAm && (
+                            <div className="pt-2.5 border-t border-emerald-900/40 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                              <div className="text-[11px] font-bold text-blue-300 mb-1">
+                                የዋናው ምዕራፍ ዝርዝር መግቢያ (ከእንግሊዝኛው ሙሉ ማስታወሻ የተተረጎመ)
+                              </div>
+                              <MathRenderer text={translatedChapter.overviewAm} />
+                            </div>
+                          )}
                         </div>
 
                         {activeAmNote.learningOutcomesAm && activeAmNote.learningOutcomesAm.length > 0 && (
@@ -912,6 +935,156 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                         </div>
                       )}
 
+                      {/* 1b. Full Translated Textbook Sections from Built English Notes */}
+                      {translatedChapter && translatedChapter.sections.length > 0 && (
+                        <div className="space-y-6">
+                          <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-emerald-950/35 border border-emerald-800/50">
+                            <div className="text-xs sm:text-sm font-bold text-emerald-300 flex items-center gap-2">
+                              <Library className="w-4 h-4 text-emerald-400 shrink-0" />
+                              <span>
+                                ሙሉ የምዕራፉ የመማሪያ ክፍሎች በአማርኛ — ከእንግሊዝኛው ሙሉ ማስታወሻ የተተረጎመ ({translatedChapter.sections.length} ክፍሎች)
+                              </span>
+                            </div>
+                          </div>
+
+                          {translatedChapter.sections.map((trSec, trIdx) => (
+                            <div
+                              key={trSec.id || trIdx}
+                              className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-4"
+                            >
+                              <h3 className="text-base sm:text-lg font-bold text-blue-300 flex items-center gap-2">
+                                <BookOpen className="w-4 h-4 shrink-0 text-blue-400" />
+                                <span>{trSec.headingAm}</span>
+                              </h3>
+
+                              <div className="prose prose-invert max-w-none text-xs sm:text-sm text-slate-200 leading-relaxed overflow-x-auto">
+                                <MathRenderer text={trSec.contentAm} />
+                              </div>
+
+                              {trSec.equations.length > 0 && (
+                                <div className="bg-slate-900/90 border border-blue-900/40 rounded-xl p-3.5 space-y-2.5">
+                                  <div className="text-xs font-bold text-blue-400 flex items-center gap-1.5">
+                                    <Zap className="w-3.5 h-3.5" /> የክፍሉ ቁልፍ ቀመሮች እና ሕጎች
+                                  </div>
+                                  <div className="grid grid-cols-1 gap-2">
+                                    {trSec.equations.map((eq, eqIdx) => (
+                                      <div
+                                        key={eqIdx}
+                                        className="bg-slate-950 p-3 rounded-lg border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                                      >
+                                        <div className="flex-1 min-w-0">
+                                          <div className="text-xs font-semibold text-slate-200">
+                                            <MathRenderer text={eq.nameAm} />
+                                          </div>
+                                          <div className="text-sm text-cyan-300 my-1.5 p-2 rounded bg-slate-900 border border-slate-800/80 overflow-x-auto text-center">
+                                            <MathRenderer latex={eq.formula} displayMode={true} />
+                                          </div>
+                                          {eq.explanationAm && (
+                                            <div className="text-[11px] text-slate-400">
+                                              <MathRenderer text={eq.explanationAm} />
+                                            </div>
+                                          )}
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleCopyEquation(eq.formula, `tr-${trSec.id}-${eqIdx}`)
+                                          }
+                                          className="p-1.5 self-end sm:self-center bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition cursor-pointer"
+                                          title="Copy Formula"
+                                        >
+                                          {copiedEqId === `tr-${trSec.id}-${eqIdx}` ? (
+                                            <Check className="w-4 h-4 text-emerald-400" />
+                                          ) : (
+                                            <Copy className="w-4 h-4" />
+                                          )}
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {trSec.workedExamples.length > 0 && (
+                                <div className="bg-slate-900/90 border border-emerald-900/40 rounded-xl p-3.5 space-y-3">
+                                  <div className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                                    <GraduationCap className="w-3.5 h-3.5" /> የተሰሩ የፈተና ምሳሌዎች (ሙሉ መፍትሔ)
+                                  </div>
+                                  {trSec.workedExamples.map((ex, exIdx) => (
+                                    <div key={exIdx} className="space-y-2">
+                                      <div className="text-xs sm:text-sm font-bold text-white bg-slate-950 p-3 rounded-lg border border-slate-800 overflow-x-auto">
+                                        <MathRenderer text={ex.problemAm} />
+                                      </div>
+                                      <div className="space-y-1.5 pl-3">
+                                        {ex.stepsAm.map((step, stIdx) => (
+                                          <div
+                                            key={stIdx}
+                                            className="text-xs text-slate-300 leading-relaxed overflow-x-auto"
+                                          >
+                                            <MathRenderer text={step} />
+                                          </div>
+                                        ))}
+                                      </div>
+                                      {ex.shortcutTipAm && (
+                                        <div className="text-[11px] bg-amber-500/10 text-amber-200 border border-amber-500/30 p-2.5 rounded-lg flex items-start gap-1.5">
+                                          <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                                          <div className="flex-1 min-w-0">
+                                            <strong>የፈተና ምክር:</strong>{' '}
+                                            <MathRenderer text={ex.shortcutTipAm} />
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {trSec.examTraps.length > 0 && (
+                                <div className="bg-rose-950/20 border border-rose-900/40 rounded-xl p-3.5 space-y-2">
+                                  <div className="text-xs font-bold text-rose-400 flex items-center gap-1.5">
+                                    <AlertTriangle className="w-3.5 h-3.5" /> የክፍሉ የፈተና ወጥመዶች
+                                  </div>
+                                  <ul className="space-y-1.5">
+                                    {trSec.examTraps.map((trap, tIdx) => (
+                                      <li
+                                        key={tIdx}
+                                        className="text-xs text-rose-200/90 flex items-start gap-2"
+                                      >
+                                        <span className="text-rose-400 font-bold shrink-0">·</span>
+                                        <div className="flex-1 min-w-0">
+                                          <MathRenderer text={trap} />
+                                        </div>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {trSec.keyTakeaways.length > 0 && (
+                                <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5 space-y-2">
+                                  <div className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" /> የክፍሉ ዋና መደምደሚያዎች
+                                  </div>
+                                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {trSec.keyTakeaways.map((tk, tkIdx) => (
+                                      <li
+                                        key={tkIdx}
+                                        className="text-xs text-slate-300 bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex items-start gap-1.5"
+                                      >
+                                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                                        <div className="flex-1 min-w-0">
+                                          <MathRenderer text={tk} />
+                                        </div>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       {/* 2. Quick Exam Revision Checklist */}
                       <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-3">
                         <h3 className="text-sm sm:text-base font-bold text-blue-400 flex items-center gap-2">
@@ -967,29 +1140,29 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                         </div>
                       )}
 
-                      {/* 4. All Key Formulas (Unclipped) */}
-                      {chapterEquations.length > 0 && (
+                      {/* 4. All Key Formulas (Unclipped, Translated Labels) */}
+                      {chapterEquationsAm.length > 0 && (
                         <div className="bg-slate-950/80 border border-blue-900/40 rounded-xl p-4 sm:p-5 space-y-3">
                           <div className="text-xs sm:text-sm font-bold text-blue-400 flex items-center gap-1.5">
                             <Zap className="w-4 h-4" />
                             <span>ሁሉም ቁልፍ ቀመሮች እና ሕጎች</span>
                           </div>
                           <div className="grid grid-cols-1 gap-2.5">
-                            {chapterEquations.map((eq, eqIdx) => (
+                            {chapterEquationsAm.map((eq, eqIdx) => (
                               <div
                                 key={eqIdx}
                                 className="bg-slate-900 p-3 rounded-lg border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                               >
                                 <div className="flex-1 min-w-0">
                                   <div className="text-xs font-semibold text-slate-200">
-                                    <MathRenderer text={eq.name} />
+                                    <MathRenderer text={eq.nameAm} />
                                   </div>
                                   <div className="text-sm text-cyan-300 my-1.5 p-2 rounded bg-slate-950 border border-slate-800/80 overflow-x-auto text-center">
                                     <MathRenderer latex={eq.formula} displayMode={true} />
                                   </div>
-                                  {eq.explanation && (
+                                  {eq.explanationAm && (
                                     <div className="text-[11px] text-slate-400">
-                                      <MathRenderer text={eq.explanation} />
+                                      <MathRenderer text={eq.explanationAm} />
                                     </div>
                                   )}
                                 </div>

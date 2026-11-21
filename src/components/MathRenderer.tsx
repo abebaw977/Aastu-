@@ -24,26 +24,54 @@ function escapeHtml(str: string): string {
 }
 
 const KNOWN_LATEX_COMMANDS = [
-  'frac', 'dfrac', 'tfrac', 'sqrt', 'root', 'overline', 'underline', 'widetilde', 'widehat',
-  'vec', 'bar', 'hat', 'tilde', 'dot', 'ddot', 'mathbf', 'mathrm', 'mathbb', 'mathcal', 'mathsf', 'mathtt',
-  'text', 'textbf', 'textit', 'textrm', 'textup', 'texttt', 'mbox', 'hbox',
+  'frac', 'dfrac', 'tfrac', 'cfrac', 'sqrt', 'root', 'overline', 'underline', 'widetilde', 'widehat',
+  'vec', 'bar', 'hat', 'tilde', 'dot', 'ddot', 'mathbf', 'mathrm', 'mathbb', 'mathcal', 'mathsf', 'mathtt', 'mathfrak', 'mathscr',
+  'text', 'textbf', 'textit', 'textrm', 'textup', 'texttt', 'textnormal', 'textsf', 'textsc', 'mbox', 'hbox',
+  'boldsymbol', 'bm', 'pmb', 'operatorname', 'ce', 'pu',
   'theta', 'vartheta', 'Delta', 'Omega', 'Lambda', 'Sigma', 'Pi', 'Phi', 'Psi', 'Gamma', 'Theta', 'Xi', 'Upsilon',
   'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'varepsilon', 'zeta', 'eta', 'iota', 'kappa', 'lambda',
   'mu', 'nu', 'xi', 'pi', 'varpi', 'rho', 'varrho', 'sigma', 'varsigma', 'tau', 'upsilon', 'phi', 'varphi', 'chi', 'psi', 'omega',
-  'sum', 'int', 'iint', 'iiint', 'oint', 'lim', 'limsup', 'liminf', 'prod', 'coprod',
-  'left', 'right', 'big', 'Big', 'bigg', 'Bigg', 'middle',
-  'cdot', 'cdots', 'ldots', 'vdots', 'ddots', 'times', 'div', 'pm', 'mp', 'ast', 'star', 'circ', 'bullet', 'oplus', 'otimes',
-  'le', 'leq', 'ge', 'geq', 'neq', 'ne', 'approx', 'equiv', 'cong', 'sim', 'simeq', 'propto', 'll', 'gg',
-  'infty', 'partial', 'nabla', 'hbar', 'ell', 'Re', 'Im', 'wp', 'aleph',
-  'in', 'notin', 'ni', 'subset', 'subseteq', 'supset', 'supseteq', 'cup', 'cap', 'bigcup', 'bigcap', 'setminus', 'emptyset', 'varnothing',
-  'forall', 'exists', 'nexists', 'neg', 'lnot', 'land', 'lor', 'implies', 'iff', 'therefore', 'because',
-  'to', 'rightarrow', 'leftarrow', 'Rightarrow', 'Leftarrow', 'leftrightarrow', 'Leftrightarrow', 'rightleftharpoons', 'mapsto', 'uparrow', 'downarrow', 'updownarrow', 'nearrow', 'searrow',
-  'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'arcsin', 'arccos', 'arctan', 'sinh', 'cosh', 'tanh', 'coth',
-  'ln', 'log', 'lg', 'exp', 'min', 'max', 'sup', 'inf', 'det', 'dim', 'ker', 'deg', 'gcd', 'lcm', 'arg', 'Pr',
-  'binom', 'tbinom', 'dbinom', 'choose', 'over', 'atop',
-  'begin', 'end', 'matrix', 'pmatrix', 'bmatrix', 'vmatrix', 'Vmatrix', 'cases', 'aligned', 'align', 'array',
-  'triangle', 'angle', 'perp', 'parallel', 'mid', 'nmid', 'quad', 'qquad', 'boxed', 'cancel', 'bcancel', 'xcancel', 'color', 'phantom'
+  'sum', 'int', 'iint', 'iiint', 'oint', 'oiint', 'idotsint', 'lim', 'limsup', 'liminf', 'prod', 'coprod',
+  'left', 'right', 'big', 'Big', 'bigg', 'Bigg', 'middle', 'langle', 'rangle', 'lfloor', 'rfloor', 'lceil', 'rceil', 'lvert', 'rvert', 'lVert', 'rVert', 'vert', 'Vert',
+  'cdot', 'cdots', 'ldots', 'dots', 'vdots', 'ddots', 'times', 'div', 'pm', 'mp', 'ast', 'star', 'circ', 'bullet', 'oplus', 'otimes', 'bigoplus', 'bigotimes',
+  'le', 'leq', 'ge', 'geq', 'neq', 'ne', 'not', 'approx', 'equiv', 'cong', 'sim', 'simeq', 'asymp', 'doteq', 'propto', 'll', 'gg', 'prec', 'succ',
+  'infty', 'partial', 'nabla', 'hbar', 'ell', 'Re', 'Im', 'wp', 'aleph', 'beth', 'gimel', 'prime', 'backprime', 'degree', 'celsius', 'angstrom',
+  'in', 'notin', 'ni', 'subset', 'subseteq', 'subsetneq', 'supset', 'supseteq', 'supsetneq', 'sqsubset', 'sqsupset', 'cup', 'cap', 'bigcup', 'bigcap', 'bigsqcup', 'biguplus', 'bigvee', 'bigwedge', 'setminus', 'smallsetminus', 'complement', 'emptyset', 'varnothing',
+  'forall', 'exists', 'nexists', 'neg', 'lnot', 'land', 'lor', 'implies', 'impliedby', 'iff', 'therefore', 'because',
+  'to', 'rightarrow', 'leftarrow', 'Rightarrow', 'Leftarrow', 'leftrightarrow', 'Leftrightarrow', 'rightleftharpoons', 'xrightarrow', 'xleftarrow', 'mapsto', 'longmapsto', 'uparrow', 'downarrow', 'updownarrow', 'nearrow', 'searrow',
+  'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'arcsin', 'arccos', 'arctan', 'arcsec', 'arccsc', 'arccot', 'sinh', 'cosh', 'tanh', 'coth', 'sech', 'csch',
+  'ln', 'log', 'lg', 'exp', 'min', 'max', 'argmax', 'argmin', 'sup', 'inf', 'det', 'tr', 'rank', 'span', 'proj', 'comp', 'grad', 'curl', 'dim', 'ker', 'deg', 'gcd', 'lcm', 'arg', 'Pr', 'mod', 'pmod', 'bmod',
+  'binom', 'tbinom', 'dbinom', 'choose', 'over', 'atop', 'stackrel', 'overset', 'underset', 'overbrace', 'underbrace',
+  'begin', 'end', 'matrix', 'pmatrix', 'bmatrix', 'vmatrix', 'Vmatrix', 'cases', 'aligned', 'align', 'array', 'gathered', 'gather', 'equation', 'split', 'eqnarray',
+  'triangle', 'angle', 'perp', 'parallel', 'mid', 'nmid', 'quad', 'qquad', 'boxed', 'cancel', 'bcancel', 'xcancel', 'color', 'phantom', 'displaystyle', 'limits', 'nolimits', 'checkmark', 'dagger', 'ddagger',
+  'R', 'N', 'Z', 'Q', 'C', 'F', 'dx', 'dy', 'dz', 'dt', 'du', 'dv', 'dr', 'ds'
 ];
+
+const KATEX_MACROS: Record<string, string> = {
+  '\\R': '\\mathbb{R}',
+  '\\N': '\\mathbb{N}',
+  '\\Z': '\\mathbb{Z}',
+  '\\Q': '\\mathbb{Q}',
+  '\\C': '\\mathbb{C}',
+  '\\F': '\\mathbb{F}',
+  '\\dx': '\\,dx',
+  '\\dy': '\\,dy',
+  '\\dz': '\\,dz',
+  '\\dt': '\\,dt',
+  '\\du': '\\,du',
+  '\\dv': '\\,dv',
+  '\\dr': '\\,dr',
+  '\\ds': '\\displaystyle',
+  '\\grad': '\\nabla',
+  '\\curl': '\\nabla\\times',
+  '\\divg': '\\nabla\\cdot',
+  '\\bm': '\\boldsymbol',
+  '\\bold': '\\mathbf',
+  '\\abs': '\\left|#1\\right|',
+  '\\norm': '\\left\\|#1\\right\\|',
+  '\\degree': '^\\circ',
+  '\\angstrom': '\\text{\\AA}',
+};
 
 const KNOWN_LATEX_CMD_REGEX = new RegExp(
   `\\\\\\\\(?=(?:${KNOWN_LATEX_COMMANDS.join('|')})\\b)`,
@@ -66,6 +94,19 @@ function convertChemCeToLatex(input: string): string {
   });
 }
 
+function normalizeLatexEnvironments(input: string): string {
+  return input
+    .replace(/\\begin\{align\*?\}/g, '\\begin{aligned}')
+    .replace(/\\end\{align\*?\}/g, '\\end{aligned}')
+    .replace(/\\begin\{eqnarray\*?\}/g, '\\begin{aligned}')
+    .replace(/\\end\{eqnarray\*?\}/g, '\\end{aligned}')
+    .replace(/\\begin\{gather\*?\}/g, '\\begin{gathered}')
+    .replace(/\\end\{gather\*?\}/g, '\\end{gathered}')
+    .replace(/\\begin\{equation\*?\}/g, '')
+    .replace(/\\end\{equation\*?\}/g, '')
+    .replace(/\\mathbbm\{1\}/g, '\\mathbf{1}');
+}
+
 /**
  * Repairs LaTeX strings that were corrupted by JSON escape sequences (\f -> \x0c, \t -> \x09, \b -> \x08, \r -> \x0d)
  * or double-escaped backslashes (\\frac -> \frac) or triple dollar signs ($$$).
@@ -76,13 +117,13 @@ export function repairCorruptedLatex(input: string): string {
 
   // 1. Restore control characters produced when JSON.parse ate \f, \b, \t, \r in LaTeX commands
   s = s.replace(/\x0c(rac|orall|lat|rown)/g, '\\f$1');
-  s = s.replace(/\x08(ar|eta|egin|inom|oxed|ullet|ig|ackslash|ecause|ot|owtie|igg)/g, '\\b$1');
-  s = s.replace(/\x09(heta|au|an|anh|imes|ext|extbf|extit|extrm|extup|exttt|ilde|o\b|op\b|riangle|frac|herefore)/g, '\\t$1');
-  s = s.replace(/\x0d(?!\n)(ight|ho|angle|ceil|floor|brace|brack|vert|Vert|m\b|oman|oot|e\b)/g, '\\r$1');
+  s = s.replace(/\x08(ar|eta|egin|inom|oxed|ullet|ig|ackslash|ecause|ot|owtie|igg|mod)/g, '\\b$1');
+  s = s.replace(/\x09(heta|au|an|anh|imes|ext|extbf|extit|extrm|extup|exttt|extnormal|extsf|extsc|ilde|o\b|op\b|riangle|frac|herefore|r\b)/g, '\\t$1');
+  s = s.replace(/\x0d(?!\n)(ight|ho|angle|ceil|floor|brace|brack|vert|Vert|m\b|oman|oot|e\b|ank)/g, '\\r$1');
 
   // 2. Repair stripped leading backslashes before unmistakable LaTeX braced macros (e.g. rac{a}{b} -> \frac{a}{b}, ext{g/mol} -> \text{g/mol})
   s = s.replace(/(?<![a-zA-Z\\])rac\{/g, '\\frac{');
-  s = s.replace(/(?<![a-zA-Z\\])(dfrac|tfrac|sqrt|overline|underline|widetilde|widehat|mathbf|mathrm|mathbb|mathcal|textbf|textit|binom|boxed)\{/g, '\\$1{');
+  s = s.replace(/(?<![a-zA-Z\\])(dfrac|tfrac|cfrac|sqrt|overline|underline|widetilde|widehat|mathbf|mathrm|mathbb|mathcal|mathfrak|boldsymbol|textbf|textit|binom|boxed)\{/g, '\\$1{');
   s = s.replace(/(?<![a-zA-Z\\])ext\{/g, '\\text{');
   s = s.replace(/(?<![a-zA-Z\\])vec\{/g, '\\vec{');
   s = s.replace(/(?<![a-zA-Z\\])bar\{/g, '\\bar{');
@@ -107,7 +148,7 @@ export function repairCorruptedLatex(input: string): string {
  */
 export function cleanFormulaString(formula: string): string {
   if (!formula) return '';
-  let clean = repairCorruptedLatex(formula).trim();
+  let clean = normalizeLatexEnvironments(repairCorruptedLatex(formula)).trim();
 
   // Repeatedly strip outer backticks and math delimiters ($$, $, \[, \], \(, \))
   let changed = true;
@@ -135,8 +176,8 @@ export function cleanFormulaString(formula: string): string {
   // Strip any stray unescaped $ signs left inside the formula (which otherwise cause KaTeX "Can't use function '$' in math mode")
   clean = clean.replace(/(?<!\\)\$/g, '');
 
-  // Strip trailing dangling backslash, underscore, or caret
-  clean = clean.replace(/[\\_^]+$/, '').trim();
+  // Strip trailing dangling single backslash (do not strip matrix row break `\\`), underscore, or caret
+  clean = clean.replace(/(?<!\\)[\\]+$|[_^]+$/, '').trim();
 
   // Balance \left and \right delimiters
   const leftMatches = (clean.match(/\\left(?![a-zA-Z])/g) || []).length;
@@ -260,6 +301,7 @@ export const renderLatexToString = (formula: string, displayMode: boolean = fals
       output: 'html',
       strict: false,
       trust: true,
+      macros: KATEX_MACROS,
     });
     if (!rendered.includes('katex-error')) {
       return rendered;
@@ -268,13 +310,15 @@ export const renderLatexToString = (formula: string, displayMode: boolean = fals
     // Second-pass retry if KaTeX reported a parse error (e.g. unsupported macro)
     const simplified = clean
       .replace(/\\(?:Limits|limits|nolimits)\b/g, '')
-      .replace(/\\(?:ds|displaystyle)\b/g, '');
+      .replace(/\\(?:ds|displaystyle)\b/g, '')
+      .replace(/\\text\{([^{}]*)\}/g, '\\mathrm{$1}');
     const retryRendered = katex.renderToString(simplified, {
       displayMode,
       throwOnError: false,
       output: 'html',
       strict: false,
       trust: true,
+      macros: KATEX_MACROS,
     });
     if (!retryRendered.includes('katex-error')) {
       return retryRendered;
@@ -360,7 +404,11 @@ function autoRenderNakedLatexInText(text: string, addToken: (html: string) => st
           if (ch === '\n' || ch === '|' || ch === '`') break;
 
           if (ch === '\\') {
-            const nextCmd = text.slice(j + 1).match(/^([a-zA-Z]+|[,;:!{}()])/);
+            if (text[j + 1] === '\\') {
+              j += 2;
+              continue;
+            }
+            const nextCmd = text.slice(j + 1).match(/^([a-zA-Z]+|[,;:!{}()|% ])/);
             if (nextCmd) {
               j += 1 + nextCmd[1].length;
               continue;
@@ -387,8 +435,8 @@ function autoRenderNakedLatexInText(text: string, addToken: (html: string) => st
             continue;
           }
 
-          // Outside braces: allow math operators, numbers, subscripts/superscripts, parens, and single-letter variables
-          if (/[0-9_^+=<>/*\-()]/.test(ch)) {
+          // Outside braces: allow math operators, numbers, subscripts/superscripts, parens, brackets, commas, primes, and &
+          if (/[0-9_^+=<>/*\-(),[\]'!&]/.test(ch)) {
             j++;
             continue;
           }
@@ -396,7 +444,7 @@ function autoRenderNakedLatexInText(text: string, addToken: (html: string) => st
           if (ch === ' ') {
             // Look ahead past spaces: continue ONLY if followed by a math operator (=, +, -, *, /, <, >, \command, ^, _)
             const rest = text.slice(j);
-            const spaceLookahead = rest.match(/^(\s+)(?:(\\[a-zA-Z]+)|([=+\-*/<>^_])|([0-9]+|[A-Za-z](?:_[A-Za-z0-9{]|\^[A-Za-z0-9{])))/);
+            const spaceLookahead = rest.match(/^(\s+)(?:(\\[a-zA-Z]+)|([=+\-*/<>^_&])|([0-9]+|[A-Za-z](?:_[A-Za-z0-9{]|\^[A-Za-z0-9{])))/);
             if (spaceLookahead) {
               if (spaceLookahead[2]) {
                 const cName = spaceLookahead[2].slice(1);
@@ -422,7 +470,8 @@ function autoRenderNakedLatexInText(text: string, addToken: (html: string) => st
               word.length === 1 ||
               afterWord === '_' ||
               afterWord === '^' ||
-              /^(?:sin|cos|tan|cot|sec|csc|ln|log|exp|lim|max|min|mol|PDI|dx|dy|dt|du|dv)$/.test(word)
+              afterWord === '\'' ||
+              /^(?:sin|cos|tan|cot|sec|csc|ln|log|exp|lim|max|min|det|mod|mol|PDI|dx|dy|dz|dt|du|dv|dr)$/.test(word)
             ) {
               j += word.length;
               continue;
@@ -455,10 +504,10 @@ function autoRenderNakedLatexInText(text: string, addToken: (html: string) => st
     i++;
   }
 
-  // 2. Also convert standalone subscript/superscript tokens (e.g., M_n, M_w, T_g, T_m, X_n, x^{2}, 10^{-5}, H_2O, CO_2, SO_4^{2-})
+  // 2. Also convert standalone subscript/superscript tokens (e.g., M_n, M_w, e^x, a^n, x^2, 10^{-5}, H_2O, CO_2, (-1)^n)
   // that are outside protected tokens
   out = out.replace(
-    /(?<![A-Za-z0-9\\@])([A-Za-z0-9()]+(?:_(?:\{[^{}]+\}|[A-Za-z0-9]+)|\^(?:\{[^{}]+\}|[0-9+-]+))+)(?![A-Za-z0-9@])/g,
+    /(?<![A-Za-z0-9\\@])([A-Za-z0-9()]+(?:_(?:\{[^{}]+\}|[A-Za-z0-9]+)|\^(?:\{[^{}]+\}|[0-9+-]+|[A-Za-z]))+)(?![A-Za-z0-9@])/g,
     (match) => {
       if (match.includes('PROTECTED_TOKEN')) return match;
       const rendered = renderLatexToString(match, false);
@@ -559,7 +608,7 @@ export const renderMixedContent = (content: string): string => {
   });
 
   // 1. Extract block math $$...$$
-  text = text.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) => {
+  text = text.replace(/(?<!\\)\$\$([\s\S]*?)(?<!\\)\$\$/g, (_, math) => {
     const rendered = renderLatexToString(math, true);
     return addToken(`<div class="${BLOCK_MATH_DIV_CLASS}">${rendered}</div>`);
   });
@@ -570,14 +619,30 @@ export const renderMixedContent = (content: string): string => {
     return addToken(`<div class="${BLOCK_MATH_DIV_CLASS}">${rendered}</div>`);
   });
 
-  // 3. Extract inline math $...$
-  text = text.replace(/\$([^\$\n]+?)\$/g, (_, math) => {
+  // 2b. Extract naked LaTeX display environments (\begin{aligned}...\end{aligned}, \begin{pmatrix}...\end{pmatrix}, \begin{cases}...\end{cases}, etc.)
+  text = text.replace(
+    /\\begin\{(equation\*?|align\*?|aligned|eqnarray\*?|gather\*?|gathered|cases|pmatrix|bmatrix|vmatrix|Vmatrix|matrix|array|split)\}([\s\S]*?)\\end\{\1\}/g,
+    (fullEnv) => {
+      const rendered = renderLatexToString(fullEnv, true);
+      return addToken(`<div class="${BLOCK_MATH_DIV_CLASS}">${rendered}</div>`);
+    }
+  );
+
+  // 3. Extract inline math $...$ (supporting escaped \$ inside, while avoiding currency pairs like "$60 vs $40")
+  text = text.replace(/(?<!\\)\$((?:\\\$|[^$\n])+?)(?<!\\)\$/g, (fullMatch, math: string) => {
+    const trimmed = math.trim();
+    if (
+      /^\d+(?:\.\d+)?\s*(?:ETB|Birr|birr|USD|[a-zA-Z]{3,}\s+[a-zA-Z]{2,})/i.test(trimmed) &&
+      !/[\\^_=+*<>]/.test(trimmed)
+    ) {
+      return fullMatch;
+    }
     const rendered = renderLatexToString(math, false);
     return addToken(`<span class="${INLINE_MATH_SPAN_CLASS}">${rendered}</span>`);
   });
 
   // 4. Extract inline math \(...\)
-  text = text.replace(/\\\(([^\n]+?)\\\)/g, (_, math) => {
+  text = text.replace(/\\\(([\s\S]+?)\\\)/g, (_, math) => {
     const rendered = renderLatexToString(math, false);
     return addToken(`<span class="${INLINE_MATH_SPAN_CLASS}">${rendered}</span>`);
   });
