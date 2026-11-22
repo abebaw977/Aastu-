@@ -1049,18 +1049,12 @@ const NOTE_RESPONSE_SCHEMA = {
 };
 
 const AMHARIC_HYBRID_TERMINOLOGY_RULES = `HYBRID AMHARIC + ENGLISH ACADEMIC TERMINOLOGY SYSTEM (STRICT MANDATORY RULES FOR AMHARIC STUDY NOTES):
-1. Language Ratio (78%–84% Amharic Explanations + 16%–22% English Major Words/Types/Parts): Write all explanations, descriptions, transitions, examples, and teaching commentary in clear, natural, university-grade Amharic (~78%–84% Amharic). Do NOT write English prose paragraphs.
-2. Major Words, Types, Parts & Listed Terms MUST Stay in English: Keep all primary academic keywords, classification types, component parts, branches, stages, list headings, and listed concept names in English (only their explanation is written in Amharic). Example: "- **Formal Fallacies**: ..." or "**Types of Memory**: **Sensory Memory**, **Short-Term Memory**, **Long-Term Memory** — ..." with the explanation in Amharic.
-3. Mandatory Bilingual First-Introduction Format: On the first occurrence of each core concept in a chapter, introduce it clearly in this format: \`የአማርኛ ትርጉም (EnglishTerm)\` with a simple Amharic explanation where unfamiliar:
-   - ፍልስፍና (Philosophy)
-   - ክርክር (Argument)
-   - ግምታዊ አስተሳሰብ (Inductive Reasoning)
-   - ጥገኛ ተለዋዋጭ (Dependent Variable)
-   - ኃይል (Force)
-   - የእንቅስቃሴ መጠን (Momentum)
-4. Keep Discipline Vocabulary in English: Retain formulas (LaTeX), theories, scientific laws, classifications, theorist/scientist names (e.g., Aristotle, Kant, Newton, Darwin, Pasteur, Wundt), SI units, and discipline-specific terms (e.g., Deductive, Inductive, Valid, Sound, Strong, Cogent, Homeostasis, Osmosis, Stoichiometry, Eigenvalue) in their original English form.
-5. Consistent Terminology Throughout the Chapter: Once an English academic term is introduced in a chapter, reuse that EXACT English term consistently throughout the rest of the chapter without flipping back to a different translation or phonetic spelling.
-6. Preserve Depth & Exam Quality: Never shorten explanations or drop syllabus concepts, equations, worked examples, or examiner traps; write material at real Ethiopian university freshman exam preparation quality.`;
+1. Titles, Headings & ALL Bolded Text MUST Be 100% in English (ZERO Amharic Characters Inside Titles or **Bold** Spans): Every chapter title, section heading, Markdown heading (#, ##, ###, ####), and EVERY bolded phrase (**...**) MUST be written strictly in English — NEVER put Amharic/Ethiopic script inside any title, heading, or **...** bold span. Example: "**Formal Fallacies**: ...", "**Deductive Argument** (አስገዳጅ ክርክር) — ...", "### 1.1 Types of Memory".
+2. Language Ratio (78%–84% Amharic Explanations + 16%–22% English Major Words/Types/Parts): Write all unbolded explanations, descriptions, transitions, examples, and teaching commentary in clear, natural, university-grade Amharic (~78%–84% Amharic). Do NOT write English prose paragraphs.
+3. Major Words, Types, Parts & Listed Terms Stay in English: Keep all primary academic keywords, classification types, component parts, branches, stages, list headings, and listed concept names in English (only their explanation is written in Amharic).
+4. Mandatory Bilingual First-Introduction Format: On the first occurrence of each core concept in a chapter, introduce it clearly with bold English + unbolded Amharic meaning, e.g. ፍልስፍና (**Philosophy**), ክርክር (**Argument**), ግምታዊ አስተሳሰብ (**Inductive Reasoning**), ጥገኛ ተለዋዋጭ (**Dependent Variable**), ኃይል (**Force**), የእንቅስቃሴ መጠን (**Momentum**).
+5. Keep Discipline Vocabulary in English: Retain formulas (LaTeX), theories, scientific laws, classifications, theorist/scientist names (e.g., Aristotle, Kant, Newton, Darwin, Pasteur, Wundt), SI units, and discipline-specific terms (e.g., Deductive, Inductive, Valid, Sound, Strong, Cogent, Homeostasis, Osmosis, Stoichiometry, Eigenvalue) in their original English form.
+6. Consistent Terminology & Exam Quality: Reuse introduced English terms consistently throughout the chapter without flipping translations, and never shorten explanations or drop equations, worked examples, or examiner traps.`;
 
 function isAmharicLanguageRequested(language?: string, ...texts: Array<string | undefined>): boolean {
   const lang = String(language || "").toLowerCase().trim();
@@ -1098,7 +1092,7 @@ async function generatePureAIMasterNote(params: {
   );
   const hybridLanguageBlock = useAmharicHybrid
     ? `\n${AMHARIC_HYBRID_TERMINOLOGY_RULES}\n`
-    : `\nBILINGUAL / AMHARIC NOTE RULE: Whenever generating Amharic or bilingual Ethiopian freshman notes, strictly follow the Hybrid Amharic + English Academic Terminology System (78–84% Amharic explanations with English major words, types, parts, and listed items; introduce key terms as \`Amharic (EnglishTerm)\` such as ፍልስፍና (Philosophy), ክርክር (Argument), ግምታዊ አስተሳሰብ (Inductive Reasoning), ጥገኛ ተለዋዋጭ (Dependent Variable), ኃይል (Force), የእንቅስቃሴ መጠን (Momentum), and keep technical/scientific terms consistently in English throughout the chapter).\n`;
+    : `\nBILINGUAL / AMHARIC NOTE RULE: Whenever generating Amharic or bilingual Ethiopian freshman notes, strictly ensure ALL titles, Markdown headings (#, ##, ###), and ALL **bolded text** are 100% in English (zero Ethiopic characters in titles/headings/bold spans), while unbolded explanations are written in clear natural Amharic (~78–84% Amharic) with English major words, types, parts, and key concepts introduced as Amharic (**EnglishTerm**).\n`;
 
   const focusInstruction = effectiveFocus
     ? `Specific Subtopics to Cover Within "${noteTopic}": ${effectiveFocus}`
@@ -1424,7 +1418,7 @@ app.post("/api/gemini/expand-edit-note", async (req, res) => {
     const useAmharicExpand = isAmharicLanguageRequested(language, noteBody, userInstruction, currentTitle);
     const expandLanguageRule = useAmharicExpand
       ? `\n${AMHARIC_HYBRID_TERMINOLOGY_RULES}\n`
-      : `\nIf this note is in Amharic or bilingual mode, strictly follow the Hybrid Amharic + English Academic Terminology System (78–84% Amharic explanations with English major words, types, parts, and listed terms; introduce key concepts as \`Amharic (EnglishTerm)\` like ፍልስፍና (Philosophy), ክርክር (Argument), ግምታዊ አስተሳሰብ (Inductive Reasoning), ጥገኛ ተለዋዋጭ (Dependent Variable), ኃይል (Force), የእንቅስቃሴ መጠን (Momentum), and retain English technical terminology consistently).\n`;
+      : `\nIf this note is in Amharic or bilingual mode, strictly ensure ALL titles, Markdown headings (#, ##, ###), and ALL **bolded text** are 100% in English (zero Ethiopic characters in titles/headings/bold spans), while unbolded explanations remain clear Amharic (~78–84% Amharic) with English major words, types, parts, and key concepts introduced as Amharic (**EnglishTerm**).\n`;
 
     const prompt = `You are the Lead Master Textbook Author for Ethiopian Higher Education Freshman Common Courses (${courseLabel}).
 You are tasked with expanding, enriching, and editing the following study note into a much larger, deeper university textbook note:
@@ -1450,7 +1444,7 @@ Instructions:
         prompt,
         {
           systemInstruction: useAmharicExpand
-            ? `You are an elite Ethiopian university professor. Return the full, extensively expanded textbook markdown note using the Hybrid Amharic + English Academic Terminology System (78–84% Amharic explanations, English major words/types/parts/listed concepts, key terms introduced as Amharic (EnglishTerm) and reused consistently in English), with clean LaTeX formulas and headings.`
+            ? `You are an elite Ethiopian university professor. Return the full, extensively expanded textbook markdown note using the Hybrid Amharic + English Academic Terminology System: ALL titles, Markdown headings (#, ##, ###), and ALL **bolded text** MUST be 100% in English (never bold Ethiopic characters), while unbolded explanations are fluent Amharic (~78–84% Amharic) with clean LaTeX formulas.`
             : "You are an elite university professor. Return the full, extensively expanded textbook markdown note content with clean LaTeX formulas and clear headings.",
           maxOutputTokens: 8192,
         },

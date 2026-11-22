@@ -5,7 +5,6 @@ import { getAmharicChapterNote, getAmharicSubjectMeta } from '../data/amharicNot
 import {
   buildFullAmharicTranslatedSections,
   polishAmharicChapterNote,
-  polishMixedAmharicText,
 } from '../utils/amharicNoteExpander';
 import {
   MasterNoteChapter,
@@ -404,14 +403,11 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                           <span className="font-bold text-blue-400">{outline.courseCode}</span>
                           <span>·</span>
                           <span>
-                            {outline.chapters?.length || 0}{' '}
-                            {isOutlineAmharic ? 'ምዕራፎች' : 'Chapters'}
+                            {outline.chapters?.length || 0} Chapters
                           </span>
                         </div>
                         <h3 className="text-base sm:text-lg font-bold text-white">
-                          {isOutlineAmharic && outlineAmMeta
-                            ? outlineAmMeta.nameAm
-                            : outline.courseTitle}
+                          {outline.courseTitle}
                         </h3>
                         {isOutlineAmharic && outlineAmMeta && (
                           <p className="text-xs text-emerald-200/90 max-w-2xl">
@@ -493,9 +489,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                           >
                             <div>
                               <div className="text-xs font-bold text-white">
-                                {isOutlineAmharic && chAm
-                                  ? chAm.titleAm
-                                  : `Chapter ${ch.chapterNumber}: ${ch.title}`}
+                                {`Chapter ${ch.chapterNumber}: ${ch.title}`}
                               </div>
                               {isOutlineAmharic && chAm ? (
                                 <p className="mt-1 text-xs text-emerald-200/85 leading-relaxed">
@@ -542,7 +536,6 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                 const isSelected = selectedSubject === course.subject;
                 const isFreeCourse = isFreeCourseSubject(course.subject);
                 const isSubjAm = Boolean(amharicSubjects[course.subject]);
-                const amMeta = getAmharicSubjectMeta(course.subject);
                 return (
                   <button
                     key={course.id}
@@ -555,7 +548,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                     }`}
                   >
                     {getSubjectIcon(course.subject)}
-                    <span>{isSubjAm && amMeta ? amMeta.shortNameAm : course.shortTitle}</span>
+                    <span>{course.shortTitle}</span>
                     {isSubjAm && (
                       <span className="text-[9px] font-extrabold text-emerald-300 bg-emerald-950/80 px-1 py-0.2 rounded border border-emerald-500/40">
                         AMM
@@ -579,18 +572,11 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                   className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm font-semibold text-white focus:outline-none focus:border-blue-500 truncate cursor-pointer"
                   aria-label="Select Chapter to Study"
                 >
-                  {availableChapters.map((ch, idx) => {
-                    const isChAm = Boolean(amharicSubjects[ch.subject]);
-                    const chAm = isChAm
-                      ? getAmharicChapterNote(ch.id, ch.subject, ch.chapterNumber, ch.title)
-                      : null;
-                    return (
-                      <option key={ch.id} value={ch.id}>
-                        {idx + 1}. {ch.courseCode}:{' '}
-                        {isChAm && chAm ? polishMixedAmharicText(chAm.titleAm) : ch.title}
-                      </option>
-                    );
-                  })}
+                  {availableChapters.map((ch, idx) => (
+                    <option key={ch.id} value={ch.id}>
+                      {idx + 1}. {ch.courseCode}: {ch.title}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -647,14 +633,9 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
             <div className={`${isFocusMode ? 'hidden' : 'hidden lg:block'} lg:col-span-4 space-y-3`}>
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 shadow-sm">
                 <div className="text-xs font-bold text-slate-400 mb-2.5 flex items-center justify-between">
-                  <span>
-                    {activeChapter && amharicSubjects[activeChapter.subject]
-                      ? 'የምዕራፎች ዝርዝር'
-                      : 'Chapters List'}
-                  </span>
+                  <span>Chapters List</span>
                   <span className="text-blue-400">
-                    {availableChapters.length}{' '}
-                    {activeChapter && amharicSubjects[activeChapter.subject] ? 'ምዕራፎች' : 'Chapters'}
+                    {availableChapters.length} Chapters
                   </span>
                 </div>
 
@@ -663,10 +644,6 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                     const isSelected = activeChapter?.id === chapter.id;
                     const isDone = Boolean(completedChapters[chapter.id]);
                     const isChAm = Boolean(amharicSubjects[chapter.subject]);
-                    const chAm = isChAm
-                      ? getAmharicChapterNote(chapter.id, chapter.subject, chapter.chapterNumber, chapter.title)
-                      : null;
-                    const chAmTitle = chAm ? polishMixedAmharicText(chAm.titleAm) : '';
 
                     return (
                       <div
@@ -685,12 +662,12 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />{' '}
                               {isChAm
-                                ? `${Math.max(chapter.estimatedReadTimeMinutes + 5, 15)} ደቂቃ`
+                                ? `${Math.max(chapter.estimatedReadTimeMinutes + 5, 15)}m`
                                 : `${chapter.estimatedReadTimeMinutes}m`}
                             </span>
                           </div>
                           <div className="text-xs font-bold text-white truncate">
-                            {isChAm && chAmTitle ? chAmTitle : chapter.title}
+                            {chapter.title}
                           </div>
                         </div>
 
@@ -732,9 +709,8 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                     )
                   : null;
                 const activeAmNote = rawActiveAmNote
-                  ? polishAmharicChapterNote(rawActiveAmNote)
+                  ? polishAmharicChapterNote(rawActiveAmNote, activeChapter)
                   : null;
-                const activeAmSubjMeta = getAmharicSubjectMeta(activeChapter.subject);
                 const translatedChapter = isActiveAmharic
                   ? buildFullAmharicTranslatedSections(activeChapter)
                   : null;
@@ -751,11 +727,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                         {getSubjectIcon(activeChapter.subject)}
                         <span className="font-bold text-blue-400">{activeChapter.courseCode}</span>
                         <span>·</span>
-                        <span>
-                          {isActiveAmharic && activeAmSubjMeta
-                            ? activeAmSubjMeta.shortNameAm
-                            : activeChapter.moduleName}
-                        </span>
+                        <span>{activeChapter.moduleName}</span>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-1.5">
@@ -781,7 +753,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                           className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 border border-slate-700 flex items-center gap-1 cursor-pointer"
                         >
                           <ArrowLeft className="w-3.5 h-3.5" />
-                          <span>{isActiveAmharic ? 'ቀዳሚ' : 'Prev'}</span>
+                          <span>Prev</span>
                         </button>
 
                         <button
@@ -793,7 +765,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                           }
                           className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 border border-slate-700 flex items-center gap-1 cursor-pointer"
                         >
-                          <span>{isActiveAmharic ? 'ቀጣይ' : 'Next'}</span>
+                          <span>Next</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </button>
 
@@ -809,12 +781,12 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                           {completedChapters[activeChapter.id] ? (
                             <>
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                              <span>{isActiveAmharic ? 'ተጠናቋል' : 'Done'}</span>
+                              <span>Done</span>
                             </>
                           ) : (
                             <>
                               <Bookmark className="w-3.5 h-3.5" />
-                              <span>{isActiveAmharic ? 'ተነቧል' : 'Mark Read'}</span>
+                              <span>Mark Read</span>
                             </>
                           )}
                         </button>
@@ -826,22 +798,22 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
                             <Languages className="w-3.5 h-3.5" />
-                            <span>ሙሉ እና ሰፊ የአማርኛ መማሪያ</span>
+                            <span>Comprehensive Amharic Study Guide</span>
                           </span>
                           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-semibold">
                             <Clock className="w-3 h-3 text-emerald-400" />
                             <span>
-                              {Math.max(activeChapter.estimatedReadTimeMinutes + 5, 15)} ደቂቃ ጥልቅ ንባብ
+                              {Math.max(activeChapter.estimatedReadTimeMinutes + 5, 15)}m Deep Read
                             </span>
                           </span>
                         </div>
 
                         <h2 className="text-lg sm:text-2xl font-bold text-white tracking-tight">
-                          {activeAmNote.titleAm}
+                          {activeChapter.title}
                         </h2>
                         <div className="bg-slate-950/80 border border-emerald-900/50 rounded-xl p-4 sm:p-5 text-xs sm:text-sm text-slate-200 leading-relaxed space-y-3">
                           <div className="text-xs font-bold text-emerald-400">
-                            የምዕራፉ ሙሉ መግቢያ እና ትኩረት
+                            Chapter Introduction & Focus
                           </div>
                           <div className="prose prose-invert max-w-none text-xs sm:text-sm text-slate-200 leading-relaxed">
                             <MathRenderer
@@ -851,7 +823,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                           {translatedChapter?.overviewAm && (
                             <div className="pt-2.5 border-t border-emerald-900/40 text-xs sm:text-sm text-slate-300 leading-relaxed">
                               <div className="text-[11px] font-bold text-blue-300 mb-1">
-                                የዋናው ምዕራፍ ዝርዝር መግቢያ (ከእንግሊዝኛው ሙሉ ማስታወሻ የተተረጎመ)
+                                Detailed Chapter Overview (Translated from Full Textbook)
                               </div>
                               <MathRenderer text={translatedChapter.overviewAm} />
                             </div>
@@ -862,7 +834,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                           <div className="bg-blue-950/20 border border-blue-900/40 rounded-xl p-4 space-y-2">
                             <div className="text-xs font-bold text-blue-300 flex items-center gap-1.5">
                               <CheckCircle2 className="w-4 h-4 text-blue-400" />
-                              <span>የመማር ግቦች</span>
+                              <span>Learning Objectives</span>
                             </div>
                             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               {activeAmNote.learningOutcomesAm.map((outcome, oIdx) => (
@@ -913,7 +885,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                               {amSec.keyPointsAm && amSec.keyPointsAm.length > 0 && (
                                 <div className="bg-slate-900/90 border border-slate-800 rounded-lg p-3 space-y-1.5">
                                   <div className="text-[11px] font-bold text-blue-300">
-                                    የክፍሉ ዋና ነጥቦች
+                                    Section Key Points
                                   </div>
                                   <ul className="space-y-1">
                                     {amSec.keyPointsAm.map((kp, kIdx) => (
@@ -942,7 +914,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                             <div className="text-xs sm:text-sm font-bold text-emerald-300 flex items-center gap-2">
                               <Library className="w-4 h-4 text-emerald-400 shrink-0" />
                               <span>
-                                ሙሉ የምዕራፉ የመማሪያ ክፍሎች በአማርኛ — ከእንግሊዝኛው ሙሉ ማስታወሻ የተተረጎመ ({translatedChapter.sections.length} ክፍሎች)
+                                Full Chapter Study Sections in Amharic ({translatedChapter.sections.length} Sections)
                               </span>
                             </div>
                           </div>
@@ -964,7 +936,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                               {trSec.equations.length > 0 && (
                                 <div className="bg-slate-900/90 border border-blue-900/40 rounded-xl p-3.5 space-y-2.5">
                                   <div className="text-xs font-bold text-blue-400 flex items-center gap-1.5">
-                                    <Zap className="w-3.5 h-3.5" /> የክፍሉ ቁልፍ ቀመሮች እና ሕጎች
+                                    <Zap className="w-3.5 h-3.5" /> Key Formulas & Laws
                                   </div>
                                   <div className="grid grid-cols-1 gap-2">
                                     {trSec.equations.map((eq, eqIdx) => (
@@ -1008,11 +980,11 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                               {trSec.workedExamples.length > 0 && (
                                 <div className="bg-slate-900/90 border border-emerald-900/40 rounded-xl p-3.5 space-y-3">
                                   <div className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                                    <GraduationCap className="w-3.5 h-3.5" /> የተሰሩ የፈተና ምሳሌዎች (ሙሉ መፍትሔ)
+                                    <GraduationCap className="w-3.5 h-3.5" /> Worked Exam Examples (Full Solution)
                                   </div>
                                   {trSec.workedExamples.map((ex, exIdx) => (
                                     <div key={exIdx} className="space-y-2">
-                                      <div className="text-xs sm:text-sm font-bold text-white bg-slate-950 p-3 rounded-lg border border-slate-800 overflow-x-auto">
+                                      <div className="text-xs sm:text-sm font-normal text-white bg-slate-950 p-3 rounded-lg border border-slate-800 overflow-x-auto">
                                         <MathRenderer text={ex.problemAm} />
                                       </div>
                                       <div className="space-y-1.5 pl-3">
@@ -1029,7 +1001,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                                         <div className="text-[11px] bg-amber-500/10 text-amber-200 border border-amber-500/30 p-2.5 rounded-lg flex items-start gap-1.5">
                                           <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                                           <div className="flex-1 min-w-0">
-                                            <strong>የፈተና ምክር:</strong>{' '}
+                                            <strong>Exam Tip:</strong>{' '}
                                             <MathRenderer text={ex.shortcutTipAm} />
                                           </div>
                                         </div>
@@ -1042,7 +1014,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                               {trSec.examTraps.length > 0 && (
                                 <div className="bg-rose-950/20 border border-rose-900/40 rounded-xl p-3.5 space-y-2">
                                   <div className="text-xs font-bold text-rose-400 flex items-center gap-1.5">
-                                    <AlertTriangle className="w-3.5 h-3.5" /> የክፍሉ የፈተና ወጥመዶች
+                                    <AlertTriangle className="w-3.5 h-3.5" /> Section Exam Traps
                                   </div>
                                   <ul className="space-y-1.5">
                                     {trSec.examTraps.map((trap, tIdx) => (
@@ -1063,7 +1035,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                               {trSec.keyTakeaways.length > 0 && (
                                 <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5 space-y-2">
                                   <div className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" /> የክፍሉ ዋና መደምደሚያዎች
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" /> Section Key Takeaways
                                   </div>
                                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     {trSec.keyTakeaways.map((tk, tkIdx) => (
@@ -1089,7 +1061,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                       <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-4 sm:p-5 space-y-3">
                         <h3 className="text-sm sm:text-base font-bold text-blue-400 flex items-center gap-2">
                           <CheckCircle2 className="w-4 h-4 shrink-0" />
-                          <span>ዋና ዋና የፈተና ማጠቃለያ ነጥቦች</span>
+                          <span>Quick Exam Summary Points</span>
                         </h3>
                         <ul className="space-y-2.5">
                           {activeAmNote.briefPointsAm.map((point, pIdx) => (
@@ -1113,11 +1085,11 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                         <div className="bg-slate-950/80 border border-emerald-900/40 rounded-xl p-4 sm:p-5 space-y-4">
                           <div className="text-xs sm:text-sm font-bold text-emerald-400 flex items-center gap-1.5">
                             <GraduationCap className="w-4 h-4" />
-                            <span>የተሰሩ የፈተና ምሳሌዎች</span>
+                            <span>Worked Exam Examples</span>
                           </div>
                           {activeAmNote.workedExamplesAm.map((ex, exIdx) => (
                             <div key={exIdx} className="space-y-2.5 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
-                              <div className="text-xs sm:text-sm font-bold text-white bg-slate-900 p-3 rounded-lg border border-slate-800">
+                              <div className="text-xs sm:text-sm font-normal text-white bg-slate-900 p-3 rounded-lg border border-slate-800">
                                 <MathRenderer text={ex.problemAm} />
                               </div>
                               <div className="space-y-1.5 pl-2">
@@ -1145,7 +1117,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                         <div className="bg-slate-950/80 border border-blue-900/40 rounded-xl p-4 sm:p-5 space-y-3">
                           <div className="text-xs sm:text-sm font-bold text-blue-400 flex items-center gap-1.5">
                             <Zap className="w-4 h-4" />
-                            <span>ሁሉም ቁልፍ ቀመሮች እና ሕጎች</span>
+                            <span>All Key Formulas & Laws</span>
                           </div>
                           <div className="grid grid-cols-1 gap-2.5">
                             {chapterEquationsAm.map((eq, eqIdx) => (
@@ -1191,7 +1163,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                         <div className="bg-slate-950/75 border border-indigo-900/40 rounded-xl p-4 sm:p-5 space-y-3">
                           <div className="text-xs sm:text-sm font-bold text-indigo-300 flex items-center gap-1.5">
                             <Languages className="w-4 h-4 text-indigo-400" />
-                            <span>ቁልፍ ቃላት እና ትርጓሜ</span>
+                            <span>Key Terms & Definitions</span>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                             {activeAmNote.glossaryAm.map((item, gIdx) => (
@@ -1199,10 +1171,14 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                                 key={gIdx}
                                 className="bg-slate-900 p-3 rounded-lg border border-slate-800 space-y-1"
                               >
-                                <div className="text-xs font-bold text-white flex flex-wrap items-center gap-1.5">
-                                  <span className="text-emerald-300">{item.termAm}</span>
-                                  <span className="text-slate-500">·</span>
-                                  <span className="text-blue-300">{item.termEn}</span>
+                                <div className="text-xs text-white flex flex-wrap items-center gap-1.5">
+                                  <span className="font-bold text-blue-300">{item.termEn}</span>
+                                  {item.termAm && (
+                                    <>
+                                      <span className="text-slate-500 font-normal">·</span>
+                                      <span className="font-normal text-emerald-300">{item.termAm}</span>
+                                    </>
+                                  )}
                                 </div>
                                 <div className="text-xs text-slate-300 leading-relaxed">
                                   <MathRenderer text={item.definitionAm} />
@@ -1218,7 +1194,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                         <Lightbulb className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
                         <div className="space-y-1 flex-1 min-w-0">
                           <div className="text-xs font-bold text-amber-300">
-                            ዋና የፈተና ምክር
+                            Main Exam Tip
                           </div>
                           <div className="text-xs sm:text-sm text-amber-100/95 leading-relaxed">
                             <MathRenderer text={activeAmNote.examTipAm} />
@@ -1230,7 +1206,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                         <div className="bg-rose-950/25 border border-rose-900/40 rounded-xl p-4 space-y-2">
                           <div className="text-xs font-bold text-rose-400 flex items-center gap-1.5">
                             <AlertTriangle className="w-4 h-4" />
-                            <span>የተለመዱ የፈተና ወጥመዶች</span>
+                            <span>Common Exam Traps</span>
                           </div>
                           <ul className="space-y-1.5">
                             {activeAmNote.examTrapsAm.map((trap, tIdx) => (
@@ -1253,7 +1229,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                         <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-2">
                           <div className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                            <span>ዋና መደምደሚያዎች</span>
+                            <span>Key Takeaways</span>
                           </div>
                           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {activeAmNote.keyTakeawaysAm.map((tk, tkIdx) => (
@@ -1276,7 +1252,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                         <div className="bg-slate-950/80 border border-teal-900/40 rounded-xl p-4 sm:p-5 space-y-3">
                           <div className="text-xs sm:text-sm font-bold text-teal-300 flex items-center gap-1.5">
                             <Brain className="w-4 h-4 text-teal-400" />
-                            <span>ራስን መፈተኛ ጥያቄና መልስ</span>
+                            <span>Self-Check Exam Q&A</span>
                           </div>
                           <div className="space-y-2.5">
                             {activeAmNote.reviewQaAm.map((qa, qIdx) => (
@@ -1284,7 +1260,7 @@ export const CourseModulesView: React.FC<CourseModulesViewProps> = ({
                                 key={qIdx}
                                 className="bg-slate-900 p-3.5 rounded-xl border border-slate-800 space-y-2"
                               >
-                                <div className="text-xs sm:text-sm font-bold text-white">
+                                <div className="text-xs sm:text-sm font-normal text-white">
                                   <MathRenderer text={qa.questionAm} />
                                 </div>
                                 <div className="text-xs sm:text-sm text-emerald-200 bg-emerald-950/30 border border-emerald-900/40 p-2.5 rounded-lg">

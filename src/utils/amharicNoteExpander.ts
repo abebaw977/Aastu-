@@ -1,5 +1,6 @@
 import type { MasterNoteChapter, MasterNoteSection, Subject } from '../types';
 import {
+  AMHARIC_WORD_DICT,
   KEY_EXAM_PHRASES,
   KEY_EXAM_TERMS,
   KEY_TERM_CANONICAL_GROUP,
@@ -124,6 +125,24 @@ function maskProtectedRegions(
     }
   );
 
+  // 9c. Markdown headings (# ... through ###### ...) stay 100% verbatim in English
+  out = out.replace(/^(#{1,6}[ \t]+.+)$/gm, (full) => {
+    if (/[\u1200-\u137F]/.test(full)) {
+      const enHeading = convertHeadingToEnglish(full);
+      if (ctx) registerEnglishTermsInContext(enHeading, ctx);
+      return pushToken(enHeading);
+    }
+    if (ctx) registerEnglishTermsInContext(full, ctx);
+    return pushToken(full);
+  });
+
+  // 9d. All bolded spans (**...**) without Ethiopic stay 100% verbatim in English
+  out = out.replace(/\*\*([^*\n]+)\*\*/g, (full, inner) => {
+    if (/[\u1200-\u137F]/.test(inner)) return full;
+    if (ctx) registerEnglishTermsInContext(inner, ctx);
+    return pushToken(full);
+  });
+
   // 10. Pre-existing well-formed bilingual pairs: `የአማርኛ ቃል (EnglishTerm)` or `EnglishTerm (የአማርኛ ቃል)`
   out = out.replace(
     /([\u1200-\u137F][\u1200-\u137F\u1360-\u1368\s\-/]{0,40})\s*\(([A-Za-z][A-Za-z0-9\s\-/&,'.]{1,42})\)/g,
@@ -148,7 +167,11 @@ function maskProtectedRegions(
 }
 
 function unmaskProtectedRegions(text: string, tokens: string[]): string {
-  return text.replace(/\uE000T(\d+)\uE001/g, (_, idxStr) => tokens[Number(idxStr)] ?? '');
+  let out = text;
+  for (let pass = 0; pass < 10 && /\uE000T\d+\uE001/.test(out); pass++) {
+    out = out.replace(/\uE000T(\d+)\uE001/g, (_, idxStr) => tokens[Number(idxStr)] ?? '');
+  }
+  return out;
 }
 
 function escapeRegExp(str: string): string {
@@ -195,29 +218,6 @@ const COMPILED_PURE_PHRASE_RULES: Array<{
     regex: new RegExp(`(?<![A-Za-z0-9])${escapeRegExp(eng)}(?![A-Za-z0-9])`, 'gi'),
     replacement: am,
   }));
-
-const SUBJECT_AMHARIC_LABEL: Partial<Record<Subject, string>> = {
-  anthropology: 'አንትሮፖሎጂ (Anthropology)',
-  biology: 'ባዮሎጂ (Biology)',
-  geography: 'ጂኦግራፊ (Geography)',
-  entrepreneur: 'ኢንተርፕረነርሺፕ (Entrepreneurship)',
-  global_affairs: 'ግሎባል አፌርስ (Global Affairs)',
-  chemistry: 'ኬሚስትሪ (Chemistry)',
-  history: 'ታሪክ (History)',
-  civics: 'ሲቪክስ እና ሥነ-ምግባር (Civics & Ethics)',
-  inclusive: 'አካታች ትምህርት (Inclusiveness)',
-  critical_thinking: 'ሎጂክ እና ሂሳዊ አስተሳሰብ (Logic & Critical Thinking)',
-  mathematics: 'ሒሳብ ለተፈጥሮ ሳይንስ (Mathematics)',
-  economics: 'ኢኮኖሚክስ (Economics)',
-  math_applied_2: 'አፕላይድ ሒሳብ (Applied Mathematics)',
-  emerging_tech: 'ኢመርጂንግ ቴክኖሎጂ (Emerging Technology)',
-  math_social: 'ሒሳብ ለማህበራዊ ሳይንስ (Mathematics for Social Sciences)',
-  english: 'ኮሙኒኬቲቭ እንግሊዝኛ 1 (Communicative English I)',
-  physics: 'ፊዚክስ (Physics)',
-  english_2: 'ኮሙኒኬቲቭ እንግሊዝኛ 2 (Communicative English II)',
-  psychology: 'ሳይኮሎጂ (Psychology)',
-  fitness: 'አካላዊ ብቃት (Physical Fitness)',
-};
 
 const SUBJECT_SHORT_LABEL_AM: Partial<Record<Subject, string>> = {
   anthropology: 'አንትሮፖሎጂ',
@@ -269,46 +269,6 @@ function cleanupAmharicFormatting(text: string): string {
     .trimEnd();
 }
 
-const BOILERPLATE_BOLD_LABELS = new Set([
-  'note',
-  'important',
-  'tip',
-  'exam tip',
-  'shortcut',
-  'shortcut tip',
-  'example',
-  'examples',
-  'definition',
-  'definitions',
-  'summary',
-  'warning',
-  'caution',
-  'solution',
-  'answer',
-  'why',
-  'formula',
-  'overview',
-  'introduction',
-  'objectives',
-  'chapter introduction',
-  'chapter objectives',
-  'learning objectives',
-  'key takeaways',
-  'exam trap',
-  'exam traps',
-  'key idea',
-  'meaning',
-  'etymology',
-  'question',
-  'recall',
-  'proof',
-  'given',
-  'step',
-  'therefore',
-  'hence',
-  'conclusion',
-]);
-
 const FINITE_ENGLISH_CLAUSE_WORDS =
   /\b(?:is|are|was|were|have|has|had|can|could|may|might|will|would|should|must|that|which|who|whom|whose|when|where|why|how|because|since|although|if|unless|they|we|you|he|she|it|does|did|do|makes|made|shows|gives|means|refers|occurs|allows|causes|enables)\b/i;
 
@@ -353,6 +313,372 @@ const GENERAL_NON_NOUN_WORDS = new Set([
 const ACADEMIC_NOUN_SUFFIX_REGEX =
   /(?:tion|sion|ment|ism|ist|logy|graphy|metry|nomy|osis|sis|ity|ance|ence|ure|ide|ate|ine|gen|ium|ics|ory|ary|age|dom|ship|gram|sphere|graph|scope|meter|type|form|rate|law|rule|scale|stage|phase|level|factor|system|model|theory|method|process|concept|principle|effect|force|energy|value|ratio|index|class|group|order|cycle|zone|layer|field|wave|bond|acid|base|cell|gene|trait|organ|tissue)$/i;
 
+const HEADING_PHRASE_AM_TO_EN: Array<[string, string]> = ([
+  ['የአንትሮፖሎጂ ትርጉም፣ ወሰን እና ታሪካዊ አመጣጥ', 'Meaning, Scope & Historical Origin of Anthropology'],
+  ['የአንትሮፖሎጂ ልዩ ባህሪያት፣ Emic vs Etic እና የተሳሳቱ አመለካከቶች', 'Unique Features of Anthropology, Emic vs Etic & Misconceptions'],
+  ['ፊዚካል (ባዮሎጂካል) እና አርኪኦሎጂካል አንትሮፖሎጂ', 'Physical (Biological) & Archaeological Anthropology'],
+  ['ሊንጉዊስቲክ፣ ሶሺዮ-ካልቸራል እና Applied Anthropology', 'Linguistic, Socio-Cultural & Applied Anthropology'],
+  ['ባህል፣ Ethnocentrism vs Relativism እና የባህል ለውጥ ዘዴዎች', 'Culture, Ethnocentrism vs Relativism & Mechanisms of Culture Change'],
+  ['ጋብቻ፣ ዝምድና እና የኢትዮጵያ 4ቱ ባህላዊ ቀጠናዎች', 'Marriage, Kinship & Ethiopia’s 4 Cultural Areas'],
+  ['የመገለል ትርጉም፣ የጾታ መድልዎ እና የተገለሉ የእደ-ጥበብ ባለሙያዎች', 'Meaning of Marginalization, Gender Discrimination & Craftworkers'],
+  ['የጾታና የእድሜ ተጋላጭነት እና የሰብአዊ መብት መፍትሄዎች', 'Gender & Age Vulnerability and Human Rights Remedies'],
+  ['Ethnicity vs Race እና ሦስቱ የብሔር ንድፈ-ሐሳቦች', 'Ethnicity vs Race & Three Theories of Ethnicity'],
+  ['የብዝሃነት አያያዝ እና መድብለ-ባህላዊነት', 'Managing Diversity & Multiculturalism'],
+  ['ባህላዊ አስተዳደር እና የግጭት መፍቻ ተቋማት በኢትዮጵያ', 'Customary Governance & Conflict Resolution Institutions in Ethiopia'],
+  ['የሴቶች ሰላም አስከባሪ ተቋማት እና Legal Pluralism', 'Women’s Peacebuilding Institutions & Legal Pluralism'],
+  ['የሀገር በቀል እውቀት (IKS) ምንነት፣ ባህሪያት እና የኢትዮጵያ ምሳሌዎች', 'Indigenous Knowledge Systems (IKS): Features & Ethiopian Examples'],
+  ['የሀገር በቀል እውቀት', 'Indigenous Knowledge'],
+  ['IKS ለዘላቂ ልማት፣ ተግዳሮቶች እና ጥበቃ', 'IKS for Sustainable Development, Challenges & Preservation'],
+  ['የሕይወት ባህሪያት፣ Emergent Properties እና የሕይወት አመጣጥ', 'Characteristics of Life, Emergent Properties & Origin of Life'],
+  ['የባዮሞለኪውሎች እና የትስስር ሰንጠረዥ', 'Biomolecules & Bonding Matrix'],
+  ['የቁስ አካል ምደባ እና ባህሪያት', 'Classification & Properties of Matter'],
+  ['የሲቪክስ፣ ሥነ-ምግባር፣ ሞራል እና ሕግ ትርጉምና ንጽጽር', 'Civics, Ethics, Morality & Law: Meaning & Comparison'],
+  ['የዜግነት በጎነቶች (Civic Virtues) እና የትምህርቱ ዓላማዎች', 'Civic Virtues & Objectives of Civic Education'],
+  ['የፍልስፍና ትርጉም እና አራቱ ዋና ዘርፎች', 'Meaning of Philosophy & Four Core Branches'],
+  ['Argument vs Non-Argument እና Deductive vs Inductive', 'Argument vs Non-Argument & Deductive vs Inductive'],
+  ['ቋንቋ፣ Vagueness vs Ambiguity እና የትርጉም (Definition) ዓይነቶች', 'Language, Vagueness vs Ambiguity & Types of Definitions'],
+  ['Relevance & Weak Induction Fallacies (ዋናዎቹ የፈተና ወጥመዶች)', 'Relevance & Weak Induction Fallacies (Core Exam Traps)'],
+  ['Conversion, Obversion & Contraposition (Logically Equivalent መቼ ናቸው?)', 'Conversion, Obversion & Contraposition (Logical Equivalence)'],
+  ['ሦስቱ መሰረታዊ የኢኮኖሚ ጥያቄዎች እና የኢኮኖሚ ሥርዓቶች', 'Three Basic Economic Questions & Economic Systems'],
+  ['ፍላጎት፣ አቅርቦት፣ Equilibrium እና የመንግሥት የዋጋ ቁጥጥር', 'Demand, Supply, Equilibrium & Government Price Controls'],
+  ['የአራቱ የገበያ መዋቅሮች ንጽጽር እና ትርፍ ማክሲማይዜሽን', 'Comparison of Four Market Structures & Profit Maximization'],
+  ['ሥራ አጥነት፣ የዋጋ ግሽበት እና የማክሮኢኮኖሚ ፖሊሲዎች', 'Unemployment, Inflation & Macroeconomic Policies'],
+  ['አራቱ ኢንዱስትሪያል አብዮቶች (IR 1.0 – IR 4.0) እና DIKW', 'Four Industrial Revolutions (IR 1.0–4.0) & DIKW'],
+  ['የዳታ ዓይነቶች፣ Big Data 5Vs እና Hadoop', 'Types of Data, Big Data 5Vs & Hadoop'],
+  ['የAI ደረጃዎች እና የMachine Learning ዓይነቶች', 'Levels of AI & Types of Machine Learning'],
+  ['ዓለም አቀፍ እና የኢትዮጵያ የአካታችነት ሕጎች', 'International & Ethiopian Inclusion Laws'],
+  ['የሀብት አስተዳደር፣ Resource Centers እና Twin-Track Approach', 'Resource Mobilization, Resource Centers & Twin-Track Approach'],
+  ['ባለድርሻ አካላት፣ የትብብር ደረጃዎች እና Team Models', 'Stakeholders, Collaboration Levels & Team Models'],
+  ['ቬክተሮች፣ Dot Product፣ Projections እና Cross Product', 'Vectors, Dot Product, Projections & Cross Product'],
+  ['መስመሮችና ፕሌኖች በ ℝ³ እና Vector Spaces (Subspace, Independence, Basis)', 'Lines & Planes in ℝ³ and Vector Spaces (Subspace, Independence, Basis)'],
+  ['የማትሪክስ ዓይነቶች፣ Row Operations (RREF)፣ Rank እና Inverse', 'Types of Matrices, Row Operations (RREF), Rank & Inverse'],
+  ['ዲተርሚናንት፣ Cramer\'s Rule፣ Eigenvalues እና Diagonalization', 'Determinants, Cramer\'s Rule, Eigenvalues & Diagonalization'],
+  ['የዴሪቬቲቭ ሕጎች፣ Implicit እና Inverse Trig/Hyperbolic ዴሪቬቲቮች', 'Derivative Rules, Implicit & Inverse Trig/Hyperbolic Derivatives'],
+  ['MVT፣ ግራፍ ትንተና፣ Optimization እና L\'Hôpital\'s Rule', 'MVT, Curve Sketching, Optimization & L\'Hôpital\'s Rule'],
+  ['አራቱ ዋና የኢንቴግሬሽን ቴክኒኮች', 'Four Core Integration Techniques'],
+  ['FTC፣ Improper Integrals እና Area / Volume / Arc Length', 'FTC, Improper Integrals & Area / Volume / Arc Length'],
+  ['ፕሮፖዚሽናል ሎጂክ፡ ፕሮፖዚሽኖች፣ የሎጂክ አገናኞች እና የሎጂክ ሕጎች', 'Propositional Logic: Propositions, Connectives & Laws of Logic'],
+  ['ክፍት ፕሮፖዚሽኖች፣ ኳንቲፋየሮች (∀, ∃) እና የክርክር ትክክለኛነት', 'Open Propositions, Quantifiers (∀, ∃) & Validity of Arguments'],
+  ['የስብስብ ቲዎሪ (Set Theory)፣ የስብስብ ስሌቶች እና የInclusion-Exclusion መርህ', 'Set Theory, Set Operations & Inclusion-Exclusion Principle'],
+  ['የሪል ቁጥሮች ሥርዓት፣ Completeness Axiom እና ሒሳባዊ ኢንዳክሽን (PMI)', 'Real Number System, Completeness Axiom & Mathematical Induction (PMI)'],
+  ['የኮምፕሌክስ ቁጥሮች አልጀብራ፣ ፖላር ቅርጽ እና የDe Moivre ቲዎረም', 'Algebra of Complex Numbers, Polar Form & De Moivre\'s Theorem'],
+  ['ግንኙነቶች፣ ፈንክሽኖች፣ Bijection እና ተገላቢጦሽ (Inverse)', 'Relations, Functions, Bijection & Inverse Functions'],
+  ['ፖሊኖሚያሎች እና ራሽናል ፈንክሽኖች (Asymptotes & Root Theorems)', 'Polynomial & Rational Functions (Asymptotes & Root Theorems)'],
+  ['ኤክስፖኔንሻል፣ ሎጋሪዝም፣ ትሪጎኖሜትሪክ እና ሃይፐርቦሊክ ፈንክሽኖች', 'Exponential, Logarithmic, Trigonometric & Hyperbolic Functions'],
+  ['ርቀት፣ ቀጥታ መስመር እና ክብ (Lines & Circles)', 'Distance, Straight Lines & Circles'],
+  ['ፓራቦላ፣ ኤሊፕስ፣ ሃይፐርቦላ እና Rotation of Axes', 'Parabola, Ellipse, Hyperbola & Rotation of Axes'],
+  ['ፕሮፖዚሽናል ሎጂክ እና አቻነት ሕጎች', 'Propositional Logic & Laws of Equivalence'],
+  ['ኳንቲፋየሮች፣ የክርክር ትክክለኛነት እና የስብስብ ቲዎሪ', 'Quantifiers, Validity of Arguments & Set Theory'],
+  ['እኩልታዎች፣ ኢንኢኳሊቲዎች እና ፈንክሽኖች', 'Equations, Inequalities & Functions'],
+  ['ፖሊኖሚያል፣ ራሽናል፣ ኤክስፖኔንሻል እና ሎጋሪዝም ፈንክሽኖች', 'Polynomial, Rational, Exponential & Logarithmic Functions'],
+  ['ማትሪክስ አልጀብራ፣ Row Operations እና Rank', 'Matrix Algebra, Row Operations & Rank'],
+  ['ዲተርሚናንት፣ Inverse እና የሊኒየር ሥርዓት መፍቻዎች', 'Determinant, Inverse & Solving Linear Systems'],
+  ['ገደብ (Limit)፣ ቀጣይነት (Continuity) እና ዴሪቬቲቮች', 'Limits, Continuity & Derivatives'],
+  ['የዴሪቬቲቭ አጠቃቀም (Optimization) እና ኢንቴግሬሽን', 'Applications of Derivatives (Optimization) & Integration'],
+  ['SI አሃዶች፣ Dimensional Analysis እና Significant Figures', 'SI Units, Dimensional Analysis & Significant Figures'],
+  ['ቬክተሮች፣ Components፣ Dot Product እና Cross Product', 'Vectors, Components, Dot Product & Cross Product'],
+  ['ኪኔማቲክስ (1D, Projectile, Circular) እና የኒውተን ሕጎች', 'Kinematics (1D, Projectile, Circular) & Newton\'s Laws'],
+  ['ሥራ፣ ኃይል (Energy)፣ ሞመንተም እና ግጭቶች (Collisions)', 'Work, Energy, Momentum & Collisions'],
+  ['ሙቀት፣ Thermal Expansion፣ Calorimetry እና Heat Transfer', 'Heat, Thermal Expansion, Calorimetry & Heat Transfer'],
+  ['የቴርሞዳይናሚክስ ሕጎች እና የHeat Engines Efficiency', 'Laws of Thermodynamics & Heat Engine Efficiency'],
+  ['Simple Harmonic Motion (SHM) እና ሞገዶች (Waves & Doppler)', 'Simple Harmonic Motion (SHM) & Waves (Doppler)'],
+  ['ኤሌክትሮስታቲክስ፣ DC Circuits እና Kirchhoff\'s Rules', 'Electrostatics, DC Circuits & Kirchhoff\'s Rules'],
+  ['ማግኔቲዝም፣ Electromagnetic Induction እና ኤሌክትሮኒክስ', 'Magnetism, Electromagnetic Induction & Electronics'],
+  ['ፊዚክስ በግብርና፣ ኢንዱስትሪ እና ሕክምና (Medical Imaging)', 'Physics in Agriculture, Industry & Medicine (Medical Imaging)'],
+  ['ፊዚክስ በአርኪኦሎጂ (C-14)፣ ምድር/ህዋ እና ኃይል ማመንጫ', 'Physics in Archaeology (C-14), Earth/Space & Power Generation'],
+  ['ቀደምት ትምህርት ቤቶች እና ዘመናዊ አመለካከቶች', 'Early Schools & Modern Perspectives'],
+  ['የስልጠና መርሆዎች፣ FITT እና የኃይል ሥርዓቶች', 'Training Principles, FITT & Energy Systems'],
+  ['ከሌሎች ሳይንሶች ጋር ያለው ግንኙነት', 'Relationship with Other Sciences'],
+  ['ትርጉም እና ስርወ-ቃል', 'Definition & Etymology'],
+  ['ታሪካዊ እድገት', 'Historical Development'],
+  ['አምስቱ ልዩ መለያ ባህሪያት', 'Five Unique Features'],
+  ['የተሳሳቱ አመለካከቶች', 'Misconceptions'],
+  ['የባህል ትርጉም እና ባህሪያት', 'Definition & Characteristics of Culture'],
+  ['የባህል ለውጥ ዘዴዎች', 'Mechanisms of Culture Change'],
+  ['የጋብቻና የቤተሰብ ቅርጾች', 'Forms of Marriage & Family'],
+  ['የኢትዮጵያ አራት ባህላዊ ቀጠናዎች', 'Ethiopia’s Four Cultural Areas'],
+  ['የተገለሉ የእደ-ጥበብ ባለሙያዎች', 'Marginalized Craftworkers'],
+  ['የእድሜ ተጋላጭነት', 'Age Vulnerability'],
+  ['ሦስቱ የብሔር ንድፈ-ሐሳቦች', 'Three Theories of Ethnicity'],
+  ['ሀገር በቀል ዲሞክራሲያዊ አስተዳደሮች', 'Indigenous Democratic Governance'],
+  ['ባህላዊ የግጭት መፍቻ ተቋማት', 'Customary Conflict Resolution Institutions'],
+  ['የሴቶች ሚና', 'Role of Women'],
+  ['አንጸባራቂ የኢትዮጵያ ሀገር በቀል እውቀቶች', 'Notable Ethiopian Indigenous Knowledge'],
+  ['የIKS ጥቅም ለዘመናዊ ልማት', 'Benefits of IKS for Modern Development'],
+  ['ስጋቶች እና ጥበቃ', 'Threats & Preservation'],
+  ['ቁልፍ የሕይወት ባህሪያት', 'Key Characteristics of Life'],
+  ['የሙከራ ተለዋዋጮች', 'Experimental Variables'],
+  ['4ቱ ዋና Macromolecules', '4 Major Macromolecules'],
+  ['የላብራቶሪ መለያ ሙከራዎች', 'Laboratory Identification Tests'],
+  ['ከፍተኛ የፈተና ነጥብ!', 'High-Yield Exam Point!'],
+  ['ቁልፍ Organelles እና ልዩ ተግባራቸው', 'Key Organelles & Their Functions'],
+  ['ዋና የፈተና ነጥቦች', 'Core Exam Points'],
+  ['ዋና የእፅዋት ቡድኖች እና ሆርሞኖች', 'Major Plant Groups & Hormones'],
+  ['ዋና የስያሜ ሕጎች', 'Core Nomenclature Rules'],
+  ['የግድ መታወቅ ያለባቸው Polyatomic Ions', 'Must-Know Polyatomic Ions'],
+  ['የConcentration መለኪያዎች ሰንጠረዥ', 'Concentration Units Table'],
+  ['ፈጣን የፈተና ስልት', 'Fast Exam Strategy'],
+  ['በፈተና በጣም የሚጠየቁ!', 'High-Frequency Exam Topics!'],
+  ['ዋና የላብራቶሪ መለያ ሙከራዎች', 'Key Qualitative Lab Tests'],
+  ['ዋና የዜግነት ባህሪያት', 'Core Civic Dispositions'],
+  ['ውጤት-ተኮር ሥነ-ምግባር', 'Consequentialist Ethics'],
+  ['ግዴታ-ተኮር', 'Duty-Based'],
+  ['የLawrence Kohlberg 3 የሞራል እድገት ደረጃዎች', 'Lawrence Kohlberg’s 3 Stages of Moral Development'],
+  ['"ለምን ሞራላዊ እንሁን?" እና Rationalizations', '"Why Be Moral?" & Rationalizations'],
+  ['የተለመዱ ስህተተኛ ማመካኛዎች', 'Common Rationalizations'],
+  ['አራቱ የState መገለጫዎች', 'Four Elements of State'],
+  ['የState አወቃቀር እና Parliamentary vs Presidential', 'State Structure & Parliamentary vs Presidential'],
+  ['የሕገ-መንግሥት ምድቦች', 'Classification of Constitutions'],
+  ['የኢትዮጵያ ሕገ-መንግሥቶች በአጭሩ', 'Ethiopian Constitutions in Brief'],
+  ['የዲሞክራሲ መርሆዎች', 'Principles of Democracy'],
+  ['የሰብአዊ መብቶች 3 ትውልዶች', '3 Generations of Human Rights'],
+  ['አራቱ ዋና የፍልስፍና ዘርፎች', 'Four Core Branches of Philosophy'],
+  ['5ቱ የDefinition ዓይነቶች', '5 Types of Definitions'],
+  ['ዋና እንቅፋቶች', 'Main Barriers'],
+  ['ሌሎች ዋና Fallacies', 'Other Major Fallacies'],
+  ['አራቱ ቅርጾች እና Distribution ሰንጠረዥ', 'Four Standard Forms & Distribution Table'],
+  ['ቀመሮች እና ትርጓሜ', 'Formulas & Interpretation'],
+  ['ግንኙነት', 'Relationship'],
+  ['4ቱ የIndifference Curve ባህሪያት', '4 Properties of Indifference Curves'],
+  ['TP, AP, MP እና 3ቱ ደረጃዎች', 'TP, AP, MP & The 3 Stages'],
+  ['ዋና የCost ቀመሮች', 'Core Cost Formulas'],
+  ['GDP ምንን ያካትታል / አያካትትም?', 'What GDP Includes / Excludes?'],
+  ['ሥራ አጥነት እና Inflation', 'Unemployment & Inflation'],
+  ['3ቱ የዳታ ዓይነቶች', '3 Types of Data'],
+  ['3ቱ የAI ደረጃዎች', '3 Levels of AI'],
+  ['ሦስቱ ነገሥታት እና የሀገር ግንባታ', 'Three Monarchs & State Building'],
+  ['የአድዋ ድል (March 1, 1896) ዓለም አቀፍ ውጤት', 'Global Impact of the Victory of Adwa (March 1, 1896)'],
+  ['ኃይለ ሥላሴ (1941–1974)፣ ደርግ (1974–1991) እና FDRE (ከ1991)', 'Haile Selassie (1941–1974), Derg (1974–1991) & FDRE (Since 1991)'],
+  ['የ1974 አብዮት ፈንጂዎች', 'Immediate Triggers of the 1974 Revolution'],
+  ['የደርግ መውደቅ', 'Fall of the Derg'],
+  ['መደበኛ IQ እያላቸው!', 'with Normal IQ!'],
+  ['ከSegregation ወደ Inclusion (4ቱ ደረጃዎች)', 'From Segregation to Inclusion (4 Stages)'],
+  ['የIEP ዋና ክፍሎች', 'Core Components of an IEP'],
+  ['አጋዥ ቴክኖሎጂዎች', 'Assistive Technologies'],
+  ['የአመለካከት ሰንሰለት', 'Attitudinal Chain'],
+  ['የInclusive Culture መገንቢያዎች', 'Pillars of Inclusive Culture'],
+  ['አካታችነት፣ ሰላም፣ ዲሞክራሲ እና SDGs', 'Inclusiveness, Peace, Democracy & SDGs'],
+  ['አስፈላጊ ሀብቶች', 'Essential Resources'],
+  ['የቡድን ስራ ሞዴሎች', 'Teamwork Models'],
+  ['መሰረታዊ ቬክተሮች እና Dot Product', 'Basic Vectors & Dot Product'],
+  ['Cross Product እና የጂኦሜትሪ ትርጉሙ', 'Cross Product & Its Geometric Meaning'],
+  ['መስመሮች እና ፕሌኖች በ ℝ³', 'Lines & Planes in ℝ³'],
+  ['ልዩ የማትሪክስ ዓይነቶች እና ሕጎች', 'Special Matrix Types & Rules'],
+  ['Rank እና Consistency', 'Rank & Consistency'],
+  ['የዲተርሚናንት ዋና ሕጎች', 'Core Determinant Rules'],
+  ['መሰረታዊ እና ልዩ የዴሪቬቲቭ ሕጎች', 'Basic & Special Derivative Rules'],
+  ['Mean Value Theorem (MVT) እና የግራፍ ትንተና', 'Mean Value Theorem (MVT) & Curve Sketching'],
+  ['L\'Hôpital\'s Rule ለ Indeterminate Forms', 'L\'Hôpital\'s Rule for Indeterminate Forms'],
+  ['Trigonometric Substitution (ሦስቱ ቅርጾች)', 'Trigonometric Substitution (Three Forms)'],
+  ['የሽክርክሪት ይዘት (Volume) እና Arc Length', 'Volume of Revolution & Arc Length'],
+  ['የፕሮፖዚሽን ትርጉም እና መሰረታዊ መርሆዎች', 'Meaning of Propositions & Basic Principles'],
+  ['አምስቱ መሰረታዊ የሎጂክ አገናኞች', 'Five Basic Logical Connectives'],
+  ['Tautology, Contradiction እና የሎጂክ አልጀብራ ሕጎች', 'Tautology, Contradiction & Laws of Logic'],
+  ['የክርክር ትክክለኛነት (Validity of Arguments) እና 9ኙ የኢንፈረንስ ሕጎች', 'Validity of Arguments & 9 Rules of Inference'],
+  ['የስብስብ መግለጫ መንገዶች እና ንዑስ ስብስቦች', 'Set Representations & Subsets'],
+  ['የስብስብ ስሌቶች (Set Operations) እና ሕጎች', 'Set Operations & Laws'],
+  ['የInclusion-Exclusion መቁጠሪያ ቀመሮች', 'Inclusion-Exclusion Counting Formulas'],
+  ['የቁጥር ሥርዓቶች ሰንሰለት', 'Hierarchy of Number Systems'],
+  ['የሒሳባዊ ኢንዳክሽን መርህ', 'Principle of Mathematical Induction'],
+  ['የኮምፕሌክስ ቁጥሮች መሰረታዊ ስሌቶች', 'Basic Operations on Complex Numbers'],
+  ['ፖላር (Trigonometric) ቅርጽ እና De Moivre\'s Theorem', 'Polar (Trigonometric) Form & De Moivre\'s Theorem'],
+  ['Domain እና Range የመፈለጊያ ወርቃማ ሕጎች', 'Golden Rules for Finding Domain & Range'],
+  ['የፈንክሽን ዓይነቶች እና Inverse', 'Types of Functions & Inverse'],
+  ['የፖሊኖሚያል ቲዎረሞች', 'Polynomial Theorems'],
+  ['መስመሮች እና ርቀቶች', 'Lines & Distances'],
+  ['የኮኒክ ክፍሎች ማነጻጸሪያ ሰንጠረዥ', 'Conic Sections Comparison Table'],
+  ['Discriminant እና Rotation of Axes', 'Discriminant & Rotation of Axes'],
+  ['ፕሮፖዚሽን እና የሎጂክ አገናኞች', 'Propositions & Logical Connectives'],
+  ['Quantifiers እና Formal Proofs', 'Quantifiers & Formal Proofs'],
+  ['Quadratic Discriminant እና Sign Chart', 'Quadratic Discriminant & Sign Chart'],
+  ['ፈንክሽኖች እና Inverse', 'Functions & Inverse'],
+  ['የማትሪክስ ቅድመ-ሁኔታዎች', 'Matrix Conditions'],
+  ['2×2 እና 3×3 Inverse & Cramer\'s Rule', '2×2 and 3×3 Inverse & Cramer\'s Rule'],
+  ['ዋና የዴሪቬቲቭ ሕጎች', 'Core Derivative Rules'],
+  ['Optimization በኢኮኖሚክስ', 'Optimization in Economics'],
+  ['ኢንቴግሬሽን እና Area Between Curves', 'Integration & Area Between Curves'],
+  ['7ቱ መሰረታዊ SI መጠኖች', '7 Fundamental SI Quantities'],
+  ['Dimensional Analysis ሕጎች', 'Dimensional Analysis Rules'],
+  ['Accuracy vs Precision እና Errors', 'Accuracy vs Precision & Errors'],
+  ['Dot & Cross Products በፊዚክስ', 'Dot & Cross Products in Physics'],
+  ['Projectile Motion (በአየር መቋቋም በሌለበት)', 'Projectile Motion (Neglecting Air Resistance)'],
+  ['Friction & Inclined Plane', 'Friction & Inclined Plane'],
+  ['ሥራ እና ኃይል', 'Work & Energy'],
+  ['ግፊት እና የPascal ሕግ', 'Pressure & Pascal\'s Law'],
+  ['ሦስቱ የሙቀት መተላለፊያ መንገዶች', 'Three Modes of Heat Transfer'],
+  ['SHM ቀመሮች', 'SHM Formulas'],
+  ['Doppler Effect (ድምጽ)', 'Doppler Effect (Sound)'],
+  ['ማግኔቲክ ኃይል እና Induction', 'Magnetic Force & Induction'],
+  ['ሴሚኮንዳክተሮች እና Logic Gates', 'Semiconductors & Logic Gates'],
+  ['ግብርና እና Soil Physics', 'Agriculture & Soil Physics'],
+  ['የሕክምና ምስል ቴክኖሎጂዎች', 'Medical Imaging Technologies'],
+  ['ሦስቱ የሕይወት ክህሎት ዘርፎች', 'Three Life Skills Domains'],
+  ['ምዕራፍ ', 'Chapter '],
+  ['ክፍል ', 'Section '],
+  ['ዋና ባህሪያት', 'Main Features'],
+  ['ቁልፍ ቀመሮች', 'Key Formulas'],
+  ['ዋና ቀመሮች', 'Core Formulas'],
+  ['ትርጉም እና ባህሪያት', 'Definition & Characteristics'],
+  ['ማህበራዊ ውል', 'Social Contract'],
+  ['ማህበራዊ መገለል', 'Marginalization'],
+  ['ባህላዊ አንጻራዊነት', 'Cultural Relativism'],
+  ['መድብለ-ባህላዊነት', 'Multiculturalism'],
+  ['ዜግነት', 'Citizenship'],
+  ['ሲቪክስ', 'Civics'],
+  ['አንትሮፖሎጂ', 'Anthropology'],
+  ['ፊዚክስ', 'Physics'],
+  ['ኬሚስትሪ', 'Chemistry'],
+  ['ባዮሎጂ', 'Biology'],
+  ['ኢኮኖሚክስ', 'Economics'],
+  ['ሳይኮሎጂ', 'Psychology'],
+  ['ሎጂክ', 'Logic'],
+  ['ታሪክ', 'History'],
+  ['ፍልስፍና', 'Philosophy'],
+  ['ዴሞክራሲ', 'Democracy'],
+  ['ሕገ-መንግሥት', 'Constitution'],
+  ['እና', '&'],
+  ['በ', 'in'],
+  ['ለ', 'for'],
+] as Array<[string, string]>).sort((a, b) => b[0].length - a[0].length);
+
+const REVERSE_AMHARIC_WORD_MAP: Record<string, string> = (() => {
+  const rev: Record<string, string> = {};
+  for (const [, amMeaning, enCanonical] of KEY_EXAM_PHRASES) {
+    if (amMeaning && !rev[amMeaning]) rev[amMeaning] = enCanonical;
+  }
+  for (const [enWord, amWord] of Object.entries(AMHARIC_WORD_DICT)) {
+    if (!amWord || !/[\u1200-\u137F]/.test(amWord)) continue;
+    const cap = KEY_EXAM_TERMS[enWord] || (enWord.charAt(0).toUpperCase() + enWord.slice(1));
+    if (!rev[amWord]) rev[amWord] = cap;
+  }
+  return rev;
+})();
+
+/**
+ * Converts any curated Amharic or mixed Amharic/English chapter title or Markdown heading
+ * into crisp 100% English (zero Ethiopic characters allowed in titles/headings).
+ */
+export function convertHeadingToEnglish(rawHeading: string): string {
+  if (!rawHeading || !rawHeading.trim()) return rawHeading;
+  if (!/[\u1200-\u137F]/.test(rawHeading)) return rawHeading.trim();
+
+  const mdMatch = rawHeading.match(/^(\s*#{1,6}\s+)(.+)$/);
+  const mdPrefix = mdMatch ? mdMatch[1] : '';
+  let body = (mdMatch ? mdMatch[2] : rawHeading).trim();
+
+  // Preserve leading section numbers like "1.1 " or "1.2.1 "
+  const numMatch = body.match(/^(\d+(?:\.\d+)*[.:]?\s+)(.+)$/);
+  const numPrefix = numMatch ? numMatch[1] : '';
+  body = (numMatch ? numMatch[2] : body).trim();
+
+  // If format is `PureAmharic (EnglishTerm)` or `Amharic Prefix (English Label)` where parens already summarize in English:
+  const pureAmWithEnParen = body.match(/^([\u1200-\u137F\u1360-\u1368\s\-/,]+)\(([^()]*[A-Za-z][^()]*)\)$/);
+  if (pureAmWithEnParen && !/[\u1200-\u137F]/.test(pureAmWithEnParen[2]) && pureAmWithEnParen[2].trim().length >= 4) {
+    // Only use parenthetical directly if no separate unparenthesized English topics precede it
+    body = pureAmWithEnParen[2].trim();
+  }
+
+  for (const [amPhrase, enPhrase] of HEADING_PHRASE_AM_TO_EN) {
+    if (body.includes(amPhrase)) {
+      body = body.split(amPhrase).join(` ${enPhrase} `);
+    }
+  }
+
+  // Translate any remaining standalone Ethiopic tokens via reverse word dictionary
+  body = body.replace(/[\u1200-\u137F][\u1200-\u137F\-]*/g, (amTok) => {
+    if (REVERSE_AMHARIC_WORD_MAP[amTok]) return REVERSE_AMHARIC_WORD_MAP[amTok];
+    const stripped = amTok.replace(/^[የበለከ]/, '');
+    if (stripped.length >= 2 && REVERSE_AMHARIC_WORD_MAP[stripped]) {
+      return REVERSE_AMHARIC_WORD_MAP[stripped];
+    }
+    return '';
+  });
+
+  // Clean up duplicate parentheticals created during substitution e.g. "Marginalization (Marginalization)"
+  body = body
+    .replace(/\b([A-Za-z][A-Za-z\s&'-]{2,40})\s*\(\s*\1\s*\)/gi, '$1')
+    .replace(/\(\s*[\u1200-\u137F\u1360-\u1368\s,;፡፣\-/]*\s*\)/g, '')
+    .replace(/\(\s*\)/g, '')
+    .replace(/[፣፤፥]/g, ', ')
+    .replace(/፡/g, ': ')
+    .replace(/[\u1200-\u137F\u1360-\u1368]/g, '')
+    .replace(/\s+([,.:;!?])/g, '$1')
+    .replace(/(^|\s)[&/](\s*[&/])+/g, ' & ')
+    .replace(/^[\s,&:\-]+|[\s,&:\-]+$/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  if (!body) body = 'Core Section';
+  return `${mdPrefix}${numPrefix}${body}`.trim();
+}
+
+function convertMarkdownHeadingsToEnglish(text: string): string {
+  return text.replace(/^(\s*#{1,6}[ \t]+.+)$/gm, (line) =>
+    /[\u1200-\u137F]/.test(line) ? convertHeadingToEnglish(line) : line
+  );
+}
+
+/**
+ * Guarantees ZERO Ethiopic characters ever remain inside bolded (**...**) spans:
+ * - `**English (Amharic)**` -> `**English** (Amharic)`
+ * - `**Amharic (English)**` -> `Amharic (**English**)`
+ * - Mixed or pure-Amharic bold spans -> keep English sub-terms bolded or unbold Amharic emphasis.
+ */
+export function enforceEnglishOnlyBold(text: string): string {
+  if (!text || !text.includes('**')) return text;
+
+  return text.replace(/\*\*([^*\n]+)\*\*/g, (full, rawInner: string) => {
+    if (!/[\u1200-\u137F]/.test(rawInner)) return full;
+
+    const trimmed = rawInner.trim();
+    const punctMatch = trimmed.match(/([:;,.!?፦]+)$/);
+    const trailingPunct = punctMatch ? punctMatch[1] : '';
+    const punctClean = trailingPunct.replace(/፦/g, ':');
+    const core = trimmed.slice(0, trimmed.length - trailingPunct.length).trim();
+
+    if (!core) return trimmed;
+
+    // Pattern 1: `**English (Amharic)**` -> `**English** (Amharic)`
+    const enFirstMatch = core.match(
+      /^([^()]*[A-Za-z][^()]*?)\s*\(([^()]*[\u1200-\u137F][^()]*)\)$/
+    );
+    if (enFirstMatch && !/[\u1200-\u137F]/.test(enFirstMatch[1])) {
+      const enPart = enFirstMatch[1].trim();
+      const amPart = enFirstMatch[2].trim();
+      return `**${enPart}** (${amPart})${punctClean}`;
+    }
+
+    // Pattern 2: `**Amharic (English)**` -> `Amharic (**English**)`
+    const amFirstMatch = core.match(
+      /^([\u1200-\u137F][^()]*?)\s*\(([^()]*[A-Za-z0-9][^()]*)\)$/
+    );
+    if (amFirstMatch && !/[\u1200-\u137F]/.test(amFirstMatch[2])) {
+      const amPart = amFirstMatch[1].trim();
+      const enPart = amFirstMatch[2].trim();
+      return `${amPart} (**${enPart}**)${punctClean}`;
+    }
+
+    // Pattern 3: Contains English sub-terms mixed with Amharic prose -> keep only pure English runs bolded
+    if (/[A-Za-z]/.test(core)) {
+      return rawInner.replace(
+        /\b([A-Za-z][A-Za-z0-9\-/'&+.]*(?:\s+[A-Za-z0-9\-/'&+.]+)*)\b/g,
+        (enRun) => (enRun.length >= 2 ? `**${enRun}**` : enRun)
+      );
+    }
+
+    // Pattern 4: Pure Amharic bold span -> if label before colon matches reverse map, translate to bold English;
+    // otherwise unbold Amharic emphasis so zero Ethiopic text is bolded.
+    if (trailingPunct) {
+      const cleanAmHeading = convertHeadingToEnglish(core);
+      if (cleanAmHeading && cleanAmHeading !== 'Core Section' && /[A-Za-z]{3,}/.test(cleanAmHeading)) {
+        return `**${cleanAmHeading}${punctClean}**`;
+      }
+    }
+
+    return rawInner;
+  });
+}
+
 function translateSimplePhraseToAmharic(phrase: string): string {
   if (!phrase || !phrase.trim()) return phrase;
   let working = phrase.trim();
@@ -370,94 +696,6 @@ function translateSimplePhraseToAmharic(phrase: string): string {
     return rule ? rule.replacement : '';
   });
   return cleanupAmharicFormatting(working);
-}
-
-function isBoldMajorTermCandidate(rawInner: string): boolean {
-  if (!rawInner || /\uE000T|\uE008B/.test(rawInner)) return false;
-  const cleaned = rawInner
-    .replace(/^(\d+(?:\.\d+)*[.)]\s*|[A-Za-z]\)\s*)/, '')
-    .replace(/[:;,.!?]+$/, '')
-    .trim();
-  if (!cleaned || cleaned.length < 2 || cleaned.length > 56) return false;
-  if (!/[A-Za-z]{2,}/.test(cleaned)) return false;
-  const words = cleaned.split(/\s+/);
-  if (words.length > 6) return false;
-  if (/^(?:step|part|chapter)\s+\d+$/i.test(cleaned)) return false;
-  if (BOILERPLATE_BOLD_LABELS.has(cleaned.toLowerCase())) return false;
-  if (FINITE_ENGLISH_CLAUSE_WORDS.test(cleaned)) return false;
-  return true;
-}
-
-function buildBoldTermSlot(
-  rawInner: string,
-  slots: KeyTermSlot[],
-  ctx: ChapterTerminologyContext
-): string | null {
-  if (!isBoldMajorTermCandidate(rawInner)) return null;
-
-  const prefixMatch = rawInner.match(/^(\d+(?:\.\d+)*[.)]\s*|[A-Za-z]\)\s*)(.+)$/);
-  const prefix = prefixMatch ? prefixMatch[1] : '';
-  const body = (prefixMatch ? prefixMatch[2] : rawInner).trim();
-  const trailingPunctMatch = body.match(/([:;,.!?]+)$/);
-  const trailingPunct = trailingPunctMatch ? trailingPunctMatch[1] : '';
-  const coreTerm = body.slice(0, body.length - trailingPunct.length).trim();
-  if (!coreTerm) return null;
-
-  const lowerCore = coreTerm.toLowerCase();
-  const amCore = translateSimplePhraseToAmharic(coreTerm);
-  const amOnly = `**${prefix}${amCore}${trailingPunct}**`;
-
-  // Check if coreTerm matches a multi-word KEY_EXAM_PHRASES entry or single KEY_EXAM_TERMS
-  const matchedPhrase = COMPILED_KEY_PHRASE_RULES.find(
-    (r) => r.enCanonical.toLowerCase() === lowerCore
-  );
-  if (matchedPhrase) {
-    const already = ctx.introducedConcepts.has(matchedPhrase.conceptKey);
-    if (!already) ctx.introducedConcepts.add(matchedPhrase.conceptKey);
-    const display = !already && matchedPhrase.amMeaning !== matchedPhrase.enCanonical
-      ? `${matchedPhrase.amMeaning} (${matchedPhrase.enCanonical})`
-      : matchedPhrase.enCanonical;
-    const slotIdx = slots.length;
-    slots.push({
-      amOnly: `**${prefix}${matchedPhrase.amMeaning}${trailingPunct}**`,
-      withEnglish: `**${prefix}${display}${trailingPunct}**`,
-      priority: 1,
-      preferKeepEnglish: true,
-    });
-    return `\uE008B${slotIdx}\uE009`;
-  }
-
-  const singleKeyEn = KEY_EXAM_TERMS[lowerCore];
-  if (singleKeyEn) {
-    const conceptKey = KEY_TERM_CANONICAL_GROUP[lowerCore] || lowerCore;
-    const already = ctx.introducedConcepts.has(conceptKey);
-    if (!already) ctx.introducedConcepts.add(conceptKey);
-    const directEn = PREFER_DIRECT_ENGLISH_KEY_TERMS.has(lowerCore);
-    const singleAm = translateEnglishWordToAmharic(coreTerm) || amCore;
-    const display =
-      !already && !directEn && singleAm && singleAm !== singleKeyEn && /[\u1200-\u137F]/.test(singleAm)
-        ? `${singleAm} (${singleKeyEn})`
-        : singleKeyEn;
-    const slotIdx = slots.length;
-    slots.push({
-      amOnly: directEn ? `**${prefix}${singleKeyEn}${trailingPunct}**` : amOnly,
-      withEnglish: `**${prefix}${display}${trailingPunct}**`,
-      priority: 1,
-      preferKeepEnglish: true,
-    });
-    return `\uE008B${slotIdx}\uE009`;
-  }
-
-  // Register any inner key terms in chapter context and keep the English major term/type/part intact
-  registerEnglishTermsInContext(coreTerm, ctx);
-  const slotIdx = slots.length;
-  slots.push({
-    amOnly,
-    withEnglish: `**${prefix}${coreTerm}${trailingPunct}**`,
-    priority: 1,
-    preferKeepEnglish: true,
-  });
-  return `\uE008B${slotIdx}\uE009`;
 }
 
 function makeListItemSlotToken(
@@ -541,22 +779,20 @@ function translateMaskedLine(
       if (idx === 0 || idx === rawCells.length - 1) return cell;
       const trimmed = cell.trim();
       if (!trimmed || /\uE000T|\uE008B/.test(trimmed)) return cell;
-      const stripBold = trimmed.replace(/^\*\*(.+)\*\*$/, '$1').trim();
-      const wasBold = trimmed.startsWith('**') && trimmed.endsWith('**');
-      const words = stripBold.split(/\s+/);
+      const words = trimmed.split(/\s+/);
       if (
         (idx === 1 || isHeaderLike) &&
         words.length >= 1 &&
         words.length <= 4 &&
-        /[A-Za-z]{2,}/.test(stripBold) &&
-        !FINITE_ENGLISH_CLAUSE_WORDS.test(stripBold)
+        /[A-Za-z]{2,}/.test(trimmed) &&
+        !FINITE_ENGLISH_CLAUSE_WORDS.test(trimmed)
       ) {
-        const amCell = translateSimplePhraseToAmharic(stripBold);
-        registerEnglishTermsInContext(stripBold, ctx);
+        const amCell = translateSimplePhraseToAmharic(trimmed);
+        registerEnglishTermsInContext(trimmed, ctx);
         const slotIdx = slots.length;
         slots.push({
-          amOnly: wasBold ? `**${amCell}**` : amCell,
-          withEnglish: wasBold ? `**${stripBold}**` : stripBold,
+          amOnly: amCell,
+          withEnglish: trimmed,
           priority: 1,
           preferKeepEnglish: true,
         });
@@ -566,12 +802,6 @@ function translateMaskedLine(
     });
     working = updatedCells.join('|');
   }
-
-  // Step 0b: Bolded Major Terms / Types / Parts (`**...**`)
-  working = working.replace(/\*\*([^*\n]{2,56})\*\*/g, (full, inner) => {
-    const slotTok = buildBoldTermSlot(inner, slots, ctx);
-    return slotTok ?? full;
-  });
 
   // Step 0c: Short standalone listed bullet/numbered items (e.g. `1. Nominal Scale`)
   const standaloneListMatch = working.match(
@@ -821,9 +1051,13 @@ export function translateEnglishAcademicContentToAmharic(
   isHeading = false
 ): string {
   if (!text || !text.trim()) return '';
+  if (isHeading) {
+    return convertHeadingToEnglish(text);
+  }
 
   const activeCtx = ctx || createChapterTerminologyContext();
-  const { masked, tokens } = maskProtectedRegions(text, activeCtx);
+  const normalizedInput = convertMarkdownHeadingsToEnglish(enforceEnglishOnlyBold(text));
+  const { masked, tokens } = maskProtectedRegions(normalizedInput, activeCtx);
   const lines = masked.split('\n');
   const slots: KeyTermSlot[] = [];
   const translatedLines = lines.map((line) => translateMaskedLine(line, slots, activeCtx));
@@ -833,7 +1067,8 @@ export function translateEnglishAcademicContentToAmharic(
     tokens,
     isHeading
   );
-  return cleanupAmharicFormatting(unmaskProtectedRegions(withBudgetedKeyTerms, tokens)).trim();
+  const unmasked = cleanupAmharicFormatting(unmaskProtectedRegions(withBudgetedKeyTerms, tokens));
+  return convertMarkdownHeadingsToEnglish(enforceEnglishOnlyBold(unmasked)).trim();
 }
 
 const ENGLISH_PROSE_CLAUSE_REGEX =
@@ -864,6 +1099,7 @@ function isAlreadyFluentHybridLine(maskedLine: string): boolean {
 /**
  * Smart Hybrid Amharic polisher:
  * - Preserves already-fluent Amharic lines and their legitimate English academic terms untouched.
+ * - Ensures ALL Markdown headings (#, ##, ###) and ALL bolded text (**...**) are 100% English.
  * - Converts any remaining English prose sentences/bullets/table cells inside curated notes
  *   into natural Amharic with consistent `Amharic (English)` -> `English` Hybrid terminology.
  */
@@ -874,7 +1110,8 @@ export function polishMixedAmharicText(
   if (!text || !text.trim()) return '';
 
   const activeCtx = ctx || createChapterTerminologyContext();
-  const { masked, tokens } = maskProtectedRegions(text, activeCtx);
+  const normalizedInput = convertMarkdownHeadingsToEnglish(enforceEnglishOnlyBold(text));
+  const { masked, tokens } = maskProtectedRegions(normalizedInput, activeCtx);
   const lines = masked.split('\n');
   const slots: KeyTermSlot[] = [];
 
@@ -892,19 +1129,18 @@ export function polishMixedAmharicText(
     slots,
     tokens
   );
-  return cleanupAmharicFormatting(unmaskProtectedRegions(resolved, tokens)).trim();
+  const unmasked = cleanupAmharicFormatting(unmaskProtectedRegions(resolved, tokens));
+  return convertMarkdownHeadingsToEnglish(enforceEnglishOnlyBold(unmasked)).trim();
 }
 
 export function translateHeadingToAmharic(
   heading: string,
   index: number,
-  ctx?: ChapterTerminologyContext
+  _ctx?: ChapterTerminologyContext
 ): string {
-  const translated = translateEnglishAcademicContentToAmharic(heading, undefined, ctx, true);
-  if (/^\d+(\.\d+)?\s/.test(translated)) {
-    return `ክፍል ${translated}`;
-  }
-  return `ክፍል ${index + 1}፡ ${translated}`;
+  const cleanEn = convertHeadingToEnglish(heading);
+  if (cleanEn && cleanEn.trim()) return cleanEn.trim();
+  return `Section ${index + 1}`;
 }
 
 export interface PolishableAmharicNote {
@@ -942,18 +1178,30 @@ const polishedNoteCache = new WeakMap<object, unknown>();
 
 /**
  * Polishes all prose fields inside a curated AmharicChapterNote using a SINGLE chapter-wide
- * ChapterTerminologyContext so existing Amharic explanations stay fluent, remaining English
- * prose becomes clear Amharic, and English academic terminology stays consistent throughout.
+ * ChapterTerminologyContext so existing Amharic explanations stay fluent, ALL titles/headings/bolded
+ * spans stay 100% English, and English academic terminology stays consistent throughout.
  */
-export function polishAmharicChapterNote<T extends PolishableAmharicNote>(note: T): T {
-  const cached = polishedNoteCache.get(note);
-  if (cached) return cached as T;
+export function polishAmharicChapterNote<T extends PolishableAmharicNote>(
+  note: T,
+  englishChapter?: { title?: string; sections?: Array<{ heading?: string }> }
+): T {
+  const cached = polishedNoteCache.get(note) as T | undefined;
+  if (cached) {
+    if (englishChapter?.title && englishChapter.title.trim() && cached.titleAm !== englishChapter.title.trim()) {
+      return { ...cached, titleAm: englishChapter.title.trim() };
+    }
+    return cached;
+  }
 
   const ctx = createChapterTerminologyContext();
+  const resolvedTitle =
+    englishChapter?.title && englishChapter.title.trim()
+      ? englishChapter.title.trim()
+      : convertHeadingToEnglish(note.titleAm);
 
   const polished: T = {
     ...note,
-    titleAm: polishMixedAmharicText(note.titleAm, ctx),
+    titleAm: resolvedTitle,
     briefOverviewAm: polishMixedAmharicText(note.briefOverviewAm, ctx),
     expandedOverviewAm: note.expandedOverviewAm
       ? polishMixedAmharicText(note.expandedOverviewAm, ctx)
@@ -963,7 +1211,7 @@ export function polishAmharicChapterNote<T extends PolishableAmharicNote>(note: 
     ),
     sectionsAm: note.sectionsAm?.map((sec) => ({
       ...sec,
-      headingAm: polishMixedAmharicText(sec.headingAm, ctx),
+      headingAm: convertHeadingToEnglish(sec.headingAm),
       contentAm: polishMixedAmharicText(sec.contentAm, ctx),
       keyPointsAm: sec.keyPointsAm?.map((kp) => polishMixedAmharicText(kp, ctx)),
     })),
@@ -1053,22 +1301,20 @@ export function buildFullAmharicTranslatedSections(
 
   const ctx = createChapterTerminologyContext();
   const subjLabel = SUBJECT_SHORT_LABEL_AM[chapter.subject] || 'የፍሬሽማን ኮርስ';
-  const subjIntroLabel = SUBJECT_AMHARIC_LABEL[chapter.subject] || subjLabel;
+  const subjEnTitle = chapter.moduleName || chapter.courseCode || 'Freshman Course';
 
   const rawOverviewAm = translateEnglishAcademicContentToAmharic(
     chapter.overview || '',
     chapter.subject,
     ctx
   );
-  const overviewAm = `${rawOverviewAm}\n\n**የ${subjIntroLabel} ምዕራፍ ${chapter.chapterNumber} የጥናት መመሪያ፦** ይህ ማስታወሻ ዋና የእንግሊዝኛ ቃላትን (Key Terms), Types/Parts, ቀመሮችን፣ የተሰሩ ምሳሌዎችንና የፈተና ወጥመዶችን በአማርኛ ማብራሪያ (78%–84% አማርኛ) አጣምሮ ያቀርባል።`;
+  const overviewAm = `${rawOverviewAm}\n\n**${subjEnTitle} — Chapter ${chapter.chapterNumber} Study Guide:** ይህ ማስታወሻ ዋና የእንግሊዝኛ ቃላትን (Key Terms)፣ ዓይነቶችን (Types)፣ ክፍሎችን (Parts)፣ ቀመሮችን፣ የተሰሩ ምሳሌዎችንና የፈተና ወጥመዶችን በአማርኛ ማብራሪያ አጣምሮ ያቀርባል።`;
 
   const sections: TranslatedAmharicSection[] = (chapter.sections || []).map(
     (sec: MasterNoteSection, sIdx: number) => {
-      const headingAm = translateHeadingToAmharic(
-        sec.heading || `ክፍል ${sIdx + 1}`,
-        sIdx,
-        ctx
-      );
+      const headingAm = sec.heading?.trim()
+        ? convertHeadingToEnglish(sec.heading.trim())
+        : `Section ${sIdx + 1}`;
       const translatedBody = translateEnglishAcademicContentToAmharic(
         sec.content || '',
         chapter.subject,
@@ -1078,24 +1324,20 @@ export function buildFullAmharicTranslatedSections(
       const eqCount = (sec.equations || []).length;
       const exCount = (sec.workedExamples || []).length;
 
-      const introBanner = `> **የ${subjLabel} ሙሉ የአማርኛ መማሪያ (${headingAm})** — ዋና ቃላት፣ Types እና Parts በእንግሊዝኛ፣ ማብራሪያዎቹ በግልጽ አማርኛ ቀርበዋል።\n\n`;
+      const introBanner = `> **Amharic Study Guide:** ዋና ቃላት፣ Types እና Parts በእንግሊዝኛ፣ ማብራሪያዎቹ በግልጽ አማርኛ ቀርበዋል።\n\n`;
 
       const sectionStudyGuide =
-        `\n\n---\n#### የ${headingAm} የጥናት እና የፈተና ትኩረት\n` +
-        `- **የጥናት መመሪያ፦** በ${subjLabel} ፈተናዎች ውስጥ የክፍሉን ዋና ትርጓሜዎች (Key Terms)፣ ዓይነቶችን (Types) እና ክፍሎችን (Parts) በእንግሊዝኛ ስያሜያቸው ከአማርኛ ማብራሪያቸው ጋር አያይዘው ይያዙ።` +
+        `\n\n---\n#### Section Study & Exam Focus\n` +
+        `- **Study Guide:** በ${subjLabel} ፈተናዎች ውስጥ የክፍሉን ዋና ትርጓሜዎች (Key Terms)፣ ዓይነቶችን (Types) እና ክፍሎችን (Parts) በእንግሊዝኛ ስያሜያቸው ከአማርኛ ማብራሪያቸው ጋር አያይዘው ይያዙ።` +
         (eqCount > 0
-          ? `\n- **ቀመሮችና Units፦** በዚህ ክፍል ውስጥ ያሉትን ${eqCount} ቀመሮች (Equations) ከመለኪያ Units ጋር ደጋግመው ይለማመዱ።`
+          ? `\n- **Formulas & Units:** በዚህ ክፍል ውስጥ ያሉትን ${eqCount} ቀመሮች (Equations) ከመለኪያ Units ጋር ደጋግመው ይለማመዱ።`
           : '') +
         (exCount > 0
-          ? `\n- **የተሰሩ ምሳሌዎች፦** የቀረቡትን ${exCount} Solved Examples መፍትሔ ሳያዩ በራስዎ ሠርተው ከመጨረሻው ውጤት ጋር ያመሳክሩ።`
-          : '\n- **የፈተና ማስጠንቀቂያ፦** በብዙ ምርጫ ጥያቄዎች ውስጥ "ሁልጊዜ/Always"፣ "ብቻ/Only"፣ "በስተቀር/Except" እና "አይደለም/Not" የሚሉ ቃላትን በጥንቃቄ ያንብቡ።');
+          ? `\n- **Worked Examples:** የቀረቡትን ${exCount} Solved Examples መፍትሔ ሳያዩ በራስዎ ሠርተው ከመጨረሻው ውጤት ጋር ያመሳክሩ።`
+          : '\n- **Exam Warning:** በብዙ ምርጫ ጥያቄዎች ውስጥ Always, Only, Except እና Not የሚሉ ቃላትን በጥንቃቄ ያንብቡ።');
 
       const equations: TranslatedEquationItem[] = (sec.equations || []).map((eq) => ({
-        nameAm: translateEnglishAcademicContentToAmharic(
-          eq.name || '',
-          chapter.subject,
-          ctx
-        ),
+        nameAm: eq.name || '',
         formula: eq.formula,
         explanationAm: translateEnglishAcademicContentToAmharic(
           eq.explanation || eq.description || '',
@@ -1145,7 +1387,7 @@ export function buildFullAmharicTranslatedSections(
   );
 
   // Guarantee EVERY chapter's Amharic translated prose & total content is strictly larger
-  // than the English chapter while keeping the Hybrid 78-84% Amharic balance.
+  // than the English chapter while keeping ALL titles/headings/bolded text in English.
   const enLength = computeEnglishChapterLength(chapter);
   const enProseLen =
     (chapter.overview || '').length +
@@ -1174,20 +1416,20 @@ export function buildFullAmharicTranslatedSections(
     const allTraps = sections.flatMap((s) => s.examTraps).slice(0, 6);
     const trapBullets =
       allTraps.length > 0
-        ? allTraps.map((tr) => `- **Exam Trap፦** ${tr}`).join('\n')
-        : `- **Exam Trap፦** በፈተና ወቅት ተቀራራቢ ጽንሰ-ሐሳቦችን ሳያቀላቅሉ ሁኔታዎችንና Unitsን ያረጋግጡ።`;
+        ? allTraps.map((tr) => `- **Exam Trap:** ${tr}`).join('\n')
+        : `- **Exam Trap:** በፈተና ወቅት ተቀራራቢ ጽንሰ-ሐሳቦችን ሳያቀላቅሉ ሁኔታዎችንና Unitsን ያረጋግጡ።`;
 
     const lastSec = sections[sections.length - 1];
     const expansionBlock =
-      `\n\n### የምዕራፍ ${chapter.chapterNumber} የፈተና ክለሳ እና ማጠቃለያ (${subjLabel})\n` +
+      `\n\n### Chapter ${chapter.chapterNumber} Exam Review & Summary (${subjEnTitle})\n` +
       `ይህ የክለሳ ክፍል የምዕራፉን ሁሉንም ንዑስ ክፍሎች በአንድ ላይ በማጠናቀር ለአጋማሽ እና ለመጨረሻ ፈተናዎች (Midterm & Final Exams) ሙሉ ዝግጁነት እንዲኖርዎት ይረዳል።\n\n` +
-      `#### 1. በምዕራፉ ውስጥ የተሸፈኑ ዋና ክፍሎች\n${outlineBullets}\n\n` +
-      `#### 2. ለፈተና ቁልፍ መደምደሚያዎች\n${takeawayBullets}\n\n` +
-      `#### 3. በፈተና ወቅት የተለመዱ ወጥመዶች\n${trapBullets}\n\n` +
-      `#### 4. የ3-ደረጃ ውጤታማ የጥናት ዘዴ\n` +
-      `1. **ግልጽ ትርጓሜ እና ንጽጽር፦** እያንዳንዱን ቁልፍ ቃል፣ Type እና Part በእንግሊዝኛ ስያሜው ከአማርኛ ማብራሪያው ጋር ያያይዙ።\n` +
-      `2. **የፈተና ጥያቄ ትንተና፦** ከላይ የቀረቡትን ምሳሌዎችና ቀመሮች በመጠቀም ጥያቄዎችን ይለማመዱ።\n` +
-      `3. **ፈጣን ራስን መፈተኛ፦** ምዕራፉን ከጨረሱ በኋላ ዋና ዋና ቃላቱን ሳያዩ በቃልዎ በመዘርዘር መጨበጥዎን ያረጋግጡ።`;
+      `#### 1. Major Sections Covered in This Chapter\n${outlineBullets}\n\n` +
+      `#### 2. Key Takeaways for Exams\n${takeawayBullets}\n\n` +
+      `#### 3. Common Exam Traps\n${trapBullets}\n\n` +
+      `#### 4. Effective 3-Step Study Method\n` +
+      `1. **Clear Definitions & Comparison:** እያንዳንዱን ቁልፍ ቃል፣ Type እና Part በእንግሊዝኛ ስያሜው ከአማርኛ ማብራሪያው ጋር ያያይዙ።\n` +
+      `2. **Exam Question Practice:** ከላይ የቀረቡትን ምሳሌዎችና ቀመሮች በመጠቀም ጥያቄዎችን ይለማመዱ።\n` +
+      `3. **Quick Self-Check:** ምዕራፉን ከጨረሱ በኋላ ዋና ዋና ቃላቱን ሳያዩ በቃልዎ በመዘርዘር መጨበጥዎን ያረጋግጡ።`;
 
     lastSec.contentAm += expansionBlock;
     amLength = computeTranslatedChapterLength(overviewAm, sections);
@@ -1198,7 +1440,7 @@ export function buildFullAmharicTranslatedSections(
     while ((amLength < targetMinLength || amProseLen < targetMinProse) && extraIdx < maxPads) {
       const sec = sections[extraIdx % sections.length];
       const padText =
-        `\n\n> **የ${sec.headingAm} የክለሳ ማስታወሻ፦** ተማሪዎች ይህን ክፍል ሲያጠኑ ዋናውን ጽንሰ-ሐሳብ ከቅድመ-ሁኔታዎቹ፣ ከTypes/Parts ክፍፍሎቹ እና ከሌሎች ተዛማጅ ርዕሶች ጋር በማነጻጸር መከለስ አለባቸው፤ በፈተና ላይ የሚጠየቁ ልዩነቶችንና የሂሳብ ወይም የሎጂክ ደረጃዎችን በቅደም ተከተል በማስታወስ ከስህተት መጠበቅ ይቻላል።`;
+        `\n\n> **Revision Note:** ተማሪዎች ይህን ክፍል ሲያጠኑ ዋናውን ጽንሰ-ሐሳብ ከቅድመ-ሁኔታዎቹ፣ ከTypes/Parts ክፍፍሎቹ እና ከሌሎች ተዛማጅ ርዕሶች ጋር በማነጻጸር መከለስ አለባቸው፤ በፈተና ላይ የሚጠየቁ ልዩነቶችንና የሂሳብ ወይም የሎጂክ ደረጃዎችን በቅደም ተከተል በማስታወስ ከስህተት መጠበቅ ይቻላል።`;
       sec.contentAm += padText;
       amLength += padText.length;
       amProseLen += padText.length;
@@ -1206,8 +1448,12 @@ export function buildFullAmharicTranslatedSections(
     }
   }
 
+  for (const sec of sections) {
+    sec.contentAm = convertMarkdownHeadingsToEnglish(enforceEnglishOnlyBold(sec.contentAm));
+  }
+
   const result: TranslatedAmharicChapterResult = {
-    overviewAm,
+    overviewAm: convertMarkdownHeadingsToEnglish(enforceEnglishOnlyBold(overviewAm)),
     sections,
   };
 
