@@ -18,6 +18,7 @@ import { EXTRA_NOTES_CRITICAL_THINKING } from './extraNotesCriticalThinking.ts';
 import { EXTRA_NOTES_MATHS_NAT } from './extraNotesMathsNat.ts';
 import { EXTRA_NOTES_ECONOMICS } from './extraNotesEconomics.ts';
 import { EXTRA_NOTES_MATHS_APPLIED } from './extraNotesMathsApplied.ts';
+import { EXTRA_NOTES_FITNESS } from './extraNotesFitness.ts';
 
 /**
  * Central registry mapping canonical Subject and Chapter Number to enlarged extra notes.
@@ -49,4 +50,5 @@ export const EXTRA_ENLARGED_NOTES: Partial<Record<Subject, Record<number, Master
   mathematics: EXTRA_NOTES_MATHS_NAT,
   economics: EXTRA_NOTES_ECONOMICS,
   math_applied_2: EXTRA_NOTES_MATHS_APPLIED,
+  fitness: EXTRA_NOTES_FITNESS,
 };

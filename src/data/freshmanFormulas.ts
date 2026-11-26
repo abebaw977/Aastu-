@@ -202,8 +202,47 @@ const RAW_FRESHMAN_FORMULAS: FormulaItem[] = [
     name: 'Target Heart Rate Reserve',
     formula: 'HR_{\\text{target}} = HR_{\\text{rest}} + \\%\\text{Intensity} \\times (HR_{\\text{max}} - HR_{\\text{rest}})',
     variablesExplanation: 'HR_max = 220 - Age; HR_rest = resting heart rate measured upon waking',
-    description: 'Calculates the optimal aerobic training zone (typically 65%–85% intensity) for cardiorespiratory fitness development.',
+    description: 'Calculates the optimal aerobic training zone (typically 60%–85% intensity) for cardiorespiratory fitness development.',
     examTip: 'Karvonen is more accurate than simple percentage of HRmax because it factors in baseline resting heart rate.',
+    difficulty: 'Core'
+  },
+  {
+    id: 'form-spsc-2',
+    subject: 'fitness',
+    semester: 1,
+    topic: 'Cardiorespiratory Prescription (4.4.1)',
+    category: 'Aerobic Training',
+    name: 'Maximum Heart Rate & Aerobic Training Zone',
+    formula: '\\text{MHR} = 220 - \\text{Age}, \\quad \\text{Target Zone} = 0.60\\text{ MHR} \\text{ to } 0.85\\text{ MHR}',
+    variablesExplanation: 'Prescribed 3–5 days/week for 20–60 minutes per session',
+    description: 'Standard Unit 4 cardiorespiratory exercise prescription formula for determining safe aerobic intensity.',
+    examTip: 'For a 20-year-old, MHR = 200 bpm, so 60%–85% MHR equals 120–170 bpm.',
+    difficulty: 'Core'
+  },
+  {
+    id: 'form-spsc-3',
+    subject: 'fitness',
+    semester: 1,
+    topic: 'Body Composition & Nutrition Timing',
+    category: 'Wellness & Recovery',
+    name: 'Body Mass Index (BMI) & Post-Exercise Recovery Ratio',
+    formula: '\\text{BMI} = \\frac{\\text{Weight (kg)}}{[\\text{Height (m)}]^2}, \\qquad \\text{Post-Workout Window} = 30\\text{--}60\\text{ min (3:1 to 4:1 Carb:Protein)}',
+    variablesExplanation: 'Weight in kg, Height in meters; Post-exercise recovery pairs protein and carbohydrates',
+    description: 'Screens body weight relative to height and defines optimal post-workout nutrient timing for muscle repair and glycogen replenishment.',
+    examTip: 'Pre-exercise meals occur 2–3 hours before activity (high carb, low fat); post-exercise nutrition occurs within 30–60 minutes.',
+    difficulty: 'Core'
+  },
+  {
+    id: 'form-spsc-4',
+    subject: 'fitness',
+    semester: 1,
+    topic: 'Muscle Fitness & Flexibility Prescription',
+    category: 'Resistance & Stretching',
+    name: '1RM Strength vs. Endurance & Flexibility Prescription',
+    formula: '\\text{Strength} > 80\\%\\text{ 1RM (1--6 reps)} \\;\\mid\\; \\text{Endurance} < 65\\%\\text{ 1RM (12--20 reps)} \\;\\mid\\; \\text{Flex} = 15\\text{--}30\\text{ s}',
+    variablesExplanation: '1RM = One-Repetition Maximum; Flexibility prescribed 2–3 days/week',
+    description: 'Summarizes Unit 4 weight training load-repetition inverse relationship and flexibility hold duration.',
+    examTip: 'Heavy load + low reps builds maximal strength; lighter load + high reps builds muscular endurance.',
     difficulty: 'Core'
   },
 

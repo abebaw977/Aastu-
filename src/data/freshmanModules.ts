@@ -5536,21 +5536,18 @@ Derived from Greek *deon* ("duty"). Certain features of actions themselves make 
   {
     id: 'spsc1011',
     code: 'SpSc 1011',
-    title: 'Physical Fitness & Conditioning',
+    title: 'Physical Fitness',
     semester: 1,
     subject: 'fitness',
     creditHours: 2,
     midtermWeight: '30% (Week 7)',
     finalWeight: '50% (Week 13)',
-    overview: 'Concepts of health-related and skill-related physical fitness, exercise physiology, training principles (FITT), nutrition, and active lifestyle wellness.',
+    overview: 'Comprehensive 4-Unit Physical Fitness (SpSc 1011) course covering Unit 1: Concepts of Physical Fitness, Unit 2: The Health Benefits of Physical Activity, Unit 3: Nutrition and Physical Performance, and Unit 4: Health-Related Components of Fitness and Principles of Exercise Prescription.',
     keyTopics: [
-      'Health-Related vs Skill-Related Fitness',
-      'Principles of Exercise Training (Overload, Progression, Specificity)',
-      'The FITT Formula (Frequency, Intensity, Time, Type)',
-      'Cardiorespiratory Endurance & Target Heart Rate',
-      'Muscular Strength & Endurance Physiology',
-      'Nutritional Foundations for Active Students',
-      'Stress Management & Lifetime Physical Wellness'
+      'Unit 1: Concepts of Physical Fitness (1.1 Definitions of Terms; 1.2 General Principles of Fitness Training: Overload, FIIT, Rest/Recovery/Periodization, Reversibility, Individual Difference)',
+      'Unit 2: The Health Benefits of Physical Activity (2.1 Hypokinetic Diseases; 2.2 Cardiovascular Diseases: Coronary Heart Disease, Hypercholesterolemia & Dyslipidemia)',
+      'Unit 3: Nutrition and Physical Performance (3.2 Before Exercise, During Exercise, After Exercise & How to Plan Your Training Diet)',
+      'Unit 4: Health-Related Components of Fitness & Principles of Exercise Prescription (4.1 Components, 4.2 Exercise Prescription, 4.3 Individualizing Workout, 4.4 Cardiorespiratory, 4.5 Muscle Fitness, 4.6 Flexibility)'
     ],
     chapters: [
       {
@@ -5559,51 +5556,365 @@ Derived from Greek *deon* ("duty"). Certain features of actions themselves make 
         semester: 1,
         courseCode: 'SpSc 1011',
         chapterNumber: 1,
-        title: 'Exercise Physiology, FITT Principles & Target Heart Rate',
-        moduleName: 'Physical Fitness & Conditioning',
-        overview: 'Scientific principles governing physical adaptation, cardiovascular workload calculation, and metabolic energy systems during exercise.',
-        estimatedReadTimeMinutes: 15,
+        title: 'Unit 1: Concepts of Physical Fitness',
+        moduleName: 'Physical Fitness',
+        overview: 'Foundational definitions distinguishing Physical Fitness, Physical Activity, Physical Exercise, and Sport, followed by the five General Principles of Fitness Training governing safe physiological adaptation.',
+        estimatedReadTimeMinutes: 18,
         sections: [
           {
-            id: 'fit-sec-1',
-            heading: '1. Health-Related Fitness Components & The FITT Principle',
-            content: `### Five Health-Related Components
-1. **Cardiorespiratory Endurance**: Ability of heart, lungs, and vessels to supply oxygen during sustained exercise.
-2. **Muscular Strength**: Maximum force a muscle group can exert in a single contraction (1RM).
-3. **Muscular Endurance**: Ability of muscles to contract repeatedly without fatigue.
-4. **Flexibility**: Range of motion available at a joint.
-5. **Body Composition**: Ratio of lean body mass to adipose fat mass.
+            id: 'fit-u1-sec1',
+            heading: '1.1 Meanings and Definitions of Terms',
+            content: `### 1.1.1 Physical Fitness
+- **Definition**: The ability to live a full and balanced life; a dynamic state of health and well-being that enables an individual to perform daily activities vigorously without undue fatigue, while retaining ample energy for leisure pursuits and unforeseen emergencies.
+- **Dual Dimensions**: Encompasses both **Health-Related Physical Fitness** (protecting against chronic diseases) and **Skill-Related Physical Fitness** (enhancing athletic coordination and sport performance).
 
-### Principles of Exercise Training
-- **Overload**: Training stimulus must exceed normal threshold for adaptation.
-- **Specificity**: Adaptations are specific to the muscle groups and energy systems trained.
-- **Reversibility**: Fitness gains diminish when training stops ("use it or lose it").`,
+### 1.1.2 Physical Activity
+- **Definition**: Any bodily movement produced by **skeletal muscles** that requires **energy expenditure** above resting metabolic levels.
+- **Characteristics**: Includes both structured workouts and unstructured everyday movements.
+- **Examples**: Walking to campus lectures, gardening, climbing stairs, carrying groceries, or active household work.
+
+### 1.1.3 Physical Exercise
+- **Definition**: A planned, structured, and repetitive subset of physical activity intentionally undertaken to improve or maintain one or more components of physical fitness.
+- **Key Distinction**: Unlike incidental physical activity, exercise follows specific volume, intensity, and progression targets.
+- **Examples**: Jogging $30\\text{ minutes}$ three times weekly at $70\\%\\text{ MHR}$, structured resistance training, or scheduled swimming laps.
+
+### 1.1.4 Sport
+- **Definition**: Competitive physical activity governed by formal, institutionalized rules, typically involving specialized motor skill, tactical strategy, scoring systems, and organized competition.
+- **Examples**: Football, basketball, track and field athletics, volleyball, and tennis.`,
+            workedExamples: [
+              {
+                problem: 'Categorize the following four behaviors as Physical Activity, Physical Exercise, Sport, or Physical Fitness: (a) Sweeping the compound for $25\\text{ min}$; (b) Running intervals $4\\text{ times/week}$ at $80\\%\\text{ MHR}$ to boost stamina; (c) Playing a university league volleyball match; (d) Having high $\\text{VO}_{2\\max}$ and low resting heart rate.',
+                stepByStepSolution: [
+                  '(a) Sweeping the compound = **Physical Activity** (skeletal muscle movement expending energy, unstructured for fitness conditioning).',
+                  '(b) Scheduled interval running $4\\times/\\text{week}$ = **Physical Exercise** (planned, structured, repetitive training aimed at improving cardiorespiratory fitness).',
+                  '(c) League volleyball match = **Sport** (rule-governed, skill- and strategy-based competitive play).',
+                  '(d) High $\\text{VO}_{2\\max}$ and low RHR = Indicators of **Physical Fitness** (the adaptive physiological state).'
+                ],
+                shortcutTip: 'Look for the three keywords for Exercise: **Planned, Structured, Repetitive**!'
+              }
+            ],
+            examTraps: [
+              'Treating Physical Activity and Physical Exercise as synonyms: Every Physical Exercise session is Physical Activity, but casual walking or gardening is Physical Activity without necessarily being structured Physical Exercise.'
+            ],
+            keyTakeaways: [
+              'Physical Fitness is a state of health/well-being allowing daily tasks without undue fatigue.',
+              'Physical Activity is any energy-expending skeletal muscle movement; Physical Exercise is planned, structured, and repetitive; Sport is rule-governed competitive activity.'
+            ]
+          },
+          {
+            id: 'fit-u1-sec2',
+            heading: '1.2 General Principles of Fitness Training',
+            content: `### 1.2.1 Principle of Overload
+- To improve physical fitness, you must stress the body beyond its normal everyday workload (e.g., lifting heavier weights, running faster, or extending exercise duration). Without overload, the body remains at baseline.
+
+### 1.2.2 FIIT Principle
+A systematic framework for designing and adjusting training programs (often written **FIIT** or **FITT**):
+- **Frequency**: How often you exercise (sessions per week, e.g., $3\\text{--}5\\text{ days/week}$).
+- **Intensity**: How hard the workout feels or physiological effort required (e.g., $60\\%\\text{--}85\\%\\text{ MHR}$ or $\\%\\text{ 1RM}$).
+- **Time**: How long each exercise session lasts (duration in minutes, e.g., $20\\text{--}60\\text{ min}$).
+- **Type**: What kind of exercise is performed (e.g., running, cycling, resistance weights, stretching).
+
+### 1.2.3 Principle of Rest, Recovery, and Periodization
+- **Rest & Recovery**: Training creates microscopic muscle stress and depletes energy stores; physiological adaptation, tissue repair, and strength growth occur **during rest and sleep**.
+- **Periodization**: Systematically cycling training volume and intensity across distinct phases (e.g., base, build, peak, active rest) to maximize long-term progress while preventing **training plateaus** and **overtraining syndrome**.
+
+### 1.2.4 Principle of Reversibility
+- Often summarized as **"Use it or lose it"**: Fitness adaptations are reversible and gradually decline when training stops or drops sharply below maintenance thresholds. Aerobic capacity drops measurably after $2\\text{--}4\\text{ weeks}$ of detraining.
+
+### 1.2.5 Principle of Individual Difference
+- Every individual responds uniquely to the same training stimulus due to differences in **genetics, age, baseline fitness, body composition, recovery capacity, and goals**. Exercise programs must be personalized rather than copied identically.`,
             equations: [
               {
-                name: 'Maximum Heart Rate (MHR) & Target Range',
-                formula: '\\text{MHR} = 220 - \\text{Age}, \\quad \\text{Target Zone} = 65\\% \\text{ to } 85\\% \\text{ of MHR}',
-                explanation: 'Governs cardiovascular intensity prescribed in the FITT formula.'
+                name: 'FIIT Cardiorespiratory Target Prescription',
+                formula: '\\text{MHR} = 220 - \\text{Age}, \\qquad \\text{Intensity} = 60\\%\\text{--}85\\%\\text{ MHR}',
+                explanation: 'Defines the Intensity variable of the FIIT principle for safe and effective aerobic overload.'
+              }
+            ],
+            examTraps: [
+              'Believing that training 7 days/week with maximum weight accelerates gains: Skipping Rest and Recovery causes overtraining, fatigue, and injury rather than adaptation.'
+            ],
+            keyTakeaways: [
+              'Overload stresses the body above normal; FIIT structures Frequency, Intensity, Time, and Type.',
+              'Rest/Periodization drives supercompensation, Reversibility explains detraining, and Individual Difference requires tailored programming.'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'spsc1011-ch2',
+        subject: 'fitness',
+        semester: 1,
+        courseCode: 'SpSc 1011',
+        chapterNumber: 2,
+        title: 'Unit 2: The Health Benefits of Physical Activity',
+        moduleName: 'Physical Fitness',
+        overview: 'Examination of how sedentary living leads to hypokinetic diseases (obesity, type 2 diabetes, osteoporosis) and how regular physical activity prevents and manages coronary heart disease, hypercholesterolemia, and dyslipidemia.',
+        estimatedReadTimeMinutes: 16,
+        sections: [
+          {
+            id: 'fit-u2-sec1',
+            heading: '2.1 Physical Activity and Hypokinetic Diseases/Conditions',
+            content: `### What Are Hypokinetic Diseases?
+- **Etymology**: *Hypo-* (insufficient/under) + *-kinetic* (movement). **Hypokinetic diseases** are chronic health conditions caused or worsened by insufficient physical activity and prolonged sedentary behavior.
+- **Core Hypokinetic Conditions & Protective Effects of Activity**:
+  1. **Obesity**: Excess body fat accumulation resulting from chronic caloric surplus and low movement. Regular exercise raises daily energy expenditure, improves fat oxidation, and preserves lean muscle mass.
+  2. **Type 2 Diabetes**: Impaired glucose regulation caused by **insulin resistance**. Skeletal muscle contractions activate insulin-independent glucose uptake (**GLUT4** translocation) and improve long-term insulin sensitivity.
+  3. **Osteoporosis**: Progressive loss of **bone mineral density (BMD)** leaving bones porous and fracture-prone. Weight-bearing activities (brisk walking, jogging, jumping, resistance training) stimulate bone-forming osteoblasts and protect skeletal strength.
+  - Other linked hypokinetic issues include chronic low back pain, hypertension, and metabolic syndrome.`,
+            examTraps: [
+              'Classifying Type 1 Diabetes or infectious bacterial illnesses as hypokinetic diseases: Hypokinetic diseases specifically stem from inactivity (Obesity, Type 2 Diabetes, Osteoporosis, CHD).'
+            ],
+            keyTakeaways: [
+              'Hypokinetic diseases arise from insufficient physical activity.',
+              'Consistent exercise prevents and helps manage obesity, type 2 diabetes, and osteoporosis.'
+            ]
+          },
+          {
+            id: 'fit-u2-sec2',
+            heading: '2.2 Physical Activity and Cardiovascular Diseases',
+            content: `### 2.2.1 Coronary Heart Disease (CHD)
+- **Pathology**: Narrowing or blockage of the coronary arteries by atherosclerotic plaque reduces oxygenated blood flow to the heart muscle (**myocardium**), risking angina and myocardial infarction (heart attack).
+- **Cardioprotective Benefits of Physical Activity**:
+  - Strengthens left ventricular heart muscle contraction and raises **stroke volume ($\\text{SV}$)**.
+  - Lowers resting and submaximal **blood pressure** by enhancing arterial elasticity and endothelial vasodilation.
+  - Reduces resting heart rate, improves myocardial oxygen efficiency, and lowers the risk of fatal **heart attacks** and strokes.
+
+### 2.2.2 Hypercholesterolemia and Dyslipidemia
+- **Hypercholesterolemia**: Abnormally high total blood cholesterol levels.
+- **Dyslipidemia**: Unfavorable blood lipid profile (elevated LDL cholesterol, elevated triglycerides, or depressed HDL cholesterol).
+- **How Exercise Improves Lipid Profiles**:
+  - Raises **HDL ("good" cholesterol — High-Density Lipoprotein)**, which clears excess cholesterol from arterial walls back to the liver for elimination.
+  - Lowers **LDL ("bad" cholesterol — Low-Density Lipoprotein)** and **triglycerides**, slowing arterial plaque deposition and managing blood lipid disorders.`,
+            equations: [
+              {
+                name: 'Cardiac Output Relation',
+                formula: 'Q = \\text{HR} \\times \\text{SV}',
+                explanation: 'Aerobic conditioning increases Stroke Volume (SV), allowing the heart to pump more blood per beat at a lower resting Heart Rate (HR).'
               }
             ],
             workedExamples: [
               {
-                problem: 'Calculate the target aerobic training heart rate zone for a 20-year-old freshman student.',
+                problem: 'Explain why an aerobically trained freshman typically has a lower resting heart rate ($55\\text{ bpm}$) than a sedentary peer ($78\\text{ bpm}$) while maintaining healthy resting cardiac output ($Q \\approx 5.0\\text{ L/min}$).',
                 stepByStepSolution: [
-                  'Step 1: Compute MHR: $220 - 20 = 200\\text{ beats per minute (bpm)}$.',
-                  'Step 2: Compute lower aerobic bound (65%): $200 \\times 0.65 = 130\\text{ bpm}$.',
-                  'Step 3: Compute upper aerobic bound (85%): $200 \\times 0.85 = 170\\text{ bpm}$.',
-                  'Result: The student\'s optimal training zone is $130\\text{--}170\\text{ bpm}$.'
+                  '1. From $Q = \\text{HR} \\times \\text{SV}$, resting cardiac output stays around $5,000\\text{ mL/min}$.',
+                  '2. Regular physical activity strengthens the myocardium and enlarges **Stroke Volume ($\\text{SV}$)** (e.g., $\\sim 91\\text{ mL/beat}$ vs $\\sim 64\\text{ mL/beat}$).',
+                  '3. Because more blood is ejected per beat, the heart needs fewer beats per minute ($55\\text{ bpm}$), reducing chronic cardiac strain and CHD risk.'
                 ],
-                shortcutTip: 'A 20-year-old simply multiplies 200 bpm by 0.65 and 0.85.'
+                shortcutTip: 'Trained heart = Higher $\\text{SV}$ + Lower resting $\\text{HR}$ + Lower Blood Pressure + Higher **HDL**!'
+              }
+            ],
+            keyTakeaways: [
+              'Physical activity lowers CHD risk by strengthening heart pumping efficiency and reducing blood pressure.',
+              'Exercise improves cholesterol profiles by raising HDL ("good") cholesterol and lowering LDL ("bad") cholesterol.'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'spsc1011-ch3',
+        subject: 'fitness',
+        semester: 1,
+        courseCode: 'SpSc 1011',
+        chapterNumber: 3,
+        title: 'Unit 3: Nutrition and Physical Performance',
+        moduleName: 'Physical Fitness',
+        overview: 'Evidence-based sports nutrition strategies covering nutrient and fluid timing before, during, and after exercise, alongside practical guidelines for planning a balanced training diet.',
+        estimatedReadTimeMinutes: 16,
+        sections: [
+          {
+            id: 'fit-u3-sec2',
+            heading: '3.2 Nutrition and Physical Performance',
+            content: `### 3.2.1 Nutrition Before Exercise
+- **Timing**: Consume a balanced pre-exercise meal **$2\\text{--}3\\text{ hours}$ before activity** (plus a light carbohydrate snack $30\\text{--}60\\text{ minutes}$ prior if needed).
+- **Macronutrient Focus**:
+  - **Carbohydrates**: Primary priority to top off muscle and liver **glycogen** stores for sustained energy.
+  - **Moderate Protein**: Supports amino acid availability and prevents muscle catabolism without overloading digestion.
+  - **Low Fat (and low heavy fiber)**: Fat digests slowly and can cause gastrointestinal cramps or sluggishness during training.
+- **Proper Hydration**: Drink $400\\text{--}600\\text{ mL}$ of water $2\\text{ hours}$ prior to exercise to begin training fully hydrated.
+
+### 3.2.2 Nutrition During Exercise
+- **Hydration & Electrolyte Balance**: Drink small amounts ($150\\text{--}250\\text{ mL}$) every $15\\text{--}20\\text{ minutes}$ to replace sweat losses. Even $2\\%$ body weight dehydration noticeably impairs endurance and focus. For heavy sweating ($>60\\text{ min}$ or hot weather), replace **electrolytes** (especially sodium and potassium).
+- **Carbohydrates for Endurance**: During prolonged endurance activities lasting $>60\\text{ minutes}$, consume $30\\text{--}60\\text{ g/hour}$ of easily absorbed carbohydrates (sports beverages, ripe bananas, fruit gels) to sustain blood glucose.
+
+### 3.2.3 Nutrition After Exercise
+- **Recovery Window**: Consume recovery nutrients within **$30\\text{--}60\\text{ minutes}$ post-exercise**, when muscle blood flow and glucose uptake sensitivity peak.
+- **Protein + Carbohydrates**:
+  - **Protein** ($20\\text{--}30\\text{ g}$) supplies amino acids needed for **muscle repair** and protein synthesis.
+  - **Carbohydrates** stimulate insulin-assisted **glycogen replenishment** (often targeted at a $3:1\\text{ to }4:1$ carbohydrate-to-protein ratio after endurance sessions).
+- **Rehydration**: Replace fluids lost via sweat ($1.25\\text{--}1.5\\text{ L}$ per $1\\text{ kg}$ weight lost).
+
+### 3.2.4 How to Plan Your Training Diet
+1. **Balance Macronutrients**: Allocate daily energy across **Carbohydrates ($45\\%\\text{--}65\\%$)** for fuel, **Proteins ($10\\%\\text{--}35\\%$)** for tissue repair, and **Healthy Fats ($20\\%\\text{--}35\\%$)** for hormones and cellular health.
+2. **Time Meals Around Workouts**: Align pre-, during-, and post-workout intake with training schedules.
+3. **Ensure Adequate Calorie & Fluid Intake**: Scale daily caloric and fluid volume directly to **training intensity**, session duration, and climate.`,
+            workedExamples: [
+              {
+                problem: 'Design an appropriate pre-exercise ($2.5\\text{ hours}$ prior) and post-exercise ($40\\text{ minutes}$ after) meal plan for a university student training for a $10\\text{ km}$ campus race.',
+                stepByStepSolution: [
+                  '1. **Pre-Exercise (3.2.1 — $2.5\\text{ h}$ prior)**: Oatmeal or whole-grain injera/bread with banana and a boiled egg or yogurt + $500\\text{ mL}$ water $\\rightarrow$ High carbohydrates, moderate protein, low fat, proper hydration.',
+                  '2. **During Race (3.2.2 — if $>60\\text{ min}$)**: Periodic sips of water or diluted electrolyte-carbohydrate drink every $15\\text{--}20\\text{ min}$.',
+                  '3. **Post-Exercise (3.2.3 — within $30\\text{--}60\\text{ min}$)**: Milk/yogurt fruit smoothie or rice with lean chicken/lentils + water $\\rightarrow$ Supplies fast **carbohydrates** for glycogen replenishment and **protein** for muscle fiber repair.'
+                ],
+                shortcutTip: 'Remember the timing anchors: **2–3 hours before** (Carbs + Moderate Protein + Low Fat + Water) and **30–60 minutes after** (Protein + Carbs)!'
               }
             ],
             examTraps: [
-              'Confusing Agility and Balance (Skill-related) with Flexibility (Health-related).',
-              'Assuming lifting lighter weights with high repetitions builds maximal strength. That builds muscular endurance; maximal strength requires heavy resistance ($>80\\%\\text{ 1RM}$).'
+              'Prescribing a high-fat meal $30\\text{ minutes}$ before intense activity: Fat slows gastric emptying and impairs acute exercise comfort.',
+              'Giving protein alone after exhaustive endurance training: Carbohydrates are essential post-workout for rapid glycogen replenishment alongside protein for muscle repair.'
             ],
             keyTakeaways: [
-              'FITT stands for Frequency, Intensity, Time, and Type.',
-              'Aerobic exercise utilizes oxygen and oxidative phosphorylation; anaerobic exercise relies on ATP-CP and glycolysis.'
+              'Pre-exercise meals ($2\\text{--}3\\text{ h}$ prior) emphasize carbohydrates, moderate protein, low fat, and hydration.',
+              'During exercise focuses on hydration/electrolytes plus carbs for prolonged endurance; post-exercise ($30\\text{--}60\\text{ min}$) combines protein and carbs.'
+            ]
+          }
+        ]
+      },
+      {
+        id: 'spsc1011-ch4',
+        subject: 'fitness',
+        semester: 1,
+        courseCode: 'SpSc 1011',
+        chapterNumber: 4,
+        title: 'Unit 4: Health-Related Components of Fitness and Principles of Exercise Prescription',
+        moduleName: 'Physical Fitness',
+        overview: 'Comprehensive guide to the four health-related components of fitness and complete exercise prescription methodologies for cardiorespiratory fitness, muscular strength/endurance, and flexibility.',
+        estimatedReadTimeMinutes: 24,
+        sections: [
+          {
+            id: 'fit-u4-sec1',
+            heading: '4.1 Health-Related Components of Fitness',
+            content: `### 4.1.1 Cardio-respiratory Fitness
+- The ability of the **heart, lungs, and blood vessels** to deliver oxygen efficiently to working muscles during sustained physical activity (e.g., running, swimming, brisk cycling).
+
+### 4.1.2 Muscle Fitness
+- **Muscular Strength**: Maximal force a muscle or muscle group can produce in a single maximal effort ($1\\text{-RM}$).
+- **Muscular Endurance**: Ability of a muscle group to perform repeated contractions over an extended time without fatiguing.
+
+### 4.1.3 Flexibility
+- The pain-free **range of motion (ROM)** available at a joint or series of joints; improved systematically through stretching exercises.
+
+### 4.1.4 Body Composition
+- The relative proportions of **fat mass** and **lean body mass** (muscle, bone, water, organs) in the body; managed via regular exercise combined with balanced nutrition.`,
+            equations: [
+              {
+                name: 'Body Mass Index (BMI) Screening Formula',
+                formula: '\\text{BMI} = \\frac{\\text{Weight (kg)}}{[\\text{Height (m)}]^2}',
+                explanation: 'Common clinical screening index used alongside waist circumference and skinfolds when evaluating body composition.'
+              }
+            ],
+            keyTakeaways: [
+              'The four health-related domains in this unit are Cardio-respiratory Fitness, Muscle Fitness (Strength & Endurance), Flexibility, and Body Composition.'
+            ]
+          },
+          {
+            id: 'fit-u4-sec2',
+            heading: '4.2 Principles of Exercise Prescription & 4.3 Individualizing Workout',
+            content: `### 4.2.1 Fitness Goals (SMART Framework)
+Effective exercise prescription begins by setting **SMART goals** tailored to individual needs:
+- **S**pecific — clear objective (e.g., *"Jog $3\\text{ km}$ continuously"*).
+- **M**easurable — tracked with numbers (minutes, bpm, kg, reps).
+- **A**chievable — realistic given current baseline fitness.
+- **R**elevant — aligned with personal health or sport priorities.
+- **T**ime-bound — assigned a clear target timeframe (e.g., $8\\text{ weeks}$).
+
+### 4.2.2 Mode of Exercise
+- Select exercise modalities matched directly to desired fitness components (e.g., **aerobic** modes for cardiorespiratory fitness, **resistance** exercises for muscle fitness, **stretching** for flexibility).
+
+### 4.2.3 Warm Up
+- $5\\text{--}10\\text{ minutes}$ of light aerobic activity combined with **dynamic stretching** to gradually elevate heart rate, increase muscle blood flow and temperature, lubricate joints, and prevent injury.
+
+### 4.2.4 Primary Conditioning Period: The Workout Plan
+- The main $20\\text{--}60\\text{ minute}$ core conditioning phase applying **FIIT** targets for aerobic conditioning, resistance training, or circuit work.
+
+### 4.2.5 Cool-Down
+- $5\\text{--}10\\text{ minutes}$ of gradually decreasing exercise intensity followed by **static stretching** to return heart rate and blood pressure smoothly toward baseline, prevent **venous blood pooling** in the legs, and build flexibility.
+
+### 4.3 Individualizing Workout
+- Adjusting exercise mode, intensity, starting duration, progression rate, and recovery days based on each person's **age, baseline fitness level, injury history, health status, and preferences**.`,
+            examTraps: [
+              'Stopping abruptly immediately after vigorous sprinting: Skipping the Cool-Down can trigger venous blood pooling in the legs and post-exercise dizziness.'
+            ],
+            keyTakeaways: [
+              'Every prescribed workout follows Warm-Up -> Primary Conditioning Period (Workout Plan) -> Cool-Down, guided by SMART goals and Individualization.'
+            ]
+          },
+          {
+            id: 'fit-u4-sec3',
+            heading: '4.4 Means and Methods of Developing Cardiorespiratory Fitness',
+            content: `### 4.4.1 Exercise Prescription for Cardiorespiratory Fitness
+- **Frequency**: **$3\\text{--}5\\text{ days/week}$**.
+- **Intensity**: **$60\\%\\text{--}85\\%\\text{ of Maximum Heart Rate (MHR)}$** (where $\\text{MHR} = 220 - \\text{Age}$), or $50\\%\\text{--}85\\%$ of Heart Rate Reserve (Karvonen).
+- **Time**: **$20\\text{--}60\\text{ minutes}$** of continuous or accumulated aerobic activity per session.
+- **Type**: Rhythmic, large-muscle aerobic activities (brisk walking, jogging, swimming, cycling, rowing).
+
+### 4.4.2 Starting and Maintaining a Cardiorespiratory Fitness Program
+- Begin conservatively (e.g., $15\\text{--}20\\text{ min}$ at $60\\%\\text{ MHR}$), apply gradual progression before increasing intensity, keep an exercise log, select enjoyable modes, and re-assess fitness every $6\\text{--}8\\text{ weeks}$.
+
+### 4.4.3 Training Techniques
+1. **Continuous Training**: Maintaining steady, uninterrupted submaximal pace throughout the entire session (builds foundational aerobic base).
+2. **Interval Training**: Alternating high-intensity work bouts with active low-intensity recovery periods (raises $\\text{VO}_{2\\max}$ and anaerobic threshold efficiently).
+3. **Cross-Training**: Rotating two or more aerobic modes (e.g., running Monday/Friday, swimming Wednesday) to reduce repetitive joint overuse injuries and prevent mental boredom.`,
+            equations: [
+              {
+                name: 'Karvonen Target Heart Rate (THR)',
+                formula: '\\text{THR} = [(\\text{MHR} - \\text{RHR}) \\times \\text{Intensity\\%}] + \\text{RHR}',
+                explanation: 'Prescribes individualized aerobic training intensity using Maximum Heart Rate (220 - Age) and Resting Heart Rate (RHR).'
+              }
+            ],
+            workedExamples: [
+              {
+                problem: 'A $20\\text{-year-old}$ student has a Resting Heart Rate of $60\\text{ bpm}$. Compute both their simple **$60\\%\\text{--}85\\%\\text{ MHR}$** zone and their **Karvonen THR** zone at $60\\%\\text{--}85\\%$.',
+                stepByStepSolution: [
+                  '1. $\\text{MHR} = 220 - 20 = 200\\text{ bpm}$.',
+                  '2. Simple $\\%\\text{ MHR}$ Zone: $200 \\times 0.60 = \\mathbf{120\\text{ bpm}}$ to $200 \\times 0.85 = \\mathbf{170\\text{ bpm}}$.',
+                  '3. Karvonen $\\text{HRR} = 200 - 60 = 140\\text{ bpm}$:',
+                  '   - Lower ($60\\%$): $(140 \\times 0.60) + 60 = 84 + 60 = \\mathbf{144\\text{ bpm}}$.',
+                  '   - Upper ($85\\%$): $(140 \\times 0.85) + 60 = 119 + 60 = \\mathbf{179\\text{ bpm}}$.'
+                ],
+                shortcutTip: 'Cardio rules of thumb: **$3\\text{--}5\\text{ days/wk}$**, **$60\\%\\text{--}85\\%\\text{ MHR}$**, **$20\\text{--}60\\text{ min}$**!'
+              }
+            ]
+          },
+          {
+            id: 'fit-u4-sec4',
+            heading: '4.5 Developing Muscle Fitness & 4.6 Developing Flexibility',
+            content: `### 4.5.1 Guiding Principles of Weight Training
+- Apply **progressive overload** and **specificity** across major muscle groups.
+- Maintain strict **form and full range of motion**; **exhale during exertion (concentric lift)** and inhale while lowering (eccentric) to avoid breath-holding spikes in blood pressure.
+- Allow **$48\\text{ hours}$ of recovery** between resistance sessions targeting the same muscle group ($2\\text{--}3\\text{ non-consecutive days/week}$).
+
+### 4.5.2 Types of Weight Training
+- **Free Weights**: Barbells, dumbbells, kettlebells (recruit stabilizer muscles and allow natural multi-planar motion).
+- **Resistance Machines**: Guided cable or cam tracks (safer learning curve for beginners, isolates specific muscles).
+- **Bodyweight Exercises**: Push-ups, pull-ups, squats, planks, lunges (accessible anywhere without equipment).
+- **Plyometrics**: Explosive stretch-shortening jump drills (box jumps, bounding) building muscular **power**.
+
+### 4.5.3 Overview of Prescription for Weight Training
+- **Sets, Repetitions (Reps), Load ($\\%\\text{ 1RM}$), and Rest Intervals**:
+  - **Muscular Strength**: Heavy load ($80\\%\\text{--}90\\%\\text{ 1RM}$), low reps ($1\\text{--}6\\text{ reps}$), $3\\text{--}5\\text{ sets}$, long rest ($2\\text{--}5\\text{ min}$).
+  - **Muscular Hypertrophy (Size)**: Moderate-heavy load ($67\\%\\text{--}85\\%\\text{ 1RM}$), $6\\text{--}12\\text{ reps}$, $3\\text{--}4\\text{ sets}$, $60\\text{--}90\\text{ s}$ rest.
+  - **Muscular Endurance**: Lighter load ($<65\\%\\text{ 1RM}$), high reps ($12\\text{--}20\\text{ reps}$), $2\\text{--}3\\text{ sets}$, short rest ($30\\text{--}60\\text{ s}$).
+
+### 4.5.4 Developing an Individualized Exercise Prescription
+- Balance opposing muscle pairs (e.g., chest/back, quadriceps/hamstrings), start beginners with $1\\text{--}2\\text{ sets}$ of $8\\text{--}12$ whole-body exercises before advancing to split routines.
+
+### 4.6.1 Exercise Prescription for Flexibility
+- **Stretching Modalities**:
+  - **Static Stretching**: Slowly stretching a muscle to mild tension and holding motionless — safest and most effective during **Cool-Down**.
+  - **Dynamic Stretching**: Controlled, sport-specific active joint movements through full ROM — ideal during **Warm-Up**.
+  - **PNF Stretching (Proprioceptive Neuromuscular Facilitation)**: Alternating isometric contraction and passive relaxation (contract-relax) to achieve maximal ROM gains.
+- **Prescription Guidelines**:
+  - **Frequency**: **$2\\text{--}3\\text{ days/week}$** minimum (daily preferred).
+  - **Intensity**: Stretch to the point of **mild tension/tightness**, never sharp pain.
+  - **Time / Volume**: Hold each static stretch **$15\\text{--}30\\text{ seconds}$**, repeating **$2\\text{--}4\\text{ times}$** per muscle group.`,
+            examTraps: [
+              'Prescribing $15\\text{--}20\\text{ reps}$ with light weight to maximize 1RM strength: High reps with light load develop Muscular Endurance; maximal Strength requires heavy load ($>80\\%\\text{ 1RM}$) and low reps ($1\\text{--}6$).',
+              'Holding stretches until sharp pain: Flexibility prescription stops at mild tension for $15\\text{--}30\\text{ seconds}$ to avoid muscle/tendon strain.'
+            ],
+            keyTakeaways: [
+              'Cardiorespiratory prescription: 3–5 days/wk, 60–85% MHR, 20–60 min using Continuous, Interval, or Cross-training.',
+              'Resistance prescription adjusts sets, reps, load, and rest to target Strength vs Endurance across Free weights, Machines, Bodyweight, or Plyometrics.',
+              'Flexibility prescription uses Static, Dynamic, or PNF stretching 2–3+ days/wk with 15–30 second static holds.'
             ]
           }
         ]
@@ -14416,11 +14727,12 @@ const SUBJECT_NAME_BY_ID: Record<string, { id: string; name: string; order: numb
   physics: { id: 'physics', name: 'Physics', order: 17 },
   english_2: { id: 'english2', name: 'English2', order: 18 },
   psychology: { id: 'psychology', name: 'Psychology', order: 19 },
+  fitness: { id: 'fitness', name: 'Physical Fitness', order: 20 },
 };
 
 // Normalize FRESHMAN_COURSES so that:
-// 1. physics_2, chemistry_2, biology_2, and fitness chapters merge into Physics, Chemistry, and Biology
-// 2. Every course uses ONLY the exact subject name (no course code numbers) across all 19 subjects
+// 1. physics_2, chemistry_2, and biology_2 chapters merge into Physics, Chemistry, and Biology
+// 2. Every course uses ONLY the exact subject name (no course code numbers) across all 20 subjects
 const mergedCourseMap = new Map<Subject, FreshmanCourse>();
 
 for (const rawCourse of RAW_FRESHMAN_COURSES) {

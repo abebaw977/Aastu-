@@ -27,6 +27,7 @@ import { MATHS_NAT_AM_NOTES } from './amharic/mathsNatAm';
 import { MATHS_SOCIAL_AM_NOTES } from './amharic/mathsSocialAm';
 import { PHYSICS_AM_NOTES } from './amharic/physicsAm';
 import { PSYCHOLOGY_AM_NOTES } from './amharic/psychologyAm';
+import { FITNESS_AM_NOTES } from './amharic/fitnessAm';
 
 export type {
   AmharicSubjectMeta,
@@ -180,84 +181,7 @@ export const AMHARIC_CHAPTER_NOTES: Record<string, AmharicChapterNote> = {
   ...MATHS_SOCIAL_AM_NOTES,
   ...PHYSICS_AM_NOTES,
   ...PSYCHOLOGY_AM_NOTES,
-
-  // Fitness expanded entry
-  'spsc1011-ch1': {
-    subject: 'fitness',
-    chapterNumber: 1,
-    titleAm: 'ምዕራፍ 1፡ የአካል ብቃት ፊዚዮሎጂ፣ የFITT መርህ እና የልብና ሳንባ ስልጠና',
-    briefOverviewAm:
-      'የአካል ብቃት እንቅስቃሴ መሰረታዊ መርሆዎች (FITT, Overload, Specificity, Reversibility)፣ ከፍተኛ የልብ ምት (MHR & Karvonen THR)፣ የAerobic vs Anaerobic ኃይል ሥርዓቶች እና የHealth-Related vs Skill-Related Fitness አካላትን በጥልቀት ያስተምራል።',
-    briefPointsAm: [
-      'FITT መርህ፡ **Frequency** (ሳምንታዊ ድግግሞሽ — 3–5 ቀናት)፣ **Intensity** (ጥንካሬ — 60–85% MHR)፣ **Time** (ቆይታ — 20–60 ደቂቃ) እና **Type** (ዓይነት)።',
-      'Target Heart Rate፡ $\\text{MHR} = 220 - \\text{Age}$ ሲሆን Karvonen Formula $\\text{THR} = [(\\text{MHR} - \\text{RHR}) \\times \\%\text{Intensity}] + \\text{RHR}$ ነው።',
-      'Aerobic vs Anaerobic፡ Aerobic በኦክስጅን (ረጅም ሩጫ፣ ዋና — Slow-twitch Type I fibers)፣ Anaerobic ያለ ኦክስጅን ለአጭር ከባድ ኃይል (100m Sprint, Weightlifting — Fast-twitch Type II fibers)።',
-      '5 Health-Related Fitness Components፡ Cardiorespiratory Endurance, Muscular Strength, Muscular Endurance, Flexibility እና Body Composition።',
-    ],
-    examTipAm:
-      'RHR (Resting Heart Rate) ሲሰጥ **Karvonen Formula** ($\\text{THR} = (\\text{MHR} - \\text{RHR}) \\times \\text{Intensity} + \\text{RHR}$) መጠቀም ከቀላሉ $\\text{MHR} \\times \\text{Intensity}$ የበለጠ ትክክለኛ ነው!',
-    expandedOverviewAm:
-      'Physical Fitness (SpSc 1011) Chapter 1 በሳይንሳዊ Exercise Physiology ላይ የተመሠረተ የአካል ብቃት እውቀትን ይሰጣል። የTraining Principles (Overload, Progression, Specificity, Individuality, Reversibility — "Use it or lose it")፣ የFITT Prescription Framework፣ ሦስቱ የሰውነት Energy Systems (ATP-PCr Immediate 1–10s, Anaerobic Glycolytic 10–90s, Aerobic Oxidative >2 min)፣ የKarvonen Target Heart Rate ስሌት፣ የ5ቱ Health-Related እና 6ቱ Skill-Related Fitness አካላት ልዩነት (Agility, Balance, Coordination, Power, Reaction Time, Speed) እንዲሁም Dynamic Warm-up vs Static Cool-down Stretchingን በጥልቀት ያስተምራል።',
-    learningOutcomesAm: [
-      'የFITT መርህን በመጠቀም ለግለሰብ ተስማሚ የአካል ብቃት ስልጠና እቅድ መንደፍ።',
-      'MHR እና Karvonen Target Heart Rate (THR) Zones ማስላት።',
-      'Health-related (5) እና Skill-related (6) የአካል ብቃት አካላትን መለየት።',
-      'ATP-PCr, Anaerobic Glycolysis እና Aerobic Energy Systemsን በቆይታና በMuscle fiber type ማነጻጸር።',
-    ],
-    sectionsAm: [
-      {
-        headingAm: '1.1 የስልጠና መርሆዎች፣ FITT እና የኃይል ሥርዓቶች (Exercise Physiology)',
-        contentAm: `### 1.1.1 Training Principles & FITT
-- **Overload & Progression**: ሰውነት ከለመደው በላይ ጫና ሲደረግበት ይጠነክራል፤ ጫናው ቀስ በቀስ መጨመር አለበት (10% rule)።
-- **Specificity**: የምናገኘው ውጤት በምንሠራው ልምምድ ዓይነት ይወሰናል (መዋኘት ሩጫን ሙሉ በሙሉ አይተካም)።
-- **Reversibility**: ስልጠና ሲቆም ብቃት በ2–4 ሳምንት ውስጥ መመለስ ይጀምራል።
-- **FITT**: **F**requency (Days/week) | **I**ntensity (%HR or Weight) | **T**ime (Minutes) | **T**ype (Aerobic/Resistance/Flexibility)።
-
-### 1.1.2 Three Energy Systems
-1. **ATP-PCr (Phosphagen — 0–10 sec)**: ያለ $\\text{O}_2$፣ Lactic acid አያመርትም (100m Sprint, Shot put)።
-2. **Anaerobic Glycolysis (10 sec – 2 min)**: ያለ $\\text{O}_2$ Glucose ይፈጫል፣ **Lactic Acid/Lactate** ያመርታል (400m run)።
-3. **Aerobic Oxidative (> 2 min)**: በ**$\text{O}_2$** በMitochondria ውስጥ Carbohydrates እና Fats ያቃጥላል (Marathon, Cycling) — ከፍተኛ ATP ያመነጫል!`,
-      },
-      {
-        headingAm: '1.2 Heart Rate Zones, Health vs Skill Fitness & Warm-up',
-        contentAm: `### 1.2.1 5 Health-Related vs 6 Skill-Related Components
-- **Health-Related (ለጤናና ለበሽታ መከላከያ)**: Cardiorespiratory Endurance ($VO_{2\\max}$), Muscular Strength (1-RM Max force), Muscular Endurance (Repetitive contractions), Flexibility (Range of motion at joints), Body Composition (% Fat vs Lean Mass)።
-- **Skill-Related (ለስፖርት ብቃት — ABCPRS)**: **A**gility, **B**alance, **C**oordination, **P**ower, **R**eaction Time, **S**peed።
-- **Warm-up vs Cool-down**: ከስልጠና በፊት **Dynamic Warm-up** (ደም ዝውውርና የጡንቻ ሙቀት ይጨምራል)፤ በኋላ **Cool-down + Static Stretching** (የልብ ምትን ቀስ ብሎ ለመመለስና Blood pooling ለመከላከል)።`,
-      },
-    ],
-    workedExamplesAm: [
-      {
-        problemAm:
-          'አንድ የ20 ዓመት ተማሪ Resting Heart Rate ($RHR$) **60 bpm** አለው። በKarvonen Formula መሠረት ከ**70% እስከ 80%** የስልጠና ዞኑ (Target Heart Rate Zone) ስንት bpm ነው?',
-        stepsAm: [
-          '1. $\\text{MHR} = 220 - 20 = 200\\text{ bpm}$.',
-          '2. Heart Rate Reserve ($\\text{HRR}$) = $\\text{MHR} - \\text{RHR} = 200 - 60 = 140\\text{ bpm}$.',
-          '3. Lower Limit (70%): $(140 \\times 0.70) + 60 = 98 + 60 = \\mathbf{158\\text{ bpm}}$.',
-          '4. Upper Limit (80%): $(140 \\times 0.80) + 60 = 112 + 60 = \\mathbf{172\\text{ bpm}}$.',
-          '5. ስለዚህ Target Zone = **158–172 bpm**!',
-        ],
-      },
-    ],
-    glossaryAm: [
-      { termEn: '$VO_{2\\max}$', termAm: 'ከፍተኛ የኦክስጅን አጠቃቀም', definitionAm: 'በከባድ አካላዊ እንቅስቃሴ ወቅት ሰውነት በደቂቃ መጠቀም የሚችለው ከፍተኛው የኦክስጅን መጠን (የCardiorespiratory fitness ዋና መለኪያ)።' },
-      { termEn: 'RICE Principle', termAm: 'የጉዳት የመጀመሪያ እርዳታ (RICE)', definitionAm: 'ለጡንቻ/መገጣጠሚያ ጉዳት: **R**est (እረፍት), **I**ce (በረዶ), **C**ompression (ማሰር), **E**levation (ከፍ ማድረግ)።' },
-    ],
-    examTrapsAm: [
-      'ከከባድ ስልጠና በኋላ ድንገት መቆም **Blood pooling in legs & Dizziness** ያስከትላል — ሁልጊዜ Cool-down ያስፈልጋል!',
-      '**Power** ($\\text{Force} \\times \\text{Velocity}$) ከ**Skill-Related** አካላት ውስጥ እንጂ ከHealth-Related ውስጥ አይደለም!',
-    ],
-    keyTakeawaysAm: [
-      'Karvonen Method ከቀላል %MHR በላይ Resting Heart Rateን ግምት ውስጥ ስለሚያስገባ በአካል ብቃት ሳይንስ ይመረጣል።',
-      'Static stretching ከስልጠና **በፊት** ሳይሆን **በኋላ (Cool-down)** ሲደረግ ጉዳትን ይከላከላል፤ ከስልጠና በፊት Dynamic warm-up ይመከራል።',
-    ],
-    reviewQaAm: [
-      {
-        questionAm: 'ጥያቄ፡ "አንድ ሰው በድንገት አቅጣጫ ሲቀይር ሚዛኑን ጠብቆ በፍጥነት የመንቀሳቀስ ብቃት" ከSkill-Related አካላት የቱ ነው?',
-        answerAm: 'መልስ፡ **Agility**!',
-      },
-    ],
-  },
+  ...FITNESS_AM_NOTES,
 };
 
 const CHAPTER_BY_SUBJECT_AND_NUM: Record<string, AmharicChapterNote> = {};

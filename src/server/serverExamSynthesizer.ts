@@ -63,6 +63,7 @@ export function normalizeFreshmanSubject(subj?: string): Subject {
   if (s.includes('inclus')) return 'inclusive';
   if (s.includes('global')) return 'global_affairs';
   if (s.includes('entrep')) return 'entrepreneur';
+  if (s.includes('fit') || s.includes('spsc') || s.includes('sport') || s.includes('exercise')) return 'fitness';
   return 'mathematics';
 }
 
@@ -125,6 +126,9 @@ export function inferSubjectFromTopic(topicText?: string, currentSubject?: Subje
   }
   if (/(conditioning|pavlov|skinner|cognition|personality|freud|memory|perception|developmental psychology)/i.test(t)) {
     return 'psychology';
+  }
+  if (/(physical fitness|hypokinetic|dyslipidemia|hypercholesterolemia|fiit|fitt|cardiorespiratory|plyometrics|reversibility|overload|periodization|pnf|warm[- ]?up|cool[- ]?down)/i.test(t)) {
+    return 'fitness';
   }
   if (/(reading comprehension|paragraph writing|grammar|tenses|vocabulary|cohesion|essay)/i.test(t)) {
     return 'english';
@@ -372,6 +376,7 @@ export function detectExplicitSubjectFromText(text: string): Subject | null {
   if (/\b(hist(?:ory)?|adwa|axum|zagwe|menelik)\b/i.test(s)) return 'history';
   if (/\b(anth(?:ropology)?|hominid|ethnography|kinship)\b/i.test(s)) return 'anthropology';
   if (/\b(psyc(?:hology)?|sensation|conditioning|pavlov|skinner)\b/i.test(s)) return 'psychology';
+  if (/\b(physical\s*fitness|spsc\s*1011|hypokinetic|dyslipidemia|hypercholesterolemia|fiit|fitt|plyometrics|reversibility)\b/i.test(s)) return 'fitness';
   if (/\b(civic(?:s)?|moral\s+education|constitution|citizenship)\b/i.test(s)) return 'civics';
   if (/\b(econ(?:omics)?|microeconomics|macroeconomics|elasticity|gdp)\b/i.test(s)) return 'economics';
   if (/\b(inclusiv(?:e|eness)|disability|impairment|universal\s+design|special\s+needs)\b/i.test(s)) return 'inclusive';

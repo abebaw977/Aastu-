@@ -30,7 +30,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Eye,
-  Code
+  Code,
+  Activity
 } from 'lucide-react';
 import { downloadBackupFile, restoreBackupFromJSON } from '../utils/storage';
 
@@ -195,6 +196,8 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
       case 'psychology':
       case 'aptitude':
         return <Brain className="w-4 h-4 text-amber-500" />;
+      case 'fitness':
+        return <Activity className="w-4 h-4 text-rose-500" />;
       default:
         return <FileText className="w-4 h-4 text-slate-500" />;
     }
@@ -220,13 +223,15 @@ export const StudentNotesView: React.FC<StudentNotesViewProps> = ({
       case 'critical_thinking':
       case 'aptitude':
         return 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800';
+      case 'fitness':
+        return 'bg-rose-100 dark:bg-rose-900/40 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800';
       default:
         return 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700';
     }
   };
 
   const formatSubjectName = (subj: Subject | 'general') => {
-    if (subj === 'all') return 'All 19 Subjects';
+    if (subj === 'all') return 'All 20 Subjects';
     if (subj === 'general') return 'General Notes';
     return getSubjectDisplayName(subj);
   };

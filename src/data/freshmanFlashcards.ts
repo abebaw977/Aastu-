@@ -24,6 +24,7 @@ const FLASHCARD_SUBJECT_NAME_MAP: Partial<Record<Subject, string>> = {
   physics_2: 'Physics',
   english_2: 'English2',
   psychology: 'Psychology',
+  fitness: 'Physical Fitness',
 };
 
 const RAW_FRESHMAN_FLASHCARDS: Flashcard[] = [
@@ -206,6 +207,76 @@ const RAW_FRESHMAN_FLASHCARDS: Flashcard[] = [
     front: 'What is the first-order condition for maximizing profit Π(Q) = TR(Q) − TC(Q)?',
     back: 'Marginal Revenue equals Marginal Cost: MR(Q) = MC(Q) (i.e., Π\'(Q) = 0), with second-order condition Π\'\'(Q) < 0.',
     hint: 'Set Marginal Revenue equal to Marginal Cost.'
+  },
+  {
+    id: 'fc-fit-1',
+    subject: 'fitness',
+    semester: 1,
+    courseCode: 'SpSc 1011',
+    category: 'Unit 1: Definitions',
+    front: 'How do Physical Activity, Physical Exercise, and Sport differ?',
+    back: '• Physical Activity: Any skeletal muscle movement requiring energy expenditure (e.g., walking, gardening).\n• Physical Exercise: Planned, structured, and repetitive movement to improve/maintain fitness.\n• Sport: Competitive physical activity governed by rules, skill, and strategy.',
+    hint: 'Incidental movement vs Planned/Structured/Repetitive vs Competitive rules.'
+  },
+  {
+    id: 'fc-fit-2',
+    subject: 'fitness',
+    semester: 1,
+    courseCode: 'SpSc 1011',
+    category: 'Unit 1: Training Principles',
+    front: 'What does the FIIT Principle stand for, and what does the Principle of Reversibility mean?',
+    back: '• FIIT: Frequency (how often), Intensity (how hard), Time (how long), Type (what kind of exercise).\n• Reversibility: "Use it or lose it" — fitness gains are lost when training stops.',
+    hint: 'F-I-I-T designs workouts; Reversibility describes detraining.'
+  },
+  {
+    id: 'fc-fit-3',
+    subject: 'fitness',
+    semester: 1,
+    courseCode: 'SpSc 1011',
+    category: 'Unit 2: Hypokinetic Diseases',
+    front: 'What are Hypokinetic Diseases, and how does exercise affect HDL and LDL cholesterol?',
+    back: '• Hypokinetic diseases: Conditions caused by insufficient physical activity (e.g., obesity, type 2 diabetes, osteoporosis).\n• Cholesterol effect: Exercise raises HDL ("good" cholesterol) and lowers LDL ("bad" cholesterol), reducing Coronary Heart Disease and dyslipidemia risk.',
+    hint: 'Hypo = low, kinetic = movement; HDL High, LDL Low.'
+  },
+  {
+    id: 'fc-fit-4',
+    subject: 'fitness',
+    semester: 1,
+    courseCode: 'SpSc 1011',
+    category: 'Unit 3: Sports Nutrition',
+    front: 'What are the key nutritional guidelines Before (2–3 hrs) and After (30–60 min) Exercise?',
+    back: '• Before Exercise (2–3 hrs prior): High carbohydrates for energy, moderate protein, low fat, and proper hydration.\n• After Exercise (30–60 min post): Protein + Carbohydrates to promote muscle repair and glycogen replenishment.',
+    hint: 'Before = low fat + carbs; After = protein + carbs within 30–60 min.'
+  },
+  {
+    id: 'fc-fit-5',
+    subject: 'fitness',
+    semester: 1,
+    courseCode: 'SpSc 1011',
+    category: 'Unit 4: Components & Prescription',
+    front: 'What are the 4 Health-Related Components of Fitness in SpSc 1011 Unit 4, and what are SMART fitness goals?',
+    back: '• 4 Components: Cardio-respiratory Fitness, Muscle Fitness (Strength & Endurance), Flexibility, and Body Composition.\n• SMART Goals: Specific, Measurable, Achievable, Relevant, Time-bound.',
+    hint: 'Heart/lungs, muscles, joint ROM, fat vs lean mass.'
+  },
+  {
+    id: 'fc-fit-6',
+    subject: 'fitness',
+    semester: 1,
+    courseCode: 'SpSc 1011',
+    category: 'Unit 4: Cardiorespiratory',
+    front: 'What is the standard Exercise Prescription and what are the 3 training techniques for Cardiorespiratory Fitness?',
+    back: '• Prescription: 3–5 days/week, 60%–85% MHR, for 20–60 minutes.\n• Techniques: Continuous training, Interval training, and Cross-training.',
+    hint: '3–5 days, 60–85% MHR, 20–60 min.'
+  },
+  {
+    id: 'fc-fit-7',
+    subject: 'fitness',
+    semester: 1,
+    courseCode: 'SpSc 1011',
+    category: 'Unit 4: Muscle & Flexibility',
+    front: 'What is the standard Flexibility Prescription (frequency, hold time, types) and Warm-Up vs Cool-Down stretching rule?',
+    back: '• Flexibility: Static, Dynamic, or PNF stretching performed 2–3 days/week, holding static stretches 15–30 seconds to mild tension.\n• Warm-Up uses light activity + Dynamic stretching; Cool-Down lowers heart rate and uses Static stretching.',
+    hint: 'Dynamic before workout; Static 15–30s after workout.'
   }
 ];
 

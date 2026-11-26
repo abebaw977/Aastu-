@@ -2168,6 +2168,73 @@ export const OFFICIAL_17_FRESHMAN_COURSES: FreshmanCourseCatalogItem[] = [
         readings: 'Psychology Module — Chapter 11'
       }
     ]
+  },
+
+  // ==========================================
+  // 20. Physical Fitness (4 Units)
+  // ==========================================
+  {
+    id: 'fitness',
+    code: 'SpSc 1011',
+    title: 'Physical Fitness',
+    shortTitle: 'Physical Fitness',
+    subject: 'fitness',
+    semester: 1,
+    creditHours: 2,
+    category: 'Technology & Wellness',
+    overview: 'Comprehensive 4-Unit Ethiopian university freshman course in Physical Fitness (SpSc 1011): Unit 1 Concepts of Physical Fitness & Training Principles (Overload, FIIT, Rest/Recovery/Periodization, Reversibility, Individual Difference); Unit 2 Health Benefits of Physical Activity (Hypokinetic Diseases, CHD, Hypercholesterolemia & Dyslipidemia); Unit 3 Nutrition and Physical Performance (Before, During, After Exercise & Training Diet Planning); and Unit 4 Health-Related Components & Exercise Prescription (Cardiorespiratory, Muscle Fitness & Flexibility).',
+    keyTopics: [
+      'Unit 1: Concepts of Physical Fitness (Definitions & General Principles of Fitness Training)',
+      'Unit 2: The Health Benefits of Physical Activity (Hypokinetic & Cardiovascular Diseases)',
+      'Unit 3: Nutrition and Physical Performance (Before, During, After Exercise & Training Diet)',
+      'Unit 4: Health-Related Components of Fitness and Principles of Exercise Prescription'
+    ],
+    defaultChapters: [
+      {
+        id: 'fit-ch1',
+        chapterNumber: 1,
+        title: 'Unit 1: Concepts of Physical Fitness',
+        topics: [
+          '1.1 Meanings and Definitions of Terms — 1.1.1 Physical Fitness (ability to live a full and balanced life without undue fatigue), 1.1.2 Physical Activity (bodily movement produced by skeletal muscles requiring energy expenditure), 1.1.3 Physical Exercise (planned, structured, repetitive movement), 1.1.4 Sport (competitive rule-governed physical activity involving skill and strategy)',
+          '1.2 General Principles of Fitness Training — 1.2.1 Principle of Overload, 1.2.2 FIIT Principle (Frequency, Intensity, Time, Type), 1.2.3 Principle of Rest, Recovery, and Periodization, 1.2.4 Principle of Reversibility ("Use it or lose it"), 1.2.5 Principle of Individual Difference'
+        ],
+        readings: 'Physical Fitness Module (SpSc 1011) — Unit 1'
+      },
+      {
+        id: 'fit-ch2',
+        chapterNumber: 2,
+        title: 'Unit 2: The Health Benefits of Physical Activity',
+        topics: [
+          '2.1 Physical Activity and Hypokinetic Diseases/Conditions (Diseases caused by insufficient physical activity: Obesity, Type 2 Diabetes, Osteoporosis; prevention and management through regular exercise)',
+          '2.2 Physical Activity and Cardiovascular Diseases — 2.2.1 Coronary Heart Disease (improves heart function, lowers blood pressure, reduces heart attack risk), 2.2.2 Hypercholesterolemia and Dyslipidemia (raising HDL "good" cholesterol, lowering LDL "bad" cholesterol, managing blood lipids)'
+        ],
+        readings: 'Physical Fitness Module (SpSc 1011) — Unit 2'
+      },
+      {
+        id: 'fit-ch3',
+        chapterNumber: 3,
+        title: 'Unit 3: Nutrition and Physical Performance',
+        topics: [
+          '3.2 Nutrition and Physical Performance — 3.2.1 Nutrition Before Exercise (carbohydrates, moderate protein, low fat, hydration 2–3 hours prior)',
+          '3.2.2 Nutrition During Exercise (hydration, electrolyte balance, carbohydrates for prolonged endurance activities)',
+          '3.2.3 Nutrition After Exercise (protein and carbohydrates within 30–60 minutes for muscle repair and glycogen replenishment)',
+          '3.2.4 How to Plan Your Training Diet (balancing macronutrients, meal timing around workouts, adequate calorie and fluid intake)'
+        ],
+        readings: 'Physical Fitness Module (SpSc 1011) — Unit 3'
+      },
+      {
+        id: 'fit-ch4',
+        chapterNumber: 4,
+        title: 'Unit 4: Health-Related Components of Fitness and Principles of Exercise Prescription',
+        topics: [
+          '4.1 Health-Related Components of Fitness — 4.1.1 Cardio-respiratory Fitness, 4.1.2 Muscle Fitness (Muscular Strength & Endurance), 4.1.3 Flexibility, 4.1.4 Body Composition',
+          '4.2 Principles of Exercise Prescription for Health and Fitness (4.2.1 SMART Fitness Goals, 4.2.2 Mode of Exercise, 4.2.3 Warm Up, 4.2.4 Primary Conditioning Period: The Workout Plan, 4.2.5 Cool-Down) & 4.3 Individualizing Workout',
+          '4.4 Means and Methods of Developing Cardiorespiratory Fitness (4.4.1 Prescription: 3–5 days/wk, 60–85% MHR, 20–60 min; 4.4.2 Starting & Maintaining; 4.4.3 Continuous, Interval, Cross-Training)',
+          '4.5 Means and Methods of Developing Muscle Fitness (4.5.1 Guiding Principles, 4.5.2 Free weights, Machines, Bodyweight, Plyometrics, 4.5.3 Sets/Reps/Load/Rest Prescription, 4.5.4 Individualized Prescription) & 4.6 Flexibility (4.6.1 Static, Dynamic, PNF; 2–3 days/wk, 15–30s hold)'
+        ],
+        readings: 'Physical Fitness Module (SpSc 1011) — Unit 4'
+      }
+    ]
   }
 ];
 
@@ -2198,8 +2265,11 @@ export function getCourseBySubject(subject: Subject | string): FreshmanCourseCat
     case 'chemistry_2':
       return OFFICIAL_17_FRESHMAN_COURSES.find((c) => c.subject === 'chemistry');
     case 'biology_2':
-    case 'fitness':
       return OFFICIAL_17_FRESHMAN_COURSES.find((c) => c.subject === 'biology');
+    case 'spsc1011':
+    case 'physical_fitness':
+    case 'physical fitness':
+      return OFFICIAL_17_FRESHMAN_COURSES.find((c) => c.subject === 'fitness');
     case 'geography_history':
       return OFFICIAL_17_FRESHMAN_COURSES.find((c) => c.subject === 'geography');
     case 'aptitude':
@@ -2244,7 +2314,7 @@ export function getSubjectDisplayName(subject: Subject | string): string {
 export function matchesSubjectFilter(itemSubject: Subject | string, selectedSubject: Subject | string): boolean {
   if (!selectedSubject || selectedSubject === 'all') return true;
   if (itemSubject === selectedSubject) return true;
-  if (selectedSubject === 'biology' && (itemSubject === 'biology_2' || itemSubject === 'fitness')) return true;
+  if (selectedSubject === 'biology' && itemSubject === 'biology_2') return true;
   if (selectedSubject === 'chemistry' && itemSubject === 'chemistry_2') return true;
   if (selectedSubject === 'physics' && itemSubject === 'physics_2') return true;
   if (selectedSubject === 'geography' && itemSubject === 'geography_history') return true;

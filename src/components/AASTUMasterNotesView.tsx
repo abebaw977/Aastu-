@@ -180,7 +180,7 @@ export const AASTUMasterNotesView: React.FC<AASTUMasterNotesViewProps> = ({
                       <GraduationCap className="w-4 h-4" /> Freshman Official Syllabus Vault
                     </span>
                     <span className="text-xs text-slate-400">
-                      {totalChapters} Comprehensive Chapters • All 19 Freshman Subjects
+                      {totalChapters} Comprehensive Chapters • All 20 Freshman Subjects
                     </span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">

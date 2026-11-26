@@ -24,6 +24,7 @@ const SUBJECT_EXACT_NAME_MAP: Partial<Record<Subject, string>> = {
   physics_2: 'Physics',
   english_2: 'English2',
   psychology: 'Psychology',
+  fitness: 'Physical Fitness',
 };
 
 const RAW_FRESHMAN_QUESTIONS: Question[] = [
@@ -436,6 +437,120 @@ const RAW_FRESHMAN_QUESTIONS: Question[] = [
     explanation: 'Health-related components directly influence long-term health and disease prevention: Cardiorespiratory Endurance, Muscular Strength, Muscular Endurance, Flexibility, and Body Composition. Agility, balance, coordination, power, reaction time, and speed are Skill-Related (performance-related) components.',
     shortcutTip: 'Health-related = Heart, muscles, fat, flexibility. Skill-related = Agility, speed, balance, reaction.',
     yearReference: 'Physical Fitness 1011 Exam',
+    difficulty: 'easy'
+  },
+  {
+    id: 'spsc-q2',
+    subject: 'fitness',
+    semester: 1,
+    courseCode: 'SpSc 1011',
+    topic: '1.1 Definitions of Physical Fitness Terms',
+    question: 'Which statement accurately distinguishes Physical Exercise from general Physical Activity?',
+    options: [
+      'Physical Activity is always competitive and governed by formal sport rules',
+      'Physical Exercise is planned, structured, and repetitive movement intended to improve or maintain fitness',
+      'Physical Activity requires gym equipment while Physical Exercise does not',
+      'Physical Exercise expends less energy than basal resting metabolism'
+    ],
+    correctAnswer: 1,
+    explanation: 'Physical Activity refers to any bodily movement produced by skeletal muscles requiring energy expenditure (e.g., walking, gardening). Physical Exercise is a planned, structured, and repetitive subset specifically done to improve or maintain physical fitness.',
+    shortcutTip: 'Exercise = Planned + Structured + Repetitive.',
+    yearReference: 'SpSc 1011 Unit 1 Exam',
+    difficulty: 'easy'
+  },
+  {
+    id: 'spsc-q3',
+    subject: 'fitness',
+    semester: 1,
+    courseCode: 'SpSc 1011',
+    topic: '1.2 General Principles of Fitness Training',
+    question: 'Which fitness training principle is summed up by the phrase "Use it or lose it," explaining why fitness gains decline when training stops?',
+    options: [
+      'Principle of Overload',
+      'Principle of Individual Difference',
+      'Principle of Reversibility',
+      'Principle of Periodization'
+    ],
+    correctAnswer: 2,
+    explanation: 'The Principle of Reversibility states that training adaptations are transient and fitness gains are lost when regular training stops or drops sharply. Overload requires stressing above normal levels, Periodization cycles training phases, and Individual Difference tailors programs to personal genetics and needs.',
+    shortcutTip: 'Stopped training → Gains reverse → Principle of Reversibility.',
+    yearReference: 'SpSc 1011 Unit 1 Exam',
+    difficulty: 'easy'
+  },
+  {
+    id: 'spsc-q4',
+    subject: 'fitness',
+    semester: 1,
+    courseCode: 'SpSc 1011',
+    topic: '2.1 Hypokinetic Diseases & 2.2 Cardiovascular Health',
+    question: 'Which cholesterol change and disease prevention effect are produced by regular aerobic physical activity?',
+    options: [
+      'Raises LDL ("bad") cholesterol and lowers HDL ("good") cholesterol',
+      'Causes osteoporosis by placing excessive load on weight-bearing bones',
+      'Raises HDL ("good") cholesterol, lowers LDL ("bad") cholesterol, and prevents hypokinetic diseases like Type 2 diabetes and coronary heart disease',
+      'Eliminates the need for any carbohydrate consumption during endurance exercise'
+    ],
+    correctAnswer: 2,
+    explanation: 'Regular physical activity prevents hypokinetic diseases (obesity, type 2 diabetes, osteoporosis) and improves cardiovascular lipid profiles in hypercholesterolemia and dyslipidemia by elevating protective HDL ("good") cholesterol and lowering atherogenic LDL ("bad") cholesterol.',
+    shortcutTip: 'Exercise = High HDL (Good) + Low LDL (Bad).',
+    yearReference: 'SpSc 1011 Unit 2 Exam',
+    difficulty: 'medium'
+  },
+  {
+    id: 'spsc-q5',
+    subject: 'fitness',
+    semester: 1,
+    courseCode: 'SpSc 1011',
+    topic: '3.2 Nutrition and Physical Performance',
+    question: 'What is the ideal post-exercise nutrition strategy for promoting muscle repair and glycogen replenishment?',
+    options: [
+      'Consume a high-fat, low-carbohydrate meal 4 hours after finishing exercise',
+      'Consume protein and carbohydrates within 30–60 minutes after exercise',
+      'Avoid all fluids for 2 hours post-workout to prevent stomach cramping',
+      'Consume only pure fat immediately after resistance training'
+    ],
+    correctAnswer: 1,
+    explanation: 'Within 30–60 minutes post-exercise, muscles show peak blood flow and nutrient uptake. Consuming both protein and carbohydrates in this window promotes muscle tissue repair and rapid glycogen replenishment. Before exercise (2–3 hrs prior), focus on carbs, moderate protein, low fat, and hydration.',
+    shortcutTip: 'Before (2–3 h) = Carbs + Low Fat; After (30–60 min) = Protein + Carbs.',
+    yearReference: 'SpSc 1011 Unit 3 Exam',
+    difficulty: 'easy'
+  },
+  {
+    id: 'spsc-q6',
+    subject: 'fitness',
+    semester: 1,
+    courseCode: 'SpSc 1011',
+    topic: '4.4 Cardiorespiratory Exercise Prescription',
+    question: 'According to standard Unit 4 exercise prescription guidelines for a healthy adult, what are the target frequency, intensity, and duration to develop cardiorespiratory fitness?',
+    options: [
+      '1 day/week at 95–100% MHR for 5 minutes',
+      '3–5 days/week at 60–85% MHR for 20–60 minutes',
+      '7 days/week at 30–40% MHR for 10 minutes',
+      '2 days/week at >90% 1RM for 15–30 seconds'
+    ],
+    correctAnswer: 1,
+    explanation: 'Cardiorespiratory fitness development follows the prescription of 3–5 days per week at 60–85% Maximum Heart Rate (MHR) for 20–60 minutes per session using continuous, interval, or cross-training methods.',
+    shortcutTip: 'Cardio numbers: 3–5 days/wk, 60–85% MHR, 20–60 min.',
+    yearReference: 'SpSc 1011 Unit 4 Exam',
+    difficulty: 'medium'
+  },
+  {
+    id: 'spsc-q7',
+    subject: 'fitness',
+    semester: 1,
+    courseCode: 'SpSc 1011',
+    topic: '4.5 Muscle Fitness & 4.6 Flexibility Prescription',
+    question: 'Which stretching prescription is recommended during the cool-down phase to develop flexibility safely without injury?',
+    options: [
+      'Ballistic bouncing stretches held for 2 seconds each once a month',
+      'Static stretching held for 15–30 seconds to mild tension, performed 2–3 days/week',
+      'Heavy plyometric box jumps immediately after lifting 95% 1RM',
+      'Holding stretches past sharp pain for 5 minutes daily'
+    ],
+    correctAnswer: 1,
+    explanation: 'Flexibility is safely developed using static, dynamic, or PNF stretching 2–3+ days/week, holding static stretches for 15–30 seconds to the point of mild tension (never sharp pain) during the cool-down.',
+    shortcutTip: 'Flexibility = 2–3 days/wk, 15–30 seconds static hold at mild tension.',
+    yearReference: 'SpSc 1011 Unit 4 Exam',
     difficulty: 'easy'
   },
 

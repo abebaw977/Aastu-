@@ -293,7 +293,7 @@ export const SamsungA04Companion: React.FC<SamsungA04CompanionProps> = ({
                       : 'bg-slate-800 text-slate-400 hover:text-white'
                   }`}
                 >
-                  All 19 Subjects
+                  All 20 Subjects
                 </button>
                 {OFFICIAL_17_FRESHMAN_COURSES.map(course => (
                   <button
